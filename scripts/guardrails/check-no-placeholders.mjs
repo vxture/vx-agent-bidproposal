@@ -35,7 +35,7 @@
 // what lets ADR-001 explain what it removed without this check calling the
 // explanation a relapse.
 //
-// A product copied from bid inherits this unchanged, which is the point - the
+// A product copied from bidproposal inherits this unchanged, which is the point - the
 // copy is made by `rename-product.mjs` rewriting real names, never by filling
 // blanks back in.
 
@@ -107,7 +107,7 @@ for (const f of findings) {
   console.error(`      ${f.why}`);
 }
 console.error(
-  `\nbid has no placeholders (ADR-001). Use the literal value - the product code is \`bid\` -` +
+  `\nbid has no placeholders (ADR-001). Use the literal value - the product code is \`bidproposal\` -` +
     `\nand let \`scripts/init/rename-product.mjs\` rewrite it for a copied repo.`,
 );
 process.exit(STRICT ? 1 : 0);

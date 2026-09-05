@@ -1,4 +1,4 @@
-import { BRAND } from "@bid/shared/brand";
+import { BRAND } from "@bidproposal/shared/brand";
 import type { Tier } from "./types";
 
 // Conversion deep-link constructor (product_200 section 3.2): the single

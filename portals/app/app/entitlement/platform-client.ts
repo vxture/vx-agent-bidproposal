@@ -1,4 +1,4 @@
-import { BRAND } from "@bid/shared/brand";
+import { BRAND } from "@bidproposal/shared/brand";
 import { assertInternalTarget } from "../lib/internal-target";
 import { EMPTY_ENTITLEMENT, type Entitlement, type QuotaPool } from "./types";
 

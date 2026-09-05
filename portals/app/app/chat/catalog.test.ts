@@ -14,7 +14,7 @@ test("every model code is an Atlas endpoint that actually routes", () => {
   // An unknown endpointCode fails at call time with 404 ENDPOINT_NOT_ROUTABLE,
   // never at build or deploy time, and Atlas offers no runtime way to validate
   // the list. This test is the standing reminder: adding an entry here means
-  // the platform line has created that endpoint AND granted it to bid.
+  // the platform line has created that endpoint AND granted it to bidproposal.
   const ROUTABLE = new Set(["chat/cheap", "chat/default", "chat/pro"]);
   for (const m of MODEL_CATALOG) {
     assert.ok(ROUTABLE.has(m.code), `${m.code} is not a known Atlas endpoint`);

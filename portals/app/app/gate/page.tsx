@@ -1,4 +1,4 @@
-import { BRAND } from "@bid/shared/brand";
+import { BRAND } from "@bidproposal/shared/brand";
 import { safeReturnTo } from "../auth/lib/return-to";
 import { ProductGate } from "../access/product-gate";
 

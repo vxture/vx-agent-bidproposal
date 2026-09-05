@@ -20,12 +20,12 @@ import { dirname, resolve as resolvePath } from "node:path";
 // graph is followed from there - the same entry point the app imports, never a
 // path into the package's internals.
 //
-// A product copied from bid inherits this test, and it keeps working: it
+// A product copied from bidproposal inherits this test, and it keeps working: it
 // derives the token list from whatever CSS that product writes.
 
 const require_ = createRequire(import.meta.url);
 
-/** Tokens bid defines for itself. Everything else must come from the DS. */
+/** Tokens bidproposal defines for itself. Everything else must come from the DS. */
 const OURS = /^--vx-gate/;
 
 /** Read a CSS file and every file it @imports, depth-first, once each. */

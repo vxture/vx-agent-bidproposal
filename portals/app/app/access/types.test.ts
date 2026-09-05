@@ -10,7 +10,7 @@ import type { Entitlement } from "../entitlement/types";
 // visitor into a paid product, or trapping a paying customer at the door.
 
 const USER = { sub: "usr_1", activeWorkspace: "ws_1" } as unknown as AuthUser;
-const NO_PLAN = makeEntitlement("ws_1", "bid");
+const NO_PLAN = makeEntitlement("ws_1", "bidproposal");
 
 function authed(gates: Partial<AccessGates>, entitlement: Entitlement = NO_PLAN): AccessState {
   return {

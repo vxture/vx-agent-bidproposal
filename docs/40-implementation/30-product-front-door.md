@@ -1,7 +1,7 @@
 # The product front door
 
 Every Vxture product reached by its own domain needs the same thing: verify the
-visitor, let them in, or show them the one action that helps. bid ships it as
+visitor, let them in, or show them the one action that helps. bidproposal ships it as
 four files a copied product changes almost nothing in.
 
 ## What a copy has to change

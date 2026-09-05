@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { BRAND } from "@bid/shared/brand";
+import { BRAND } from "@bidproposal/shared/brand";
 import { ShellBrand } from "../ds";
 import { SessionControl } from "../session-control";
 

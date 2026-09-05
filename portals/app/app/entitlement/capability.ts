@@ -6,8 +6,8 @@ import { TIERS, hasProductAccess } from "./types";
 // what tier a workspace holds.
 //
 // The MECHANISM below (cumulative tiers, canUseFeature, minTierFor) is rigid and
-// shared org-wide. The CONTENT is bid's, and a product copied from bid
-// replaces it: these keys describe bid's chat models/skills and its challenge
+// shared org-wide. The CONTENT is bidproposal's, and a product copied from bidproposal
+// replaces it: these keys describe bidproposal's chat models/skills and its challenge
 // game (ADR-006), and mean nothing anywhere else.
 //
 // The game ladder (docs/20-specs/20-challenge-game.md) unlocks exactly one

@@ -82,7 +82,7 @@ export class AtlasChatResolver implements ChatResolver {
     // it and both store it verbatim, so a turn that spent a capability call and
     // model tokens can be totalled back up as one unit of work. Two ids would
     // make that impossible, and neither side would complain.
-    const taskId = `bid-${randomUUID()}`;
+    const taskId = `bidproposal-${randomUUID()}`;
 
     let skill: SkillOutcome | undefined;
     let messages = history;

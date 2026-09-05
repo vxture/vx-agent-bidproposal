@@ -1,5 +1,5 @@
 {
-  "name": "@bid/app",
+  "name": "@bidproposal/app",
   "version": "0.0.0",
   "private": true,
   "scripts": {
@@ -14,7 +14,7 @@
     "@phosphor-icons/react": "^2.1.10",
     "@prisma/adapter-pg": "^7.8.0",
     "@prisma/client": "^7.8.0",
-    "@bid/shared": "workspace:*",
+    "@bidproposal/shared": "workspace:*",
     "@vxture/design-system": "^5.0.0",
     "@vxture/shared": "^1.6.0",
     "ioredis": "^5.4.0",

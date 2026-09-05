@@ -7,16 +7,16 @@ source-directory slots:
 
 ```
 portals/
-  app/                  @bid/app     - the Next.js 15 application (App Router)
-  packages/shared/      @bid/shared  - product identity constants
+  app/                  @bidproposal/app     - the Next.js 15 application (App Router)
+  packages/shared/      @bidproposal/shared  - product identity constants
 ```
 
-`@bid/shared` exists to hold exactly one thing well: `BRAND`, the single source
+`@bidproposal/shared` exists to hold exactly one thing well: `BRAND`, the single source
 of product identity. Everything that names the product - the health payload, C2
 entitlement lookups, the C3 webhook's wrong-product check - reads
 `BRAND.productCode` from there. Never derive the product code from
-`OIDC_CLIENT_ID`: the beta client is `bid-beta` while the product code stays
-`bid`, so on any non-prod stack the two diverge and every attribution is wrong.
+`OIDC_CLIENT_ID`: the beta client is `bidproposal-beta` while the product code stays
+`bidproposal`, so on any non-prod stack the two diverge and every attribution is wrong.
 
 `@vxture/shared` (note the different scope) is the published org package, resolved
 from GitHub Packages. It owns the health-identity helper and the subscription
@@ -76,11 +76,11 @@ whole integration chain:
 5. **Skill** (optional) - `chat/skill-runner.ts` runs the Runos loop:
    discover -> resolve -> invoke -> report_outcome. It searches the catalog
    rather than hard-coding capability ids, because the entitled catalog is
-   per-caller and changes without bid redeploying. A skill that cannot run
+   per-caller and changes without bidproposal redeploying. A skill that cannot run
    degrades the turn instead of failing it.
 6. **Inference** - `chat/atlas-client.ts` posts to Atlas `/v1/chat`, threading
    any skill result into the prompt.
-7. **Metering** - `usage/lib/buffer.ts` records one `bid.chat.messages` event.
+7. **Metering** - `usage/lib/buffer.ts` records one `bidproposal.chat.messages` event.
    Deliberately not token counts: Atlas meters model tokens itself under
    `atlas.chat`, so reporting them here would double-count. A metering failure
    is logged and swallowed - it must not fail a turn the user already waited for.
@@ -105,7 +105,7 @@ whole integration chain:
   would be a claim about consumption rather than the absence of one.
 - **A Runos Skill returns instructions, not a result.** Runos distributes skills
   and never executes them, so a `result_kind: "distributed"` invoke hands back
-  the skill's own content for bid's runtime to use. Connectors and Executors
+  the skill's own content for bidproposal's runtime to use. Connectors and Executors
   return a payload; the skill runner handles both.
 - **Prisma generates the client; it is not the schema authority.** `deploy/database/ddl/`
   is, and `db-init.yml` is the only thing that applies it. There is no migrations

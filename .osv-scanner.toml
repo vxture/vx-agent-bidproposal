@@ -1,6 +1,6 @@
 # osv-scanner suppression config (CI `audit` job, .github/workflows/ci.yml).
 #
-# EMPTY IGNORE BASELINE. bid ships with zero accepted residuals, and a product
+# EMPTY IGNORE BASELINE. bidproposal ships with zero accepted residuals, and a product
 # copied from it starts empty too - do not copy another repo's named ignores.
 # Every advisory osv-scanner reports on
 # pnpm-lock.yaml must be remediated (direct-dep floor bump / pnpm.overrides /

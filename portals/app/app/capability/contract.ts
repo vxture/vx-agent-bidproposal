@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { BRAND } from "@bid/shared/brand";
+import { BRAND } from "@bidproposal/shared/brand";
 
 // The product contract, served to the runtime.
 //
@@ -11,11 +11,11 @@ import { BRAND } from "@bid/shared/brand";
 // without a ruyin release, and NOT serving it is never fatal to a user.
 //
 // The file is the product's own `ruyin.product.yaml`. It is the same file
-// vxture-ruyin ships as its test fixture (products/bid/); this repo is the
+// vxture-ruyin ships as its test fixture (products/bidproposal/); this repo is the
 // authority for it from now on (ruyin TD-006: no product code lives in ruyin).
 
 /** The product id as ruyin knows it (contract `product.id`), distinct from the platform product code. */
-export const CONTRACT_PRODUCT_ID = "vxture.bid";
+export const CONTRACT_PRODUCT_ID = "bidproposal";
 
 const CONTRACT_PATH = join(process.cwd(), "contract", "ruyin.product.yaml");
 

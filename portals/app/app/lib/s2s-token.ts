@@ -10,7 +10,7 @@ import { assertInternalTarget } from "./internal-target";
 // token can pass one manual smoke test and nothing else.
 //
 // The caller's credential is its own confidential OIDC client - the same
-// client_id/client_secret pair bid already holds for the C1 login flow. There
+// client_id/client_secret pair bidproposal already holds for the C1 login flow. There
 // is no separate S2S credential to procure.
 //
 // Two modes, and the choice is not cosmetic:
@@ -19,7 +19,7 @@ import { assertInternalTarget } from "./internal-target";
 //           subject are read FROM that token, so the caller cannot claim a
 //           workspace it has no session in. The minted token carries `sub`.
 //   service no subject_token; the caller declares `workspace_id`. Minting is
-//           gated on bid actually covering that workspace (an active/trialing
+//           gated on bidproposal actually covering that workspace (an active/trialing
 //           subscription, or a provisioned state) - the D2 gate, which answers
 //           400 invalid_target when the coverage is absent. Service-mode tokens
 //           carry NO `sub` by design.
@@ -89,7 +89,7 @@ function errorCodeFrom(body: string): string {
 export interface MintOptions {
   /** OBO mode: the end user's access token. Required for any call to Runos. */
   subjectToken?: string;
-  /** service mode: the workspace bid is speaking for. Ignored when subjectToken is set. */
+  /** service mode: the workspace bidproposal is speaking for. Ignored when subjectToken is set. */
   workspaceId?: string;
   orgId?: string;
 }
@@ -99,11 +99,11 @@ export interface MintOptions {
  * and `tenant_id` in particular is the only trustworthy source of the tenant
  * identity a request should be attributed to - it is resolved server-side from
  * the workspace, so it cannot be spoofed by the caller and does not have to be
- * carried in bid's own configuration.
+ * carried in bidproposal's own configuration.
  */
 export interface S2SClaims {
   aud: string;
-  /** The calling product code - "bid". */
+  /** The calling product code - "bidproposal". */
   act?: { sub?: string };
   mode?: "obo" | "service";
   scope?: string;
@@ -226,7 +226,7 @@ export async function mintS2S(audience: string, opts: MintOptions = {}): Promise
     const body = await res.text().catch(() => "");
     // `invalid_target` is overloaded: the audience check runs first, the D2
     // coverage check second. With a known-good audience string it therefore
-    // means coverage - the platform has not opened bid in that workspace yet,
+    // means coverage - the platform has not opened bidproposal in that workspace yet,
     // which is the failure a newly registered product hits first.
     throw new S2STokenError(res.status, errorCodeFrom(body), body.slice(0, 300) || res.statusText);
   }

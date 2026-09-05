@@ -19,14 +19,14 @@ import { resetS2STokenCache } from "../lib/s2s-token";
 
 const ENV = {
   OIDC_ISSUER: "http://accounts.internal",
-  OIDC_CLIENT_ID: "bid",
+  OIDC_CLIENT_ID: "bidproposal",
   OIDC_CLIENT_SECRET: "s3cret",
   RUNOS_API_URL: "http://worker-02:3120",
 };
 const saved: Record<string, string | undefined> = {};
 const realFetch = globalThis.fetch;
 
-const OPTS = { taskId: "bid-task-1", identity: { subjectToken: "user-access-token" } };
+const OPTS = { taskId: "bidproposal-task-1", identity: { subjectToken: "user-access-token" } };
 const HISTORY = [{ role: "user" as const, content: "summarize this" }];
 
 /** Answers the four MCP tools in sequence; `payload` is what invoke returns. */

@@ -10,7 +10,7 @@ import type { MintOptions } from "../lib/s2s-token";
 // product credential; what it presents is the SIGNED-IN USER's platform access
 // token (`platform.bearerToken()` in ruyin's local-host). That token is verified
 // here against the platform issuer, and it then becomes the `subject_token` of
-// every OBO exchange bid performs downstream (Atlas, Runos) - which is exactly
+// every OBO exchange bidproposal performs downstream (Atlas, Runos) - which is exactly
 // how the browser path in api/chat works, minus the cookie.
 //
 // The one thing this module must not do is trust a body field for identity.
@@ -20,7 +20,7 @@ import type { MintOptions } from "../lib/s2s-token";
 /**
  * The audience ruyin's user token is minted for. ruyin is registered as its own
  * native/public OIDC client, so the token's `aud` is ruyin's client id, not
- * bid's. Which id that is belongs to platform registration, not to this repo -
+ * bidproposal's. Which id that is belongs to platform registration, not to this repo -
  * hence an env with a documented default rather than a constant.
  *
  * OPEN INTEGRATION POINT (docs/20-specs/30-capability-surface.md section 4):
@@ -93,7 +93,7 @@ export async function resolveCapabilityCaller(
     workspaceId,
     sub,
     // On-behalf-of: downstream reads workspace and subject FROM this token;
-    // nothing bid declares can widen it. Runos additionally requires the `sub`
+    // nothing bidproposal declares can widen it. Runos additionally requires the `sub`
     // that only an OBO token carries.
     mint: { subjectToken: token },
   };

@@ -10,24 +10,24 @@ import { execSync } from "node:child_process";
 // globals.css has said "never a local copy of brand tokens" since the DS was
 // adopted, and nothing checked it. The 2.x -> 5.x migration is what that cost:
 // DS 5 moved its semantic layer off the `--vx-color-*` prefix onto plain names
-// (`--border`, `--radius`, `--accent`), which are the same names bid's own
+// (`--border`, `--radius`, `--accent`), which are the same names bidproposal's own
 // legacy stylesheet had been using for its hardcoded hexes. Ours load after the
-// DS, so they won - bid was overriding the design system's palette on every
+// DS, so they won - bidproposal was overriding the design system's palette on every
 // surface, and the only symptom was that the product looked exactly like it did
 // before adopting a design system.
 //
 // A comment cannot catch that. Two rules can:
 //
-//   1. Anything bid defines for itself lives under `--bid-*`. Then a DS
+//   1. Anything bidproposal defines for itself lives under `--bidproposal-*`. Then a DS
 //      release can rename whatever it likes and never collide.
-//   2. Nothing bid defines may shadow a token the DS defines. This is the
+//   2. Nothing bidproposal defines may shadow a token the DS defines. This is the
 //      rule that actually matters; rule 1 is how it is kept cheaply true.
 //
-// A product copied from bid inherits both, with its own code substituted for
-// `bid` by the rename script.
+// A product copied from bidproposal inherits both, with its own code substituted for
+// `bidproposal` by the rename script.
 
 const require_ = createRequire(import.meta.url);
-const OUR_PREFIX = "--bid-";
+const OUR_PREFIX = "--bidproposal-";
 
 function readCssGraph(entry: string, seen = new Set<string>()): string {
   if (seen.has(entry)) return "";
@@ -73,7 +73,7 @@ function dsTokens(): Set<string> {
 }
 
 /**
- * bid's own stylesheets - whatever they are, discovered not listed.
+ * bidproposal's own stylesheets - whatever they are, discovered not listed.
  *
  * The extension filter is applied here rather than as a git pathspec on
  * purpose. `git ls-files portals -- *.css` looks like a narrowing but is a
@@ -89,7 +89,7 @@ function ourStylesheets(): string[] {
     .map((f) => resolvePath(repoRoot, f));
 }
 
-test("bid defines no token that the design system also defines", () => {
+test("bidproposal defines no token that the design system also defines", () => {
   const ds = dsTokens();
   assert.ok(ds.size > 50, `expected the DS to define many tokens, found ${ds.size}`);
 
@@ -104,7 +104,7 @@ test("bid defines no token that the design system also defines", () => {
   assert.deepEqual(
     collisions.sort(),
     [],
-    `these redefine a design-system token, and bid loads last so bid wins:\n  ${collisions.join("\n  ")}\n` +
+    `these redefine a design-system token, and bidproposal loads last so bidproposal wins:\n  ${collisions.join("\n  ")}\n` +
       `Either yield the token to the DS (delete ours and consume theirs), or, if it means something ` +
       `different here, move it under ${OUR_PREFIX}.`,
   );
@@ -158,7 +158,7 @@ test("dark mode is keyed on the class the design system sets, not the media quer
   // and never reads `prefers-color-scheme` - verified: zero occurrences in its
   // entire CSS graph. A stylesheet here that used the media query instead would
   // be answering a different question, and the two disagree exactly when the OS
-  // is dark: bid's surfaces flip, the DS's tokens do not, and the page comes
+  // is dark: bidproposal's surfaces flip, the DS's tokens do not, and the page comes
   // out half black. This repo shipped that for one commit after the 5.x
   // migration, so it is pinned rather than remembered.
   const offenders: string[] = [];
@@ -184,13 +184,13 @@ test("a BEM modifier with a pseudo-class is not a token definition", () => {
   assert.deepEqual(definedIn(".deck-btn--quiet:hover { color: red; }"), []);
   assert.deepEqual(definedIn(".a--b:focus-visible,.c--d:hover{}"), []);
   // ...while the real thing is still caught, in every position it can occupy.
-  assert.deepEqual(definedIn(":root{--bid-x:1;--bid-y:2}"), ["--bid-x", "--bid-y"]);
-  assert.deepEqual(definedIn("  --bid-z : 3;"), ["--bid-z"]);
+  assert.deepEqual(definedIn(":root{--bidproposal-x:1;--bidproposal-y:2}"), ["--bidproposal-x", "--bidproposal-y"]);
+  assert.deepEqual(definedIn("  --bidproposal-z : 3;"), ["--bidproposal-z"]);
   // A var() READ is not a definition.
-  assert.deepEqual(definedIn("color: var(--bid-deck-dim);"), []);
+  assert.deepEqual(definedIn("color: var(--bidproposal-deck-dim);"), []);
 });
 
-test("every token bid defines for itself is namespaced", () => {
+test("every token bidproposal defines for itself is namespaced", () => {
   const stray: string[] = [];
   for (const file of ourStylesheets()) {
     for (const t of definedIn(readFileSync(file, "utf8"))) {

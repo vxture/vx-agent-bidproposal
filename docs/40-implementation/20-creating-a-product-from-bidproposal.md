@@ -1,12 +1,12 @@
-# Creating a new product repo from bid
+# Creating a new product repo from bidproposal
 
-bid carries no placeholders (ADR-001). A new product repo is a **copy** of this
+bidproposal carries no placeholders (ADR-001). A new product repo is a **copy** of this
 one with the name cascade rewritten, not an instantiation of a skeleton.
 
 ## The procedure
 
 ```bash
-git clone https://github.com/vxture/vxture-bid.git vxture-<code>
+git clone https://github.com/vxture/vxture-bidproposal.git vxture-<code>
 cd vxture-<code>
 rm -rf .git && git init            # start your own history
 node scripts/init/rename-product.mjs <code> --dry-run   # read the report first
@@ -35,7 +35,7 @@ every specific site is consumed before the generic rule sees the text.
 
 The script also rewrites **itself**, so the copy's `CURRENT` constant reads as the
 new code and the copy can in turn be copied. Renaming is a chain, not a one-shot
-from bid. That is also why the table is derived from `CURRENT`'s three forms
+from bidproposal. That is also why the table is derived from `CURRENT`'s three forms
 rather than hard-coded: a repo already renamed to `my-prod` carries `my_prod_svc`
 in its DDL, and a table built only from the raw `my-prod` would walk straight past
 it.
@@ -56,7 +56,7 @@ Concretely, `my-prod` derives:
 ## What the script deliberately refuses to touch
 
 `docs/80-liaison/`, `docs/70-workplan/`, and the tech-debt register record what
-bid did, when, and with whom. Rewriting `bid` to your code inside them would
+bidproposal did, when, and with whom. Rewriting `bidproposal` to your code inside them would
 not carry history forward - it would fabricate it, leaving your repo claiming to
 have sent letters it never sent. The script lists these files and leaves them
 alone; delete or archive them before your first commit.
@@ -65,10 +65,10 @@ alone; delete or archive them before your first commit.
 
 The script prints this list when it finishes. In order of when it bites:
 
-1. **Delete bid's history** - liaison correspondence, batch tracker, tech-debt
+1. **Delete bidproposal's history** - liaison correspondence, batch tracker, tech-debt
    register.
 2. **Replace `docs/20-specs/`** with your product definition, and start a fresh
-   ADR register at ADR-001. bid's ADRs are bid's decisions.
+   ADR register at ADR-001. bidproposal's ADRs are bidproposal's decisions.
 3. **Fill the exemplar zone.** The capability matrix, the model/skill catalog, the
    product surfaces under `portals/app/app/`, and the role/permission catalog are
    worked examples to replace - not mechanism to preserve. The boundary is in
@@ -81,12 +81,12 @@ The script prints this list when it finishes. In order of when it bites:
    before the first push blocks that push.
 6. **Get a port allocation and re-point the edge vhost.** Ports come from the org
    port registry and nowhere else - do not pick one. `configs/edge/<code>.vxture.com.conf`
-   still carries bid's upstream port; set yours there and in `APP_PUBLISH_PORT`
+   still carries bidproposal's upstream port; set yours there and in `APP_PUBLISH_PORT`
    (one number, both places), then hand the vhost to the edge operator.
 
 ## Adding a beta tier
 
-bid is production-only (ADR-002). If your product needs beta: add `beta-*` tag
+bidproposal is production-only (ADR-002). If your product needs beta: add `beta-*` tag
 routing to `deploy.yml`, create a `beta` GitHub Environment (no reviewer gate),
 set `PROJECT_NAME=<code>-beta` so the two stacks never collide on one host, get a
 second host-port allocation, register the `<code>-beta` OIDC client, and create

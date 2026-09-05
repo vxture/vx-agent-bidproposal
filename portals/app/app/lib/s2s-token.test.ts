@@ -16,7 +16,7 @@ const realFetch = globalThis.fetch;
 
 function configure(): void {
   process.env.OIDC_ISSUER = "http://accounts.internal";
-  process.env.OIDC_CLIENT_ID = "bid";
+  process.env.OIDC_CLIENT_ID = "bidproposal";
   process.env.OIDC_CLIENT_SECRET = "s3cret";
 }
 
@@ -64,7 +64,7 @@ test("service mode posts the RFC 8693 form the platform token endpoint expects",
   assert.equal(calls[0].url, "http://accounts.internal/oidc/token");
   const f = calls[0].form;
   assert.equal(f.get("grant_type"), "urn:ietf:params:oauth:grant-type:token-exchange");
-  assert.equal(f.get("client_id"), "bid");
+  assert.equal(f.get("client_id"), "bidproposal");
   assert.equal(f.get("client_secret"), "s3cret");
   assert.equal(f.get("audience"), "atlas");
   assert.equal(f.get("workspace_id"), "ws-1");

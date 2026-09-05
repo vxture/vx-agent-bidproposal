@@ -1,4 +1,4 @@
-# ADR-002: bid deploys production only
+# ADR-002: bidproposal deploys production only
 
 - **Status:** accepted
 - **Date:** 2026-08-16 (records an owner decision taken during batch E)
@@ -9,10 +9,10 @@ The org branch model offers product repos two deploy tiers: a `beta-YYYYMMDD.N`
 tag deploying an ungated beta stack, and a `vX.Y.Z` tag deploying production
 behind a required-reviewer gate.
 
-bid was built with the production tier only. `deploy.yml` triggers on `v*.*.*`
+bidproposal was built with the production tier only. `deploy.yml` triggers on `v*.*.*`
 and its routing step rejects any other tag; there is no `beta` GitHub Environment,
-no beta host-port allocation, and no `vxturebiz_bid_beta` database. The
-`bid-beta` OIDC client name is reserved by the cascade but has never been
+no beta host-port allocation, and no `vxturebiz_bidproposal_beta` database. The
+`bidproposal-beta` OIDC client name is reserved by the cascade but has never been
 registered.
 
 This was an owner decision, but it was recorded nowhere - so `CLAUDE.md` described
@@ -22,21 +22,21 @@ missing beta tier was a decision or an unfinished batch.
 
 ## Decision
 
-bid is production-only, and the repo says so.
+bidproposal is production-only, and the repo says so.
 
 - `deploy.yml` triggers on `v*.*.*` only; a `beta-*` tag deploys nothing.
 - `production` is the only GitHub Environment, and it keeps its required reviewer.
 - Dead `beta-*` / `dev-*` branches are pruned from the build provenance staging.
-- `bid-beta` stays reserved in the name cascade and unregistered in practice.
+- `bidproposal-beta` stays reserved in the name cascade and unregistered in practice.
 
-A product copied from bid that wants a beta tier adds it deliberately: beta tag
+A product copied from bidproposal that wants a beta tier adds it deliberately: beta tag
 routing in `deploy.yml`, a `beta` GitHub Environment, a distinct `PROJECT_NAME`
 (`<code>-beta`) so the two stacks never collide on one host, its own host-port
 allocation, the `<code>-beta` OIDC client, and a `vxturebiz_<code>_beta` database.
 
 ## Consequences
 
-- One host port, one database, one stack root (`/srv/md0/bid`) to reason about.
+- One host port, one database, one stack root (`/srv/md0/bidproposal`) to reason about.
 - No pre-production environment: a change is verified by CI gates, local run, and
   the required-reviewer pause on the production deploy. There is no place to
   exercise a real platform integration before it is live, which is a real cost and

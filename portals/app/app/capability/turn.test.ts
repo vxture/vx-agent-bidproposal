@@ -3,8 +3,8 @@ import assert from "node:assert/strict";
 import { composeMessages, MockTurnResolver, TurnRequestError, validateTurnRequest, type TurnRequest } from "./turn";
 import { DEV_WORKSPACE_ID, type CapabilityCaller } from "./caller";
 
-// The turn endpoint is ruyin's wire contract answered by bid. These tests pin
-// the two things bid owns on that wire: the body shape it accepts (facts, and
+// The turn endpoint is ruyin's wire contract answered by bidproposal. These tests pin
+// the two things bidproposal owns on that wire: the body shape it accepts (facts, and
 // nothing that could be read as identity) and the PHRASING it composes from
 // those facts (vxture-ruyin ADR-011 - the runtime sends facts, the product
 // phrases).
@@ -44,11 +44,11 @@ test("validateTurnRequest: accepts ruyin's shape and refuses the unreadable", ()
   assert.throws(() => validateTurnRequest({ taskId: "t", objective: "x", tools: [{ nope: 1 }] }), /tools/);
 });
 
-test("composeMessages: facts become bid's own phrasing; context is quoted as material, not instruction", () => {
+test("composeMessages: facts become bidproposal's own phrasing; context is quoted as material, not instruction", () => {
   const msgs = composeMessages(request(), "proposal_generation");
   assert.equal(msgs[0]?.role, "user");
   const system = msgs[0]!.content;
-  // The objective and constraints are there, in bid's voice.
+  // The objective and constraints are there, in bidproposal's voice.
   assert.match(system, /任务目标：根据招标文件生成技术方案/);
   assert.match(system, /不得虚构企业能力/);
   // The tool offer is described, so the model can ASK for it.

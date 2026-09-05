@@ -58,7 +58,7 @@ export default function EntitlementMatrixPage() {
   const data = groups().map((g) => ({
     ...g,
     rows: g.rows.map((r) => {
-      const e = makeEntitlement("ws_demo", "bid", { tier: r.tier, status: r.status, bundled: r.bundled });
+      const e = makeEntitlement("ws_demo", "bidproposal", { tier: r.tier, status: r.status, bundled: r.bundled });
       return { ...r, productAccess: hasProductAccess(e), dataAccess: hasDataAccess(e), cta: ctaFor(e) };
     }),
   }));

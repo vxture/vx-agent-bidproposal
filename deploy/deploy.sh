@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# On-host deployment lifecycle for the bid production stack. Invoked by CI
+# On-host deployment lifecycle for the bidproposal production stack. Invoked by CI
 # (deploy.yml / rollback.yml) after the image build. Single-stack, prod only
 # (ADR-002). worker02 is a data-array box, so a full-stack pull + up -d is fine.
 #
@@ -14,12 +14,12 @@
 set -euo pipefail
 
 DEPLOY_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-ROOT="$(cd "$DEPLOY_DIR/.." && pwd)"     # /srv/md0/bid
+ROOT="$(cd "$DEPLOY_DIR/.." && pwd)"     # /srv/md0/bidproposal
 ENV_FILE="$ROOT/etc/.env"
 COMPOSE_FILE="$DEPLOY_DIR/docker-compose.yml"
 
 # CI passes PRODUCT_CODE explicitly; the default keeps a bare on-host run working.
-PRODUCT_CODE="${PRODUCT_CODE:-bid}"
+PRODUCT_CODE="${PRODUCT_CODE:-bidproposal}"
 PRODUCT_CODE_SNAKE="${PRODUCT_CODE//-/_}"
 IMAGE_NAME="${PRODUCT_CODE}-app"
 PROJECT_NAME="${PRODUCT_CODE}"

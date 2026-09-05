@@ -26,7 +26,7 @@ permissions:
   packages: read
 
 env:
-  PRODUCT_CODE: bid
+  PRODUCT_CODE: bidproposal
 
 jobs:
   rollback:

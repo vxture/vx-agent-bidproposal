@@ -1,4 +1,4 @@
-/* bid's stylesheet, layered on the Vxture design system.
+/* bidproposal's stylesheet, layered on the Vxture design system.
  *
  * ORDER IS CONTRACTUAL. The DS globals entry must come first and exactly ONE
  * brand entry after it - never two, and never a local copy of brand tokens.
@@ -11,76 +11,76 @@
 @import "@vxture/design-system/styles/globals.css";
 @import "@vxture/design-system/styles/brands/vxture.css";
 
-/* --- bid's own surface -------------------------------------------------
- * Everything below is bid's, loaded after the DS so it wins on the classes
+/* --- bidproposal's own surface -------------------------------------------------
+ * Everything below is bidproposal's, loaded after the DS so it wins on the classes
  * it owns. It is being migrated onto DS components; what remains here is the
  * part that has not moved yet.
  *
- * EVERY token below is `--bid-*`, and that prefix is load-bearing rather than
+ * EVERY token below is `--bidproposal-*`, and that prefix is load-bearing rather than
  * tidy. This block used to name them `--border`, `--radius`, `--accent`; DS 5
- * moved its own semantic layer onto exactly those names, and since bid loads
- * last, bid won - the design system was being overridden on every surface,
+ * moved its own semantic layer onto exactly those names, and since bidproposal loads
+ * last, bidproposal won - the design system was being overridden on every surface,
  * and the only symptom was that adopting it changed nothing. `--border`,
  * `--radius` and `--radius-sm` are gone from here entirely: the DS means the
  * same thing by them, so it should be the one that says what they are.
  */
 
 :root {
-  --bid-paper: #f6f7f9;
-  --bid-surface: #ffffff;
-  --bid-surface-raised: #ffffff;
-  --bid-border-strong: #cbd0d9;
-  --bid-ink: #14171f;
-  --bid-ink-soft: #3d4451;
-  --bid-slate: #636b78;
-  --bid-slate-faint: #8b93a0;
-  --bid-accent: #3457d5;
-  --bid-accent-soft: #eaeefc;
-  --bid-accent-ink: #23399e;
-  --bid-accent-hover: #2a46b8;
-  --bid-success: #1e7a4c;
-  --bid-success-soft: #e1f3e8;
-  --bid-warn: #a8622c;
-  --bid-warn-soft: #f5e9dd;
-  --bid-danger: #b3261e;
-  --bid-danger-soft: #fbe6e4;
-  --bid-code-bg: #10131a;
-  --bid-code-ink: #d9dee6;
-  --bid-shadow: 0 1px 2px rgba(20, 23, 31, 0.04), 0 8px 24px -12px rgba(20, 23, 31, 0.12);
-  --bid-shadow-sm: 0 1px 2px rgba(20, 23, 31, 0.06);
-  --bid-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
-  --bid-mono: ui-monospace, "SF Mono", "Cascadia Code", Consolas, "Sarasa Mono SC", monospace;
+  --bidproposal-paper: #f6f7f9;
+  --bidproposal-surface: #ffffff;
+  --bidproposal-surface-raised: #ffffff;
+  --bidproposal-border-strong: #cbd0d9;
+  --bidproposal-ink: #14171f;
+  --bidproposal-ink-soft: #3d4451;
+  --bidproposal-slate: #636b78;
+  --bidproposal-slate-faint: #8b93a0;
+  --bidproposal-accent: #3457d5;
+  --bidproposal-accent-soft: #eaeefc;
+  --bidproposal-accent-ink: #23399e;
+  --bidproposal-accent-hover: #2a46b8;
+  --bidproposal-success: #1e7a4c;
+  --bidproposal-success-soft: #e1f3e8;
+  --bidproposal-warn: #a8622c;
+  --bidproposal-warn-soft: #f5e9dd;
+  --bidproposal-danger: #b3261e;
+  --bidproposal-danger-soft: #fbe6e4;
+  --bidproposal-code-bg: #10131a;
+  --bidproposal-code-ink: #d9dee6;
+  --bidproposal-shadow: 0 1px 2px rgba(20, 23, 31, 0.04), 0 8px 24px -12px rgba(20, 23, 31, 0.12);
+  --bidproposal-shadow-sm: 0 1px 2px rgba(20, 23, 31, 0.06);
+  --bidproposal-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  --bidproposal-mono: ui-monospace, "SF Mono", "Cascadia Code", Consolas, "Sarasa Mono SC", monospace;
 }
 
 /* Keyed on `.dark`, not `prefers-color-scheme`, because that is the signal the
  * design system answers to - it sets the class on <html> from localStorage
  * (defaulting to system) before first paint and never reads the media query.
- * A media query here would flip bid's surfaces while the DS's tokens stayed
+ * A media query here would flip bidproposal's surfaces while the DS's tokens stayed
  * light, which is the half-dark page this repo shipped briefly after the 5.x
  * migration. `design-system.test.ts` pins it. */
 .dark {
-  --bid-paper: #0c0e13;
-  --bid-surface: #14171f;
-  --bid-surface-raised: #1a1e28;
-  --bid-border-strong: #383f4d;
-  --bid-ink: #e9ebf0;
-  --bid-ink-soft: #c2c8d3;
-  --bid-slate: #99a1af;
-  --bid-slate-faint: #6b7280;
-  --bid-accent: #7d92f5;
-  --bid-accent-soft: #1c2340;
-  --bid-accent-ink: #c2cdfb;
-  --bid-accent-hover: #93a5ff;
-  --bid-success: #4ade80;
-  --bid-success-soft: #16281e;
-  --bid-warn: #e0954f;
-  --bid-warn-soft: #2b2113;
-  --bid-danger: #f87171;
-  --bid-danger-soft: #2b1414;
-  --bid-code-bg: #0a0c11;
-  --bid-code-ink: #d9dee6;
-  --bid-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px -12px rgba(0, 0, 0, 0.65);
-  --bid-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.5);
+  --bidproposal-paper: #0c0e13;
+  --bidproposal-surface: #14171f;
+  --bidproposal-surface-raised: #1a1e28;
+  --bidproposal-border-strong: #383f4d;
+  --bidproposal-ink: #e9ebf0;
+  --bidproposal-ink-soft: #c2c8d3;
+  --bidproposal-slate: #99a1af;
+  --bidproposal-slate-faint: #6b7280;
+  --bidproposal-accent: #7d92f5;
+  --bidproposal-accent-soft: #1c2340;
+  --bidproposal-accent-ink: #c2cdfb;
+  --bidproposal-accent-hover: #93a5ff;
+  --bidproposal-success: #4ade80;
+  --bidproposal-success-soft: #16281e;
+  --bidproposal-warn: #e0954f;
+  --bidproposal-warn-soft: #2b2113;
+  --bidproposal-danger: #f87171;
+  --bidproposal-danger-soft: #2b1414;
+  --bidproposal-code-bg: #0a0c11;
+  --bidproposal-code-ink: #d9dee6;
+  --bidproposal-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px -12px rgba(0, 0, 0, 0.65);
+  --bidproposal-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.5);
 }
 
 * {
@@ -93,9 +93,9 @@ html {
 
 body {
   margin: 0;
-  background: var(--bid-paper);
-  color: var(--bid-ink);
-  font-family: var(--bid-sans);
+  background: var(--bidproposal-paper);
+  color: var(--bidproposal-ink);
+  font-family: var(--bidproposal-sans);
   font-size: 15px;
   line-height: 1.55;
   -webkit-font-smoothing: antialiased;
@@ -105,11 +105,11 @@ h1,
 h2,
 h3,
 h4 {
-  font-family: var(--bid-sans);
+  font-family: var(--bidproposal-sans);
   font-weight: 700;
   letter-spacing: -0.01em;
   margin: 0;
-  color: var(--bid-ink);
+  color: var(--bidproposal-ink);
 }
 
 p {
@@ -117,7 +117,7 @@ p {
 }
 
 a {
-  color: var(--bid-accent);
+  color: var(--bidproposal-accent);
   text-decoration: none;
 }
 a:hover {
@@ -139,7 +139,7 @@ a[data-slot="button"]:hover {
 
 code,
 .mono {
-  font-family: var(--bid-mono);
+  font-family: var(--bidproposal-mono);
   font-size: 0.9em;
 }
 
@@ -156,11 +156,11 @@ select {
 }
 
 ::selection {
-  background: var(--bid-accent);
+  background: var(--bidproposal-accent);
   color: #fff;
 }
 :focus-visible {
-  outline: 2px solid var(--bid-accent);
+  outline: 2px solid var(--bidproposal-accent);
   outline-offset: 2px;
 }
 
@@ -178,7 +178,7 @@ select {
   gap: 1.5rem;
   padding: 0.9rem 1.5rem;
   border-bottom: 1px solid var(--border);
-  background: var(--bid-surface);
+  background: var(--bidproposal-surface);
   position: sticky;
   top: 0;
   z-index: 10;
@@ -188,7 +188,7 @@ select {
   font-weight: 800;
   letter-spacing: -0.02em;
   font-size: 1.02rem;
-  color: var(--bid-ink);
+  color: var(--bidproposal-ink);
 }
 
 .topnav nav {
@@ -198,16 +198,16 @@ select {
 }
 
 .topnav nav a {
-  color: var(--bid-slate);
+  color: var(--bidproposal-slate);
   font-size: 0.88rem;
   font-weight: 600;
   padding: 0.3rem 0;
   border-bottom: 2px solid transparent;
 }
 .topnav nav a:hover {
-  color: var(--bid-ink);
+  color: var(--bidproposal-ink);
   text-decoration: none;
-  border-bottom-color: var(--bid-border-strong);
+  border-bottom-color: var(--bidproposal-border-strong);
 }
 
 /* Session control sits at the far end of the nav, away from the page links. */
@@ -221,7 +221,7 @@ select {
   align-items: center;
   gap: 0.55rem;
   font-size: 0.82rem;
-  color: var(--bid-slate-faint);
+  color: var(--bidproposal-slate-faint);
   max-width: 22ch;
 }
 
@@ -234,7 +234,7 @@ select {
 .nav-session button {
   font: inherit;
   font-weight: 600;
-  color: var(--bid-slate);
+  color: var(--bidproposal-slate);
   background: none;
   border: none;
   border-bottom: 1px solid transparent;
@@ -243,8 +243,8 @@ select {
 }
 
 .nav-session button:hover {
-  color: var(--bid-ink);
-  border-bottom-color: var(--bid-border-strong);
+  color: var(--bidproposal-ink);
+  border-bottom-color: var(--bidproposal-border-strong);
 }
 
 .page {
@@ -260,11 +260,11 @@ select {
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--bid-accent);
+  color: var(--bidproposal-accent);
 }
 
 .lede {
-  color: var(--bid-slate);
+  color: var(--bidproposal-slate);
   font-size: 0.95rem;
   max-width: 62ch;
   margin-top: 0.6rem;
@@ -281,11 +281,11 @@ select {
   font-size: 0.87rem;
 }
 .field-row .k {
-  color: var(--bid-slate);
+  color: var(--bidproposal-slate);
 }
 .field-row .v {
-  font-family: var(--bid-mono);
-  color: var(--bid-ink-soft);
+  font-family: var(--bidproposal-mono);
+  color: var(--bidproposal-ink-soft);
   text-align: right;
   word-break: break-word;
 }
@@ -377,8 +377,8 @@ select {
   overflow-x: auto;
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  background: var(--bid-surface);
-  box-shadow: var(--bid-shadow-sm);
+  background: var(--bidproposal-surface);
+  box-shadow: var(--bidproposal-shadow-sm);
 }
 table.ref {
   font-size: 0.85rem;
@@ -389,8 +389,8 @@ table.ref th {
   font-size: 0.7rem;
   letter-spacing: 0.05em;
   text-transform: uppercase;
-  color: var(--bid-slate);
-  background: var(--bid-paper);
+  color: var(--bidproposal-slate);
+  background: var(--bidproposal-paper);
   padding: 0.6rem 0.85rem;
   border-bottom: 1px solid var(--border);
   white-space: nowrap;
@@ -398,7 +398,7 @@ table.ref th {
 table.ref td {
   padding: 0.55rem 0.85rem;
   border-bottom: 1px solid var(--border);
-  color: var(--bid-ink-soft);
+  color: var(--bidproposal-ink-soft);
 }
 table.ref tr:last-child td {
   border-bottom: none;
@@ -432,10 +432,10 @@ footer.page-links {
  */
 
 :root {
-  --bid-chart-series: #3457d5;
+  --bidproposal-chart-series: #3457d5;
 }
 .dark {
-  --bid-chart-series: #6d84ec;
+  --bidproposal-chart-series: #6d84ec;
 }
 
 /* --- the command deck (fullscreen challenge surface) ----------------------
@@ -443,30 +443,30 @@ footer.page-links {
  * dashboard): warm near-black ground with a faint grid and star specks, thin
  * gold panel chrome with chamfered corners, one glowing orb as the
  * centerpiece. The deck is a screen-within-a-screen: its palette is FIXED in
- * both themes, exactly like the code block, so none of these are bid-*
+ * both themes, exactly like the code block, so none of these are bidproposal-*
  * tokens.
  */
 
 .deck {
-  --bid-deck-bg: #0d0b08;
-  --bid-deck-panel: rgba(22, 18, 10, 0.72);
-  --bid-deck-line: rgba(245, 166, 35, 0.4);
-  --bid-deck-line-faint: rgba(245, 166, 35, 0.16);
-  --bid-deck-gold: #f5a623;
-  --bid-deck-gold-bright: #ffc85e;
-  --bid-deck-ink: #fff4d6;
-  --bid-deck-dim: #9a8f76;
+  --bidproposal-deck-bg: #0d0b08;
+  --bidproposal-deck-panel: rgba(22, 18, 10, 0.72);
+  --bidproposal-deck-line: rgba(245, 166, 35, 0.4);
+  --bidproposal-deck-line-faint: rgba(245, 166, 35, 0.16);
+  --bidproposal-deck-gold: #f5a623;
+  --bidproposal-deck-gold-bright: #ffc85e;
+  --bidproposal-deck-ink: #fff4d6;
+  --bidproposal-deck-dim: #9a8f76;
   /* trend series ON the deck surface: #c97f15 passes the palette validator
    * against #14100a (the page-mode colors above sit above the dark band) */
-  --bid-chart-series: #c97f15;
+  --bidproposal-chart-series: #c97f15;
 
   position: fixed;
   inset: 0;
   z-index: 60;
   display: flex;
   flex-direction: column;
-  background: var(--bid-deck-bg);
-  color: var(--bid-deck-ink);
+  background: var(--bidproposal-deck-bg);
+  color: var(--bidproposal-deck-ink);
   overflow: hidden;
 }
 
@@ -607,9 +607,9 @@ footer.page-links {
 .deck-tab {
   flex: 1;
   padding: 6px 8px;
-  border: 1px solid var(--bid-deck-line-faint);
+  border: 1px solid var(--bidproposal-deck-line-faint);
   background: transparent;
-  color: var(--bid-deck-dim);
+  color: var(--bidproposal-deck-dim);
   font-family: inherit;
   font-size: 0.58rem;
   font-weight: 800;
@@ -618,12 +618,12 @@ footer.page-links {
   clip-path: polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px);
 }
 .deck-tab:hover {
-  color: var(--bid-deck-gold-bright);
+  color: var(--bidproposal-deck-gold-bright);
 }
 .deck-tab--active {
   background: rgba(245, 166, 35, 0.14);
-  border-color: var(--bid-deck-line);
-  color: var(--bid-deck-gold-bright);
+  border-color: var(--bidproposal-deck-line);
+  color: var(--bidproposal-deck-gold-bright);
 }
 
 /* --- the identity strip: QUIET chrome (owner review) - a hairline frame,
@@ -656,7 +656,7 @@ footer.page-links {
   border-radius: 50%;
   border: 1px solid rgba(245, 166, 35, 0.4);
   background: rgba(245, 166, 35, 0.12);
-  color: var(--bid-deck-gold-bright);
+  color: var(--bidproposal-deck-gold-bright);
   font-size: 0.68rem;
   font-weight: 800;
 }
@@ -673,10 +673,10 @@ footer.page-links {
   font-size: 0.62rem;
   font-weight: 700;
   letter-spacing: 0.16em;
-  color: var(--bid-deck-dim);
+  color: var(--bidproposal-deck-dim);
 }
 .deck-id__ava:hover .deck-id__name {
-  color: var(--bid-deck-ink);
+  color: var(--bidproposal-deck-ink);
 }
 .deck-id__sep {
   width: 1px;
@@ -692,10 +692,10 @@ footer.page-links {
   font-size: 0.6rem;
   font-weight: 700;
   letter-spacing: 0.2em;
-  color: var(--bid-deck-dim);
+  color: var(--bidproposal-deck-dim);
 }
 .deck-id__btn:hover {
-  color: var(--bid-deck-gold-bright);
+  color: var(--bidproposal-deck-gold-bright);
   text-decoration: none;
 }
 
@@ -709,15 +709,15 @@ footer.page-links {
   z-index: 6;
   min-width: 210px;
   padding: 4px;
-  border: 1px solid var(--bid-deck-line-faint);
+  border: 1px solid var(--bidproposal-deck-line-faint);
   background: rgba(18, 14, 8, 0.96);
   clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
 }
 .deck-menu__who {
   padding: 8px 10px;
   font-size: 0.66rem;
-  color: var(--bid-deck-dim);
-  border-bottom: 1px solid var(--bid-deck-line-faint);
+  color: var(--bidproposal-deck-dim);
+  border-bottom: 1px solid var(--bidproposal-deck-line-faint);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -727,7 +727,7 @@ footer.page-links {
   font-size: 0.54rem;
   font-weight: 800;
   letter-spacing: 0.24em;
-  color: var(--bid-deck-dim);
+  color: var(--bidproposal-deck-dim);
 }
 .deck-menu form {
   display: block;
@@ -743,7 +743,7 @@ footer.page-links {
   font-size: 0.66rem;
   font-weight: 700;
   letter-spacing: 0.18em;
-  color: var(--bid-deck-gold-bright);
+  color: var(--bidproposal-deck-gold-bright);
   cursor: pointer;
 }
 .deck-menu__item:hover {
@@ -757,8 +757,8 @@ footer.page-links {
 /* collapsible data modules (records / board), glowing-dot header per the
  * reference's section bars */
 .deck-mod {
-  border: 1px solid var(--bid-deck-line-faint);
-  background: var(--bid-deck-panel);
+  border: 1px solid var(--bidproposal-deck-line-faint);
+  background: var(--bidproposal-deck-panel);
   clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
   display: flex;
   flex-direction: column;
@@ -773,17 +773,17 @@ footer.page-links {
   width: 100%;
   padding: 9px 11px;
   border: none;
-  border-bottom: 1px solid var(--bid-deck-line-faint);
+  border-bottom: 1px solid var(--bidproposal-deck-line-faint);
   background: rgba(245, 166, 35, 0.05);
   cursor: pointer;
   font-family: inherit;
-  color: var(--bid-deck-ink);
+  color: var(--bidproposal-deck-ink);
 }
 .deck-mod__dot {
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: var(--bid-deck-gold);
+  background: var(--bidproposal-deck-gold);
   box-shadow: 0 0 8px rgba(245, 166, 35, 0.8);
 }
 .deck-mod__title {
@@ -794,8 +794,8 @@ footer.page-links {
 }
 .deck-mod__toggle {
   margin-left: auto;
-  font-family: var(--bid-mono);
-  color: var(--bid-deck-gold);
+  font-family: var(--bidproposal-mono);
+  color: var(--bidproposal-deck-gold);
 }
 .deck-mod__body {
   padding: 10px 12px 12px;
@@ -818,7 +818,7 @@ footer.page-links {
   overflow-y: auto;
 }
 .deck-mod__foot {
-  border-top: 1px solid var(--bid-deck-line-faint);
+  border-top: 1px solid var(--bidproposal-deck-line-faint);
   padding-top: 8px;
 }
 .deck-mod__sub {
@@ -826,14 +826,14 @@ footer.page-links {
   font-weight: 700;
   letter-spacing: 0.2em;
   text-transform: uppercase;
-  color: var(--bid-deck-dim);
+  color: var(--bidproposal-deck-dim);
 }
 .deck-mod__loading {
   padding: 10px 12px;
-  font-family: var(--bid-mono);
+  font-family: var(--bidproposal-mono);
   font-size: 0.7rem;
   letter-spacing: 0.24em;
-  color: var(--bid-deck-dim);
+  color: var(--bidproposal-deck-dim);
 }
 
 .deck-rows {
@@ -863,27 +863,27 @@ footer.page-links {
   font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--bid-deck-gold);
+  color: var(--bidproposal-deck-gold);
 }
 .deck-row__rank--plain {
-  color: var(--bid-deck-dim);
+  color: var(--bidproposal-deck-dim);
 }
 .deck-row__sign {
-  font-family: var(--bid-mono);
+  font-family: var(--bidproposal-mono);
   font-weight: 600;
-  color: var(--bid-deck-ink);
+  color: var(--bidproposal-deck-ink);
 }
 .deck-row__value {
-  font-family: var(--bid-mono);
+  font-family: var(--bidproposal-mono);
   font-weight: 700;
-  color: var(--bid-deck-ink);
+  color: var(--bidproposal-deck-ink);
 }
 .deck-row__value--win {
   color: #6fdc8f;
 }
 .deck-row__meta {
   font-size: 0.64rem;
-  color: var(--bid-deck-dim);
+  color: var(--bidproposal-deck-dim);
 }
 
 .deck-lock {
@@ -895,7 +895,7 @@ footer.page-links {
 .deck-lock__note {
   font-size: 0.72rem;
   line-height: 1.6;
-  color: var(--bid-deck-dim);
+  color: var(--bidproposal-deck-dim);
 }
 
 /* topbar: the never-folding chrome - live numbers | winged title | identity */
@@ -916,8 +916,8 @@ footer.page-links {
 .deck-chip {
   min-width: 108px;
   padding: 5px 11px 7px;
-  border: 1px solid var(--bid-deck-line-faint);
-  background: var(--bid-deck-panel);
+  border: 1px solid var(--bidproposal-deck-line-faint);
+  background: var(--bidproposal-deck-panel);
   clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
 }
 .deck-chip__label {
@@ -925,7 +925,7 @@ footer.page-links {
   font-weight: 700;
   letter-spacing: 0.2em;
   text-transform: uppercase;
-  color: var(--bid-deck-dim);
+  color: var(--bidproposal-deck-dim);
 }
 .deck-chip--wide {
   min-width: 168px;
@@ -954,7 +954,7 @@ footer.page-links {
   align-self: center;
   text-align: center;
   padding: 4px 34px 10px;
-  border-bottom: 1px solid var(--bid-deck-line);
+  border-bottom: 1px solid var(--bidproposal-deck-line);
 }
 .deck-title::before,
 .deck-title::after {
@@ -963,7 +963,7 @@ footer.page-links {
   bottom: -1px;
   width: 30px;
   height: 8px;
-  background: repeating-linear-gradient(115deg, var(--bid-deck-gold) 0 3px, transparent 3px 7px);
+  background: repeating-linear-gradient(115deg, var(--bidproposal-deck-gold) 0 3px, transparent 3px 7px);
 }
 .deck-title::before {
   left: -6px;
@@ -984,19 +984,19 @@ footer.page-links {
   font-size: 0.62rem;
   font-weight: 700;
   letter-spacing: 0.34em;
-  color: var(--bid-deck-gold);
+  color: var(--bidproposal-deck-gold);
 }
 
 /* shared value type for chips and modules */
 .deck-panel__value {
   margin-top: 3px;
-  font-family: var(--bid-mono);
+  font-family: var(--bidproposal-mono);
   font-size: 1rem;
   font-weight: 700;
-  color: var(--bid-deck-ink);
+  color: var(--bidproposal-deck-ink);
 }
 .deck-panel__dim {
-  color: var(--bid-deck-dim);
+  color: var(--bidproposal-deck-dim);
   font-weight: 400;
 }
 
@@ -1008,7 +1008,7 @@ footer.page-links {
 .deck-tick {
   width: 5px;
   height: 13px;
-  background: var(--bid-deck-gold);
+  background: var(--bidproposal-deck-gold);
   transform: skewX(-14deg);
   box-shadow: 0 0 6px rgba(245, 166, 35, 0.5);
 }
@@ -1039,7 +1039,7 @@ footer.page-links {
 }
 .deck-arena__canvas {
   display: block;
-  border: 1px solid var(--bid-deck-line-faint);
+  border: 1px solid var(--bidproposal-deck-line-faint);
   box-shadow:
     0 0 42px rgba(245, 140, 20, 0.08),
     0 0 120px rgba(245, 140, 20, 0.05);
@@ -1049,10 +1049,10 @@ footer.page-links {
   inset: 0;
   display: grid;
   place-items: center;
-  font-family: var(--bid-mono);
+  font-family: var(--bidproposal-mono);
   font-size: clamp(4rem, 12vmin, 7rem);
   font-weight: 800;
-  color: var(--bid-deck-gold-bright);
+  color: var(--bidproposal-deck-gold-bright);
   text-shadow: 0 0 32px rgba(245, 166, 35, 0.6);
   pointer-events: none;
 }
@@ -1108,7 +1108,7 @@ button.deck-orb:hover {
   color: rgba(58, 31, 0, 0.72);
 }
 .deck-orb__big {
-  font-family: var(--bid-mono);
+  font-family: var(--bidproposal-mono);
   font-size: clamp(2rem, 6.4vmin, 2.9rem);
   font-weight: 800;
   line-height: 1.05;
@@ -1132,9 +1132,9 @@ button.deck-orb:hover {
 .deck-btn {
   display: inline-block;
   padding: 10px 18px;
-  border: 1px solid var(--bid-deck-line);
+  border: 1px solid var(--bidproposal-deck-line);
   background: rgba(245, 166, 35, 0.08);
-  color: var(--bid-deck-gold-bright);
+  color: var(--bidproposal-deck-gold-bright);
   font-family: inherit;
   font-size: 0.74rem;
   font-weight: 800;
@@ -1147,11 +1147,11 @@ button.deck-orb:hover {
   text-decoration: none;
 }
 .deck-btn-solid {
-  background: var(--bid-deck-gold);
+  background: var(--bidproposal-deck-gold);
   color: #2a1700;
 }
 .deck-btn-solid:hover {
-  background: var(--bid-deck-gold-bright);
+  background: var(--bidproposal-deck-gold-bright);
 }
 
 /* The side rails' upsell. Ghost-faint at rest, activated on hover - the same
@@ -1159,22 +1159,22 @@ button.deck-orb:hover {
    an aside that glows competes with the arena. Solid amber is reserved for the
    stage's own next step (sign in, no subscription). */
 .deck-btn-quiet {
-  border-color: var(--bid-deck-line-faint);
+  border-color: var(--bidproposal-deck-line-faint);
   background: transparent;
-  color: var(--bid-deck-dim);
+  color: var(--bidproposal-deck-dim);
   font-weight: 700;
 }
 .deck-btn-quiet:hover {
-  border-color: var(--bid-deck-line);
+  border-color: var(--bidproposal-deck-line);
   background: rgba(245, 166, 35, 0.08);
-  color: var(--bid-deck-gold-bright);
+  color: var(--bidproposal-deck-gold-bright);
 }
 
 .deck-dialog {
   max-width: 430px;
   padding: 24px 26px;
-  border: 1px solid var(--bid-deck-line-faint);
-  background: var(--bid-deck-panel);
+  border: 1px solid var(--bidproposal-deck-line-faint);
+  background: var(--bidproposal-deck-panel);
   text-align: center;
   display: flex;
   flex-direction: column;
@@ -1191,21 +1191,21 @@ button.deck-orb:hover {
 .deck-dialog__body {
   font-size: 0.82rem;
   line-height: 1.65;
-  color: var(--bid-deck-dim);
+  color: var(--bidproposal-deck-dim);
   max-width: 46ch;
 }
 
 .deck-hintline {
   font-size: 0.76rem;
   letter-spacing: 0.06em;
-  color: var(--bid-deck-dim);
+  color: var(--bidproposal-deck-dim);
   max-width: 52ch;
 }
 
 .deck-status {
-  font-family: var(--bid-mono);
+  font-family: var(--bidproposal-mono);
   letter-spacing: 0.34em;
-  color: var(--bid-deck-gold);
+  color: var(--bidproposal-deck-gold);
 }
 .deck-error {
   position: absolute;
@@ -1231,7 +1231,7 @@ button.deck-orb:hover {
   position: relative;
   width: min(340px, 60%);
   height: 1px;
-  background: linear-gradient(90deg, transparent, var(--bid-deck-line) 22%, var(--bid-deck-line) 78%, transparent);
+  background: linear-gradient(90deg, transparent, var(--bidproposal-deck-line) 22%, var(--bidproposal-deck-line) 78%, transparent);
 }
 .deck-bottom__frame::after {
   content: "";
@@ -1241,7 +1241,7 @@ button.deck-orb:hover {
   width: 8px;
   height: 8px;
   transform: translateX(-50%) rotate(45deg);
-  background: var(--bid-deck-gold);
+  background: var(--bidproposal-deck-gold);
   box-shadow: 0 0 10px rgba(245, 166, 35, 0.6);
 }
 .deck-hint {
@@ -1249,7 +1249,7 @@ button.deck-orb:hover {
   font-weight: 700;
   letter-spacing: 0.3em;
   text-transform: uppercase;
-  color: var(--bid-deck-dim);
+  color: var(--bidproposal-deck-dim);
 }
 
 /* narrow screens: rails become overlay drawers over the stage */
@@ -1287,56 +1287,56 @@ button.deck-orb:hover {
   stroke-width: 1;
 }
 .trend-goal {
-  stroke: var(--bid-success);
+  stroke: var(--bidproposal-success);
   stroke-width: 1;
   stroke-dasharray: 4 4;
   opacity: 0.7;
 }
 .trend-goal-label {
-  fill: var(--bid-success);
+  fill: var(--bidproposal-success);
   font-size: 10px;
   font-weight: 600;
 }
 .trend-tick {
-  fill: var(--bid-slate-faint);
+  fill: var(--bidproposal-slate-faint);
   font-size: 10px;
 }
 .trend-crosshair {
-  stroke: var(--bid-border-strong);
+  stroke: var(--bidproposal-border-strong);
   stroke-width: 1;
 }
 .trend-line {
   fill: none;
-  stroke: var(--bid-chart-series);
+  stroke: var(--bidproposal-chart-series);
   stroke-width: 2;
   stroke-linejoin: round;
   stroke-linecap: round;
 }
 .trend-dot {
-  fill: var(--bid-chart-series);
-  stroke: var(--bid-surface); /* 2px surface ring: dots stay separable when close */
+  fill: var(--bidproposal-chart-series);
+  stroke: var(--bidproposal-surface); /* 2px surface ring: dots stay separable when close */
   stroke-width: 2;
 }
 .trend-tooltip {
   position: absolute;
   transform: translate(-50%, calc(-100% - 10px));
-  background: var(--bid-surface-raised);
+  background: var(--bidproposal-surface-raised);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm, 6px);
-  box-shadow: var(--bid-shadow);
+  box-shadow: var(--bidproposal-shadow);
   padding: 0.4rem 0.6rem;
   font-size: 0.75rem;
   line-height: 1.5;
-  color: var(--bid-ink-soft);
+  color: var(--bidproposal-ink-soft);
   pointer-events: none;
   white-space: nowrap;
 }
 .trend-tooltip__day {
   font-weight: 700;
-  color: var(--bid-ink);
+  color: var(--bidproposal-ink);
 }
 .trend-empty {
-  color: var(--bid-slate-faint);
+  color: var(--bidproposal-slate-faint);
   font-size: 0.88rem;
 }
 
@@ -1352,7 +1352,7 @@ button.deck-orb:hover {
   fill: #6fdc8f;
 }
 .deck .trend-tick {
-  fill: var(--bid-deck-dim);
+  fill: var(--bidproposal-deck-dim);
 }
 .deck .trend-crosshair {
   stroke: rgba(245, 166, 35, 0.35);
@@ -1366,9 +1366,9 @@ button.deck-orb:hover {
   color: #d8cdb4;
 }
 .deck .trend-tooltip__day {
-  color: var(--bid-deck-ink);
+  color: var(--bidproposal-deck-ink);
 }
 .deck .trend-empty {
-  color: var(--bid-deck-dim);
+  color: var(--bidproposal-deck-dim);
   font-size: 0.74rem;
 }

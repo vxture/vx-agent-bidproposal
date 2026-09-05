@@ -6,12 +6,12 @@
 ## Context
 
 A Vxture product is reached by its own domain. Someone arriving at
-`bid.vxture.com` has not asked for a login page - they asked for the product -
+`bidproposal.vxture.com` has not asked for a login page - they asked for the product -
 but the product cannot serve them until it knows two things that live in
 different places: who they are (the RP session) and what their workspace is
 entitled to (C2, deliberately never in the token).
 
-Before this, bid answered that badly. The home page rendered for anyone,
+Before this, bidproposal answered that badly. The home page rendered for anyone,
 `/api/entitlement` answered 401 to the browser, and each surface discovered
 independently that the visitor could not be served. A signed-in customer and an
 anonymous visitor saw the same shell, and the difference only appeared after a
@@ -84,7 +84,7 @@ middleware exists so a visitor meets a door instead of an empty shell.
 - Local development is unaffected: with no IdP configured the gate reports
   `open` and stands aside. Without that branch the front door would be a wall no
   developer could open, which is how gates get disabled and never re-enabled.
-- The gate is one component and one route. A product copied from bid changes
+- The gate is one component and one route. A product copied from bidproposal changes
   the product name and the destination; the states, their copy, the redirect and
   the return-to round trip are the same for every product, which is why they
   live in `app/access/` rather than in a page.
@@ -92,6 +92,6 @@ middleware exists so a visitor meets a door instead of an empty shell.
   is an infinite redirect; gating `/auth/callback` breaks the very request that
   sets the cookie; redirecting an API route to an HTML page surfaces as a JSON
   parse error rather than as a 302.
-- bid now has a second reason to keep `/auth/session` - the nav's session
+- bidproposal now has a second reason to keep `/auth/session` - the nav's session
   control still uses it. `/api/access` did not replace it, and should not: one
   is a cheap "is anyone there", the other is the full verdict.

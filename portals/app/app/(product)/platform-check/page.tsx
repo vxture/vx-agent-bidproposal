@@ -95,13 +95,13 @@ export default function PlatformCheckPage() {
           title="Platform capability check"
           description={
             <span className="block max-w-[62ch]">
-              Every channel bid consumes, verified from the consumer&apos;s side per the integration
+              Every channel bidproposal consumes, verified from the consumer&apos;s side per the integration
               general rules&apos; go-live checklist. Checks on load are read-only; only the explicit replay
               probe spends (at most one unit per day).
             </span>
           }
         >
-          {error && <p style={{ color: "var(--bid-danger)" }}>{error}</p>}
+          {error && <p style={{ color: "var(--bidproposal-danger)" }}>{error}</p>}
           {data && (
             <Stack gap="md">
               {CHANNELS.map((c) => (
@@ -138,7 +138,7 @@ export default function PlatformCheckPage() {
                   <CardDescription>
                     Sends the same consume twice with one idempotency key. The second answer must say{" "}
                     <code>replayed: true</code> and carry the first event&apos;s id. Spends at most one unit of{" "}
-                    <code>bid.chat.messages</code> per workspace per day.
+                    <code>bidproposal.chat.messages</code> per workspace per day.
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -149,7 +149,7 @@ export default function PlatformCheckPage() {
                       </Button>
                     </div>
                     {replay && (
-                      <div className="mono" style={{ fontSize: "0.8rem", color: "var(--bid-slate)" }}>
+                      <div className="mono" style={{ fontSize: "0.8rem", color: "var(--bidproposal-slate)" }}>
                         <div>{replay.detail}</div>
                         {replay.first && <div>first: {JSON.stringify(replay.first)}</div>}
                         {replay.second && <div>second: {JSON.stringify(replay.second)}</div>}

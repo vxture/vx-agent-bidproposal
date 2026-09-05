@@ -22,7 +22,7 @@ import { isThrough, type AccessState } from "./types";
  * what makes "come back carrying auth AND subscription" true rather than
  * aspirational: after login returns, the same single call re-resolves both.
  *
- * Reuse: a product copied from bid changes `productName` and `destination`.
+ * Reuse: a product copied from bidproposal changes `productName` and `destination`.
  * Everything else - the states, their copy, the redirect, the return-to
  * round trip - is the same for every product, which is exactly why it lives
  * here and not in a page.

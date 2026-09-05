@@ -11,7 +11,7 @@
 // cannot read compose, an nginx vhost cannot read a shell script. What it must
 // not hold is a number that disagrees with itself.
 //
-// WHY THIS EXISTS. On 2026-08-17 bid's published port and its container port
+// WHY THIS EXISTS. On 2026-08-17 bidproposal's published port and its container port
 // were both made variables, sourced from an env value that did not reach every
 // consumer. The container came up on the operator's number, the deploy script
 // probed the default, and the deploy reported a health failure against a
@@ -89,7 +89,7 @@ const SITES = [
     re: /^APP_PUBLISH_PORT=(\d+)/m,
   },
   {
-    file: "configs/edge/bid.vxture.com.conf",
+    file: "configs/edge/bidproposal.vxture.com.conf",
     what: "edge upstream (source of record for the installed vhost)",
     re: /set \$upstream\s+"[^":]+:(\d+)"/,
   },

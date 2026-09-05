@@ -1,4 +1,4 @@
-# ADR-004: bid consumes the Vxture design system
+# ADR-004: bidproposal consumes the Vxture design system
 
 - **Status:** accepted
 - **Date:** 2026-08-17
@@ -6,27 +6,27 @@
 
 ## Context
 
-bid shipped its own ~400-line stylesheet with its own tokens, and said so
+bidproposal shipped its own ~400-line stylesheet with its own tokens, and said so
 proudly: "Plain CSS, no framework - one less dependency in the image and one
 less thing a product copied from here has to adopt."
 
 That reasoning was sound for a repo proving a deploy chain. It stops being sound
-the moment bid is the build every Vxture product is copied from, because then
+the moment bidproposal is the build every Vxture product is copied from, because then
 its stylesheet is not one repo's convenience - it is the visual starting point
-of the whole fleet. A product copied from bid inherited bid's blues, and
+of the whole fleet. A product copied from bidproposal inherited bidproposal's blues, and
 diverged from the platform the moment it drew anything.
 
 The org has a design system for exactly this. `030-design-system-consumer-trial.md`
 had already worked out the consumption path and named its own precondition for a
 first real pilot: a React/Next.js frontend repo, authorized to modify, with
-GitHub Packages read configured, on the same branch/PR/CI discipline. bid is
+GitHub Packages read configured, on the same branch/PR/CI discipline. bidproposal is
 all four.
 
 ## The state of the DS
 
 Adopted against `2.0.0`, the pre-split monolith, which was then the only
 installable line. The three-package 5.x line published to `latest` on
-2026-08-17 and bid moved the same day:
+2026-08-17 and bidproposal moved the same day:
 
 | | |
 |---|---|
@@ -41,7 +41,7 @@ not this ADR.
 
 ## Decision
 
-bid depends on `@vxture/design-system` `^5.0.0` and only that. Its peers
+bidproposal depends on `@vxture/design-system` `^5.0.0` and only that. Its peers
 (`tailwindcss` v4, `tailwindcss-animate`, `next-themes`, `@phosphor-icons/react`)
 come with it, and Tailwind v4 runs through `@tailwindcss/postcss`.
 
@@ -64,7 +64,7 @@ Three details are contractual rather than stylistic:
 
 ## How the components became usable
 
-Rule 3 cost bid the DS's React components for as long as the only way to
+Rule 3 cost bidproposal the DS's React components for as long as the only way to
 generate their utilities was an `@source` naming a path inside `node_modules`.
 That is no longer the only way.
 
@@ -90,7 +90,7 @@ means a visitor who is already signed in never sees a verifying screen at all.
 
 This does not close `vxture/vxture-platform#268`. Every consumer still has to
 write this config, and a consumer who does not gets a grey page with no error -
-the package should carry it. But it does mean bid is no longer choosing
+the package should carry it. But it does mean bidproposal is no longer choosing
 between the components and rule 3.
 
 ## What the CSS-only period cost, and why the rule held through it
@@ -121,7 +121,7 @@ declaration that reads as if it were handled. That is a defect in the DS, not a
 decision for a product repo to work around: per CLAUDE.md, a gap like this is
 fixed upstream first. It is filed as `vxture/vxture-platform#268`. Adding the
 two directories to `files`, or shipping precompiled component CSS, closes it -
-and then bid adopts the components without a path and this section becomes
+and then bidproposal adopts the components without a path and this section becomes
 history.
 
 The cost of holding the line is real and worth naming: the fleet's reference
@@ -131,7 +131,7 @@ were free - it is not. A path into `node_modules` copied into every product repo
 makes the DS's internal layout a fleet-wide contract that nobody agreed to and
 one refactor breaks everywhere at once.
 
-bid's existing stylesheet is loaded after the DS and keeps the classes it
+bidproposal's existing stylesheet is loaded after the DS and keeps the classes it
 already owns. It is being migrated surface by surface, not deleted in one move -
 a rewrite of every page in the same change as the adoption would make a
 regression impossible to attribute.
@@ -148,15 +148,15 @@ tokens `gate.css` spent stopped existing, and nothing failed - an undefined
 custom property is a dead declaration, not an error, so the gate rendered in
 default colours through a green build and a green test suite.
 
-**bid was overriding the design system.** bid's own stylesheet had long
+**bidproposal was overriding the design system.** bidproposal's own stylesheet had long
 defined `--border`, `--radius`, `--accent`, `--success` for itself. Under 2.x
 that collided with nothing. Under 5.x those are exactly the DS's semantic names,
-and bid loads last - so bid won, on every surface, and the only symptom was
+and bidproposal loads last - so bidproposal won, on every surface, and the only symptom was
 that adopting a design system changed how nothing looked.
 
 The fixes are structural rather than a set of corrected values:
 
-- Everything bid defines for itself is now `--bid-*`. A future DS release
+- Everything bidproposal defines for itself is now `--bidproposal-*`. A future DS release
   can rename whatever it likes without reaching us.
 - `--border`, `--radius` and `--radius-sm` were deleted here rather than
   renamed. The DS means the same thing by them, so it should be the one that
@@ -164,7 +164,7 @@ The fixes are structural rather than a set of corrected values:
 - `gate.css` carries no `var()` fallbacks. A fallback is what turned the rename
   into a downgrade instead of a break.
 - Three tests enforce all of it (`design-system.test.ts`, `gate.test.ts`): no
-  token bid defines may shadow a DS token, everything bid defines is
+  token bidproposal defines may shadow a DS token, everything bidproposal defines is
   namespaced, and every token the gate spends must be one the DS actually
   defines. The last one caught a real mistake during this migration - `--shadow`
   and `--shadow-sm` resolve, but they are TAILWIND defaults, not DS decisions.
@@ -177,7 +177,7 @@ The fixes are structural rather than a set of corrected values:
 - ~64 packages enter the dependency tree, 13 of them Radix primitives. The
   bundle grows; the alternative was every copied product growing its own
   divergent stylesheet instead.
-- A product copied from bid now inherits the platform's visual language by
+- A product copied from bidproposal now inherits the platform's visual language by
   default, and re-brands by swapping one import line rather than editing colours.
 - **The 5.x migration is done** (2026-08-17), and it was breaking in both the
   ways predicted and one that was not: see the section above. Pinning a major is
@@ -221,8 +221,8 @@ The fixes are structural rather than a set of corrected values:
   defect a machine can catch, so `design-system.test.ts` catches it. On #268.
 - **Dark mode is a class, not a media query.** The DS keys dark on `.dark` on
   `<html>` and never reads `prefers-color-scheme` - zero occurrences in its
-  whole CSS graph. bid's stylesheet used the media query, so after the 5.x
-  rename the two halves of the page disagreed whenever the OS was dark: bid's
+  whole CSS graph. bidproposal's stylesheet used the media query, so after the 5.x
+  rename the two halves of the page disagreed whenever the OS was dark: bidproposal's
   surfaces flipped, the DS's tokens did not. Fixed by adopting `ThemeProvider`
   and `themeBootstrapScript` (which sets the class before first paint) and
-  moving bid's own dark block onto `.dark`. Pinned by a test.
+  moving bidproposal's own dark block onto `.dark`. Pinned by a test.

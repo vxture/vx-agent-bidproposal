@@ -18,16 +18,16 @@ const FULL_ENV = {
   NEXT_PUBLIC_APP_ENV: "production",
   OIDC_RP_ENABLED: "on",
   OIDC_ISSUER: "https://accounts.vxture.com",
-  OIDC_CLIENT_ID: "bid",
-  OIDC_REDIRECT_URI: "https://bid.vxture.com/auth/callback",
+  OIDC_CLIENT_ID: "bidproposal",
+  OIDC_REDIRECT_URI: "https://bidproposal.vxture.com/auth/callback",
   OIDC_SCOPES: "openid profile email phone",
   RP_SESSION_COOKIE_NAME: "__Host-vx_rp_session",
   PLATFORM_API_URL: "http://platform.internal",
   NEXT_PUBLIC_CONSOLE_URL: "https://console.vxture.com",
   ATLAS_API_URL: "http://atlas.internal",
   RUNOS_API_URL: "http://runos.internal",
-  DATABASE_URL: `postgresql://bid_svc:${SECRETS.POSTGRES_PASSWORD}@bid-db:5432/vxturebiz_bid_prod`,
-  REDIS_URL: "redis://bid-redis:6379",
+  DATABASE_URL: `postgresql://bidproposal_svc:${SECRETS.POSTGRES_PASSWORD}@bidproposal-db:5432/vxturebiz_bidproposal_prod`,
+  REDIS_URL: "redis://bidproposal-redis:6379",
 };
 
 test("NO SECRET VALUE ever appears in the status output", () => {
@@ -73,8 +73,8 @@ test("a deployed stage missing platform config is flagged as running on mocks", 
 });
 
 test("parseDbUrl extracts host/db/role and DROPS the password", () => {
-  const p = parseDbUrl(`postgresql://bid_svc:${SECRETS.POSTGRES_PASSWORD}@bid-db:5432/vxturebiz_bid_prod`);
-  assert.deepEqual(p, { host: "bid-db", db: "vxturebiz_bid_prod", role: "bid_svc" });
+  const p = parseDbUrl(`postgresql://bidproposal_svc:${SECRETS.POSTGRES_PASSWORD}@bidproposal-db:5432/vxturebiz_bidproposal_prod`);
+  assert.deepEqual(p, { host: "bidproposal-db", db: "vxturebiz_bidproposal_prod", role: "bidproposal_svc" });
   assert.equal(JSON.stringify(p).includes(SECRETS.POSTGRES_PASSWORD), false);
   assert.equal(parseDbUrl(undefined), null);
 });
@@ -86,8 +86,8 @@ test("STATUS_SHOW_INFRA=off hides host/db/role but keeps configured", () => {
   assert.equal(off.data.database.role, undefined);
   assert.equal(off.data.redis.host, undefined);
   const on = buildStatus(FULL_ENV, "t");
-  assert.equal(on.data.database.host, "bid-db");
-  assert.equal(on.data.database.role, "bid_svc");
+  assert.equal(on.data.database.host, "bidproposal-db");
+  assert.equal(on.data.database.role, "bidproposal_svc");
 });
 
 test("statusMode defaults to public and accepts off/authed", () => {

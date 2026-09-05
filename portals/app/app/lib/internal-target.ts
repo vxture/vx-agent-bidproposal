@@ -23,7 +23,7 @@ function isPrivateHost(host: string): boolean {
   // would otherwise treat every globally routable IPv6 address as internal.
   if (host.startsWith("[")) return host === "[::1]";
   // Single-label hostnames cannot resolve on public DNS - they are container DNS
-  // names (bid-db, bid-redis) or tailscale MagicDNS short names (worker-02,
+  // names (bidproposal-db, bidproposal-redis) or tailscale MagicDNS short names (worker-02,
   // which is how the platform line publishes the Atlas and Runos base URLs).
   // Rejecting them would refuse the documented internal endpoints while letting
   // a genuinely public target through unnoticed.

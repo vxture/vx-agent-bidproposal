@@ -4,7 +4,7 @@ import { GET } from "./route";
 
 // The identity-block shape and honest-fallback behavior (025 section 3/6) are
 // @vxture/shared's own responsibility (its own test suite covers that). This
-// tests OUR wiring: the route calls buildHealthIdentity with bid's real
+// tests OUR wiring: the route calls buildHealthIdentity with bidproposal's real
 // service/product identity, and honest fallbacks flow through end to end when
 // the build env is absent - no fabrication (025 section 6).
 
@@ -31,8 +31,8 @@ test("GET wires service/product from BRAND and returns the full identity block",
     assert.equal(res.status, 200);
     const body = await res.json();
     assert.equal(body.status, "ok");
-    assert.equal(body.service, "bid-app");
-    assert.equal(body.product, "bid");
+    assert.equal(body.service, "bidproposal-app");
+    assert.equal(body.product, "bidproposal");
     for (const k of ["version", "gitSha", "stage", "buildTime", "time"]) {
       assert.equal(typeof body[k], "string", `${k} must be a string`);
     }

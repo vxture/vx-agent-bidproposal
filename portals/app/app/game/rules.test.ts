@@ -20,23 +20,23 @@ import {
 } from "./rules";
 
 test("free tier gets the product-default daily cap", () => {
-  const e = makeEntitlement("ws", "bid", { tier: "free" });
+  const e = makeEntitlement("ws", "bidproposal", { tier: "free" });
   assert.equal(dailyRunCap(e), FREE_DAILY_RUNS);
 });
 
 test("a platform-configured limit overrides the product default", () => {
-  const e = makeEntitlement("ws", "bid", {
+  const e = makeEntitlement("ws", "bidproposal", {
     tier: "free",
-    limits: { "bid.game.runs_per_day": 25 },
+    limits: { "bidproposal.game.runs_per_day": 25 },
   });
   assert.equal(dailyRunCap(e), 25);
 });
 
 test("starter and above are unlimited, and the platform limit is ignored there", () => {
   for (const tier of ["starter", "pro", "business", "enterprise"] as const) {
-    const e = makeEntitlement("ws", "bid", {
+    const e = makeEntitlement("ws", "bidproposal", {
       tier,
-      limits: { "bid.game.runs_per_day": 25 },
+      limits: { "bidproposal.game.runs_per_day": 25 },
     });
     assert.equal(dailyRunCap(e), UNLIMITED, tier);
   }

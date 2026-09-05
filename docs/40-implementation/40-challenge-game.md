@@ -14,7 +14,7 @@ that keep the module copyable.
 (product)/challenge/page.tsx     redirect to `/` (old links only)
 game/engine.ts                   pure sim: seeded RNG, spawn curves, collision
 game/rules.ts                    pure product rules: quota, windows, trend, call signs
-game/store.ts / prisma-store.ts  persistence port: in-memory | bid_game.run
+game/store.ts / prisma-store.ts  persistence port: in-memory | bidproposal_game.run
 game/api-caller.ts               session -> (workspaceId, sub), chat-route posture
 api/game/*                       gate -> count -> write -> meter, per route
 ```
@@ -42,10 +42,10 @@ Three rules, in copy-priority order:
 2. **Rules are functions over the C2 envelope.** `dailyRunCap`,
    `historyWindowFor`, `remainingRuns` take an `Entitlement` and return plain
    values; routes render the server's answer and the client re-derives
-   nothing. The platform limit (`limits["bid.game.runs_per_day"]`) beats the
+   nothing. The platform limit (`limits["bidproposal.game.runs_per_day"]`) beats the
    product default by construction (`limitOf(...) ?? FREE_DAILY_RUNS`).
 3. **Quota is spent at start, not finish.** `POST /api/game/run` inserts the
-   row (and meters `bid.game.runs`) before the countdown begins, so a closed
+   row (and meters `bidproposal.game.runs`) before the countdown begins, so a closed
    tab still spends the attempt - the design doc counts challenges, not
    completions. `countStartedSince` therefore counts rows of ANY status.
 
@@ -82,5 +82,5 @@ Three rules, in copy-priority order:
 | quota arithmetic, windows, wall-clock rule, call signs, trend | `game/rules.test.ts` |
 | store semantics (quota counting, podium, board dedupe) | `game/store.test.ts` |
 | determinism, difficulty ramp, collision, tunneling clamp | `game/engine.test.ts` |
-| DDL <-> prisma lockstep incl. `bid_game` | `check-data-architecture.mjs` (baseline UNION incr) |
+| DDL <-> prisma lockstep incl. `bidproposal_game` | `check-data-architecture.mjs` (baseline UNION incr) |
 | live API flow (429 at 11th run, 409 replay, 422 overclaim, locked shapes) | exercised against `pnpm dev` with `MOCK_TIER=free|pro` |

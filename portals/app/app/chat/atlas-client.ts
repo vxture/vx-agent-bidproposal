@@ -21,7 +21,7 @@ import type { ChatMessage } from "./types";
 // endpoint is repointed, control falls through to a UUID assertion and the call
 // fails with 400 INVALID_TENANT_ID, which reads like a payload bug and hides the
 // real cause. A non-UUID also silently writes NULL into Atlas's request log, so
-// bid's traffic disappears from every tenant rollup with no error at all.
+// bidproposal's traffic disappears from every tenant rollup with no error at all.
 
 export const ATLAS_AUDIENCE = "atlas";
 
@@ -128,7 +128,7 @@ async function throwAtlasError(res: Response): Promise<never> {
 }
 
 // "chat/default" is the reference's own example of a global stable endpointCode.
-// bid holds no per-model grant and no per-tenant taskProfile, so it routes by
+// bidproposal holds no per-model grant and no per-tenant taskProfile, so it routes by
 // endpointCode - the same choice /v1/embed and /v1/rerank would make.
 export const DEFAULT_ENDPOINT_CODE = "chat/default";
 
@@ -194,7 +194,7 @@ async function atlasFetch(
 export interface ChatCallOptions {
   /**
    * The agent task this call belongs to. REQUIRED by Atlas since v0.15.0
-   * (`400 TASK_ID_REQUIRED` without it), and deliberately the SAME value bid
+   * (`400 TASK_ID_REQUIRED` without it), and deliberately the SAME value bidproposal
    * sends to Runos for the same turn: Atlas is the only inference-metering
    * entry point, so a task that spans a capability call and a model call can
    * only be totalled back up if both carry one id. `requestId` does not
@@ -220,7 +220,7 @@ export async function fetchChatCompletion(
     identity,
     "/v1/chat",
     (minted) => {
-      // The tenant comes from the token, never from anything bid declares -
+      // The tenant comes from the token, never from anything bidproposal declares -
       // Atlas UUID-asserts it up front now, so a product code here is a plain
       // `400 INVALID_TENANT_ID` rather than the delayed, misleading failure it
       // used to be. Omitted when the token carries neither, which Atlas answers
@@ -280,7 +280,7 @@ export interface AtlasModel {
 
 /**
  * The global model catalog. NOT grant-filtered - it lists every model Atlas
- * knows about, not the ones bid may route to - so it is an auth and
+ * knows about, not the ones bidproposal may route to - so it is an auth and
  * connectivity probe, not a model picker. For "what may I actually call", use
  * `listGrantedEndpoints` below.
  */

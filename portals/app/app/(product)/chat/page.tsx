@@ -89,7 +89,7 @@ function PillSelect({
 function SkillReport({ skill }: { skill: SkillOutcome }) {
   const tone = skill.status === "ran" ? "success" : skill.status === "failed" ? "warning" : "neutral";
   return (
-    <div style={{ marginTop: "0.6rem", fontSize: "0.8rem", color: "var(--bid-slate)" }}>
+    <div style={{ marginTop: "0.6rem", fontSize: "0.8rem", color: "var(--bidproposal-slate)" }}>
       <StatusBadge tone={tone} dot>
         {skill.code}: {skill.status}
       </StatusBadge>
@@ -224,15 +224,15 @@ export default function ChatPage() {
             style={{ flex: 1, overflowY: "auto", padding: "1.2rem 1.4rem", display: "flex", flexDirection: "column", gap: 10 }}
           >
             {messages.length === 0 && (
-              <span style={{ color: "var(--bid-slate-faint)", fontSize: "0.88rem" }}>Say something to verify the round trip.</span>
+              <span style={{ color: "var(--bidproposal-slate-faint)", fontSize: "0.88rem" }}>Say something to verify the round trip.</span>
             )}
             {messages.map((m, i) => (
               <div
                 key={i}
                 style={{
                   alignSelf: m.role === "user" ? "flex-end" : "flex-start",
-                  background: m.role === "user" ? "var(--bid-accent-soft)" : "var(--bid-paper)",
-                  color: m.role === "user" ? "var(--bid-accent-ink)" : "var(--bid-ink-soft)",
+                  background: m.role === "user" ? "var(--bidproposal-accent-soft)" : "var(--bidproposal-paper)",
+                  color: m.role === "user" ? "var(--bidproposal-accent-ink)" : "var(--bidproposal-ink-soft)",
                   border: m.role === "assistant" ? "1px solid var(--border)" : "none",
                   borderRadius: 12,
                   padding: "0.55rem 0.85rem",
@@ -245,7 +245,7 @@ export default function ChatPage() {
                 {m.content}
               </div>
             ))}
-            {busy && <span style={{ color: "var(--bid-slate-faint)", fontSize: "0.82rem" }}>thinking...</span>}
+            {busy && <span style={{ color: "var(--bidproposal-slate-faint)", fontSize: "0.82rem" }}>thinking...</span>}
           </div>
           <div className="chat-composer">
             <div className="chat-composer__row">
@@ -275,7 +275,7 @@ export default function ChatPage() {
                   />
                 </>
               ) : (
-                <span style={{ color: "var(--bid-slate-faint)", fontSize: "0.82rem" }}>loading catalog...</span>
+                <span style={{ color: "var(--bidproposal-slate-faint)", fontSize: "0.82rem" }}>loading catalog...</span>
               )}
               {turn && (
                 <span style={{ marginLeft: "auto" }}>
@@ -310,7 +310,7 @@ export default function ChatPage() {
                   <CardTitle>Last turn</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div style={{ fontSize: "0.8rem", color: "var(--bid-slate)", lineHeight: 1.7 }}>
+                  <div style={{ fontSize: "0.8rem", color: "var(--bidproposal-slate)", lineHeight: 1.7 }}>
                     <div>
                       served by <code>{turn.modelCode}</code>
                     </div>
@@ -327,7 +327,7 @@ export default function ChatPage() {
         )}
       </div>
 
-      {error && <p style={{ color: "var(--bid-danger)", fontSize: "0.86rem", marginTop: "0.7rem" }}>{error}</p>}
+      {error && <p style={{ color: "var(--bidproposal-danger)", fontSize: "0.86rem", marginTop: "0.7rem" }}>{error}</p>}
 
       <footer className="page-links">
         <a href="/status">-&gt; integration status</a>

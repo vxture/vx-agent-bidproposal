@@ -47,9 +47,9 @@ jobs:
       ACR_REGISTRY: ${{ vars.ALIYUN_ACR_REGISTRY }}
       ACR_NAMESPACE: ${{ vars.ALIYUN_ACR_NAMESPACE }}
       VXTURE_NPM_REGISTRY: ${{ vars.VXTURE_NPM_REGISTRY }}
-      # bid's owned image. The product code is baked into the source tree, so
+      # bidproposal's owned image. The product code is baked into the source tree, so
       # there is no build-time substitution and no repo-variable indirection.
-      IMAGE: bid-app
+      IMAGE: bidproposal-app
       IMAGE_CONTEXT: .
       IMAGE_DOCKERFILE: ./portals/app/Dockerfile
     steps:
@@ -93,7 +93,7 @@ jobs:
           REF_TYPE: ${{ github.ref_type }}
         run: |
           set -euo pipefail
-          # bid ships prod-only (ADR-002); a non-v tag never reaches deploy.yml,
+          # bidproposal ships prod-only (ADR-002); a non-v tag never reaches deploy.yml,
           # so anything but a v*.*.* tag is a local/manual build and stages as dev.
           case "$REF_TYPE:$REF_NAME" in
             tag:v*) stage="production" ;;

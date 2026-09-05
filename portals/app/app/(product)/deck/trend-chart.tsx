@@ -8,7 +8,7 @@ import { QUALIFY_MS, formatScoreMs, type TrendPoint } from "../../game/rules";
 // One series on purpose - the spec asks for "a trend curve", and a single
 // series needs no legend (the title names it) and cannot collide with itself.
 // The mean and run count ride along in the tooltip where they belong. The
-// series color is --bid-chart-series, validated per mode with the palette
+// series color is --bidproposal-chart-series, validated per mode with the palette
 // validator (light #3457d5, dark #6d84ec) - see globals.css.
 //
 // Days without a run are gaps, not zeros: the x axis is a real date scale over

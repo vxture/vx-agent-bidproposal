@@ -4,13 +4,20 @@ Start here if you are an AI agent working in this repo.
 
 ## What this repo is
 
-This is `bid`: a Vxture product deployed at `https://bid.vxture.com` (worker02)
-AND the reference build new product repos are copied from (ADR-001). Both, on
-purpose - see `docs/20-specs/10-product-definition.md`.
+This is `bidproposal`, the platform product code of 标书方案智能体 (Proposal
+Writing Agent). The repo is that product's **cloud capability surface** for the
+RUYIN desktop runtime (ADR-001 of this repo; vxture-ruyin ADR-009 / ADR-020):
+four endpoints under `portals/app/app/api/products/[product]/`. It was copied
+from the `vx-agent-vxtpl` template on 2026-09-05 and renamed; it is **not
+deployed and not platform-registered yet** (vxture-platform/vxture-platform#198,
+`docs/50-deployment/10-platform-registration-checklist.md`). Template text that
+says "deployed at https://bidproposal.vxture.com" describes the template's own
+product, not this one.
+
 
 Three things follow that will save you a wrong assumption:
 
-- **There are no placeholders.** Every name is the literal `bid` value that runs
+- **There are no placeholders.** Every name is the literal `bidproposal` value that runs
   in production. If you find a `__SOMETHING__` token outside `docs/80-liaison/`
   (frozen historical letters), it is a bug - and CI will say so:
   `scripts/guardrails/check-no-placeholders.mjs` runs in `static-checks`. Prose
@@ -45,7 +52,7 @@ first, then mirror it here - do not invent a standard inside a product repo.
 - `docs/80-liaison/` is append-only. Letters are dated records of what was sent;
   correct a superseded claim with a NEW letter, never by editing an old one.
 - Product identity comes from `BRAND.productCode`, never from `OIDC_CLIENT_ID`
-  (the beta client is `bid-beta`; the product code stays `bid`).
+  (the beta client is `bidproposal-beta`; the product code stays `bidproposal`).
 - See `CLAUDE.md` (repo root) for the full working agreement,
   `docs/40-implementation/10-app-workspace.md` for how the app fits together, and
   `docs/70-workplan/00-index.md` for the batch tracker.

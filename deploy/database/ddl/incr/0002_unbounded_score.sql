@@ -8,6 +8,6 @@
 --
 -- Idempotent as a pair: every db-init apply drops and re-adds the constraint.
 
-ALTER TABLE bid_game.run DROP CONSTRAINT IF EXISTS chk_run_score_ms;
-ALTER TABLE bid_game.run ADD CONSTRAINT chk_run_score_ms
+ALTER TABLE bidproposal_game.run DROP CONSTRAINT IF EXISTS chk_run_score_ms;
+ALTER TABLE bidproposal_game.run ADD CONSTRAINT chk_run_score_ms
   CHECK (score_ms >= 0 AND score_ms <= 600000);

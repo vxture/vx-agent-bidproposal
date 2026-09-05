@@ -1,22 +1,26 @@
-# bid - product definition
+# bidproposal - product definition
 
-## What bid is
+## What bidproposal is
 
-bid is a Vxture product with a real business domain: **Bid**, a
-bullet-dodging reaction game (its mode: the 20-Second Challenge) whose three
-subscription tiers exercise the platform's quota / subscription / entitlement
-machinery with real users (ADR-006, spec in `20-challenge-game.md`). `bid`
-is the product code - platform plumbing; Bid is the brand
-(`BRAND.displayName`). Its second subject matter is the
-platform integration surface itself, made visible and exercised in production.
+`bidproposal` is the platform's product code for **标书方案智能体 / Proposal Writing
+Agent** ("基于企业知识库、产品资料和历史投标文件，辅助生成方案大纲、响应点和差异化亮点" -
+the platform product directory, seeded 2026-09-01, `release_stage=developing`).
+The product itself runs inside the RUYIN desktop runtime under its runtime
+contract (`portals/app/contract/ruyin.product.yaml`, mirrored from
+vxture-ruyin `products/bid/`). This repo is the product's **cloud capability
+surface** - see `30-capability-surface.md` - and is the first consumer of Runos
+(ADR-001).
 
-Both roles are deliberate and reinforce each other. bid is the reference
-build every new Vxture product is copied from (ADR-001), and a reference nobody
-runs drifts from reality within weeks - while a product nobody USES verifies
-the integration surface but never the product surface. By deploying bid at
-`https://bid.vxture.com`, giving it users, and holding it to the same gates
-as any product, both the integration contracts and the tier-gating patterns
-stay verified by execution rather than by review.
+Status (2026-09-05): capability surface implemented and tested offline; not
+deployed; not registered on the platform (vxture-platform/vxture-platform#198).
+
+## Template sample (inherited, not the product)
+
+Everything below this line describes the sample product that came with the
+`vx-agent-vxtpl` template (a bullet-dodging game used there to exercise the
+subscription tiers). It is kept as a sample UI area and will be replaced by the
+product's own surfaces; nothing in it is 标书方案智能体.
+
 
 ## Surfaces
 
@@ -47,12 +51,12 @@ is visible without a debugger.
 
 ## Platform contracts consumed
 
-| Channel | Contract | bid's use |
+| Channel | Contract | bidproposal's use |
 |---------|----------|-------------|
 | C1 | OIDC relying party against `accounts.vxture.com` | Sign-in with PKCE (S256), single-use state, nonce verification, Redis-backed opaque session cookie, back-channel logout. Tokens never reach the browser. |
 | C2 | `GET /platform/entitlements` | Resolves the caller's subscription tier and quota pools for the active workspace; 45s cache, invalidated by C3, stale-on-error, fail-closed to no-coverage. |
 | C3 | Inbound provisioning webhook + `POST /usage/consume` | HMAC-verified (`t=`,`v1=` over raw bytes, +/-300s, rotation slot), idempotent and sequence-ordered; every entitlement-changing delivery evicts the C2 cache. Usage is buffered locally and flushed on the always-200 consume contract (`gated` is information and evicts C2, `replayed`/`event_id` reconcile, non-200 retries), with `end_user_id` attribution and `x-request-id` on every call. |
-| Atlas | Chat inference and model listing | Every chat turn. Atlas meters model token consumption itself; bid records only its own product-level counter. |
+| Atlas | Chat inference and model listing | Every chat turn. Atlas meters model token consumption itself; bidproposal records only its own product-level counter. |
 | Runos | Capability discovery and invocation | Skill execution on a chat turn, plus a read-only well-known probe on `/platform-check`. |
 
 S2S credentials for Atlas, Runos, and the platform are **minted per call** via
@@ -68,28 +72,28 @@ they should, and are worth stating where a reader will meet them:
   and records usage against no workspace, dropping the call out of the
   tenant-by-workspace rollup that billing is computed from.
 - **A user-initiated call mints on-behalf-of.** The workspace and subject come
-  from the presented session token rather than anything bid declares, which is
+  from the presented session token rather than anything bidproposal declares, which is
   what makes the claim unforgeable - and Runos uses the resulting `sub` as the
   end-user on its audit trail. Service mode is available too (Runos v0.6.0), so
-  a background path exists; bid has no scheduled capability work today.
+  a background path exists; bidproposal has no scheduled capability work today.
 - **Skills are distributed, not executed.** A Runos Skill answers with its own
   content for the caller's runtime to run (Runos ADR-006); only Connectors and
-  Executors return a result. bid handles both shapes.
+  Executors return a result. bidproposal handles both shapes.
 
 ## Entitlement model
 
-bid's capability matrix (`portals/app/app/entitlement/capability.ts`) is the
+bidproposal's capability matrix (`portals/app/app/entitlement/capability.ts`) is the
 exemplar of a product blank zone filled in: concrete feature keys for three chat
 models, four skills, and the game's five `game:*` keys, gated cumulatively
 across the five subscription tiers. The *mechanism* - `canUseFeature`,
 `minTierFor`, the `hasProductAccess` / `hasDataAccess` / `ctaFor` formulas, and
 the value domains imported from `@vxture/shared` - is rigid and shared
-org-wide. The *content* of the matrix is bid's, and a copied product replaces
+org-wide. The *content* of the matrix is bidproposal's, and a copied product replaces
 it.
 
 The game adds the quota exemplar: the free tier's 10-runs-a-day cap is counted
-locally against `bid_game.run` (the product counts, the platform never
-adjudicates), with a platform-configured `limits["bid.game.runs_per_day"]`
+locally against `bidproposal_game.run` (the product counts, the platform never
+adjudicates), with a platform-configured `limits["bidproposal.game.runs_per_day"]`
 overriding the product default when present - the sales number always wins.
 
 Gating is fail-closed at every layer: an unresolvable entitlement denies access
@@ -105,12 +109,12 @@ entrypoint, never by a migration on boot):
 - `local_authz` - product-local membership and role/permission catalogs
 - `local_usage` - the usage buffer feeding the C3 flush
 
-The runtime connects as `bid_svc`, a least-privilege role with no DDL rights, no
+The runtime connects as `bidproposal_svc`, a least-privilege role with no DDL rights, no
 blanket UPDATE, and a column-level write whitelist. Anchor columns (`id`,
-reference keys, `created_at`) are never writable. bid adds no domain schemas of
+reference keys, `created_at`) are never writable. bidproposal adds no domain schemas of
 its own; the three contract names are reserved org-wide.
 
-## What bid deliberately does not do
+## What bidproposal deliberately does not do
 
 - **No business domain.** No product catalog, no billing logic, no tenant-facing
   workflow. Those are the copy's job, and inventing a fake one here would make the
@@ -118,5 +122,5 @@ its own; the three contract names are reserved org-wide.
 - **No beta tier.** Production only (ADR-002).
 - **No multi-region, no horizontal scale.** One stack on one host. The deploy
   chain is correct, not large.
-- **No abstraction layer over the platform SDK surface.** bid calls the
+- **No abstraction layer over the platform SDK surface.** bidproposal calls the
   documented HTTP contracts directly so a reader can see the wire, not a wrapper.

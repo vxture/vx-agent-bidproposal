@@ -5,5 +5,5 @@
 
 | Issue | 事项 | 状态 |
 |---|---|---|
-| vxture-foundation/vxture-runos#14 | bid 云端能力面 = Runos 第一消费者；按 ruyin 清单建预置台账、给主体 `product=bid` 授权 | open |
-| vxture-platform/vxture-platform#198 | OBO subject_token 受众（现规则必拒，生产前提）+ bid 按暂用名登记（产品行 / OIDC client / 回填 / ruyin↔bid 关系 / plan） | open |
+| vxture-foundation/vxture-runos#14 | bidproposal 云端能力面 = Runos 第一消费者；按 ruyin 清单建预置台账、给主体 `product=bidproposal` 授权 | open |
+| vxture-platform/vxture-platform#198 | OBO subject_token 受众（现规则必拒，生产前提）+ bidproposal 按暂用名登记（产品行 / OIDC client / 回填 / ruyin↔bidproposal 关系 / plan） | open |

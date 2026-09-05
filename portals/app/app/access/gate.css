@@ -13,7 +13,7 @@
  * missing token invalidates the declaration outright, which is visible in one
  * glance. `gate.test.ts` turns the same drift into a failing test, so it does
  * not depend on someone looking - and it is what caught the shadows below:
- * `--bid-shadow-sm` resolves, but it is TAILWIND's default, not a DS decision. The
+ * `--bidproposal-shadow-sm` resolves, but it is TAILWIND's default, not a DS decision. The
  * DS's shadow vocabulary is an elevation scale (flat / raised / sticky /
  * overlay / dialog / notification), so a button at rest is `raised` and lifts
  * to `sticky`. Spending a Tailwind default here would have looked correct and

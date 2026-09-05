@@ -20,7 +20,7 @@ import { CHAT_TURNS_PER_MINUTE, allowChatTurn } from "../../chat/rate-limit";
 // configured it would let an anonymous visitor spend model tokens.
 export const dynamic = "force-dynamic";
 
-const USAGE_METRIC = "bid.chat.messages";
+const USAGE_METRIC = "bidproposal.chat.messages";
 
 /**
  * Stand-in workspace for local development with no IdP.
@@ -72,7 +72,7 @@ async function resolveCaller(): Promise<Caller | { error: string; status: number
     identity: {
       workspaceId: ctx.user.activeWorkspace,
       // On-behalf-of: the platform reads workspace and subject from this token
-      // rather than trusting anything bid declares. Runos additionally
+      // rather than trusting anything bidproposal declares. Runos additionally
       // REQUIRES the `sub` that only an OBO token carries.
       mint: { subjectToken: ctx.accessToken },
       sessionId: rpsid,
@@ -165,9 +165,9 @@ export async function POST(req: Request): Promise<Response> {
     return NextResponse.json({ error: err instanceof Error ? err.message : "chat resolver failed" }, { status: 502 });
   }
 
-  // Meter bid's own unit of work, and only that. Atlas meters model token
+  // Meter bidproposal's own unit of work, and only that. Atlas meters model token
   // consumption on its side, so reporting `reply.usage` here would double-count
-  // it; what bid owns is "a chat message was served". Buffered locally and
+  // it; what bidproposal owns is "a chat message was served". Buffered locally and
   // reported by the flush job - a metering failure must never fail the turn the
   // user already paid for in latency.
   try {

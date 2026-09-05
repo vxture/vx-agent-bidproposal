@@ -12,14 +12,14 @@ import { SHARED_REJECTION_CODES, isEntitlementRejection, isSharedRejection } fro
 
 const OIDC = {
   OIDC_ISSUER: "http://accounts.internal",
-  OIDC_CLIENT_ID: "bid",
+  OIDC_CLIENT_ID: "bidproposal",
   OIDC_CLIENT_SECRET: "s3cret",
   RUNOS_API_URL: "http://worker-02:3120",
 };
 const saved: Record<string, string | undefined> = {};
 const realFetch = globalThis.fetch;
 const IDENTITY = { subjectToken: "user-access-token" };
-const CALL = { taskId: "bid-task-1", identity: IDENTITY };
+const CALL = { taskId: "bidproposal-task-1", identity: IDENTITY };
 
 interface Capture {
   url: string;
@@ -87,7 +87,7 @@ test("_meta.vxture sits on params, NOT inside arguments", async () => {
   const params = calls[0].body.params as Record<string, unknown>;
   const meta = params._meta as { vxture?: Record<string, unknown> } | undefined;
   assert.ok(meta?.vxture, "_meta.vxture must be a sibling of name/arguments");
-  assert.equal(meta.vxture.task_id, "bid-task-1");
+  assert.equal(meta.vxture.task_id, "bidproposal-task-1");
   const args = params.arguments as Record<string, unknown>;
   assert.equal(args._meta, undefined, "_meta inside arguments makes every tool answer missing_metadata");
   assert.equal(args.query, "run python");

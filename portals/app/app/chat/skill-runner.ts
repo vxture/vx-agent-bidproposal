@@ -18,9 +18,9 @@ import type { ChatMessage, SkillOutcome } from "./types";
 // The loop is discover -> resolve -> invoke -> report_outcome, and each step is
 // there for a reason:
 //
-//   discover  bid does not hard-code capability ids. The catalog is per-caller
+//   discover  bidproposal does not hard-code capability ids. The catalog is per-caller
 //             (a capability outside your entitled set is invisible, not
-//             forbidden) and it changes without bid redeploying, so the only
+//             forbidden) and it changes without bidproposal redeploying, so the only
 //             correct way to find one is to ask.
 //   resolve   the operation name and its input schema come from the capability's
 //             own contract, not from an assumption here.
@@ -41,7 +41,7 @@ import type { ChatMessage, SkillOutcome } from "./types";
 
 /**
  * Search terms per skill. These are queries, not ids - the entitled catalog is
- * per-caller and changes without bid redeploying, so it has to be asked.
+ * per-caller and changes without bidproposal redeploying, so it has to be asked.
  *
  * Ranking is keyword overlap, not embeddings (Runos's vector provider is still a
  * stub), so these must SHARE WORDS with how a capability describes itself.
@@ -80,7 +80,7 @@ export async function runSkill(
   const call: CallToolOptions = {
     taskId: opts.taskId,
     identity: opts.identity,
-    // The capability acts as the signed-in user, not as bid. The client
+    // The capability acts as the signed-in user, not as bidproposal. The client
     // forwards the minted token, not the session token - see CallToolOptions.
     delegate: true,
     sessionId: opts.sessionId,

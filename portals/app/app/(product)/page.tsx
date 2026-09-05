@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { subscribeUrl } from "../entitlement/deeplink";
 import { formatScoreMs } from "../game/rules";
-import { BRAND } from "@bid/shared/brand";
+import { BRAND } from "@bidproposal/shared/brand";
 import { GameView, type GameFinish } from "./deck/game-view";
 import { AvatarBadge, BoardModule, RecordsModule } from "./deck/panels";
 

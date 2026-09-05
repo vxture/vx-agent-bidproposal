@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 /**
- * rename-product.mjs - turn a copy of bid into a new Vxture product repo.
+ * rename-product.mjs - turn a copy of bidproposal into a new Vxture product repo.
  *
  * Usage:
  *   node scripts/init/rename-product.mjs <product_code> [--dry-run]
  *
- * bid carries no placeholders: every name in the tree is the literal `bid`
+ * bidproposal carries no placeholders: every name in the tree is the literal `bidproposal`
  * value that runs in production. Creating a new product therefore means renaming,
  * not substituting - this script rewrites the whole name cascade in file contents
  * AND in file/directory names, then prints the follow-up a human still owns.
@@ -19,7 +19,7 @@
  *          mapped to _     in an unquoted Postgres identifier
  *   upper  SNAKE upper     platform-side secret names
  *
- * For `bid` all three collapse (no hyphen), which is exactly why the site-aware
+ * For `bidproposal` all three collapse (no hyphen), which is exactly why the site-aware
  * rules must be encoded here rather than discovered the first time somebody picks
  * a hyphenated code.
  *
@@ -34,11 +34,11 @@ const CODE_RE = /^[a-z][a-z0-9_-]{0,31}$/;
 /**
  * The code this repo currently carries. This script rewrites ITSELF along with
  * everything else, so after a rename this constant reads as the new code and the
- * copy can in turn be copied - renaming is a chain, not a one-shot from bid.
+ * copy can in turn be copied - renaming is a chain, not a one-shot from bidproposal.
  * (Node reads the whole file before executing it, so rewriting it mid-run is
  * safe.)
  */
-const CURRENT = "bid";
+const CURRENT = "bidproposal";
 
 const SKIP_DIRS = new Set([
   ".git",
@@ -57,8 +57,8 @@ const BINARY_EXT = new Set([
 ]);
 
 /**
- * Paths left untouched on purpose. These record what bid did, when, and with
- * whom: rewriting `bid` to the new code inside them would not carry history
+ * Paths left untouched on purpose. These record what bidproposal did, when, and with
+ * whom: rewriting `bidproposal` to the new code inside them would not carry history
  * forward, it would fabricate it - letters the new product never sent, batches it
  * never ran. The copy deletes or archives them instead (reported at the end).
  */
@@ -118,7 +118,7 @@ const currentUpper = currentSnake.toUpperCase();
 /**
  * The CURRENT display name, READ from brand.ts rather than derived from the
  * product code. The two diverge on purpose: a real product carries a real
- * brand ("Bid"), not a Title-Cased code - so deriving the old name
+ * brand ("Bidproposal"), not a Title-Cased code - so deriving the old name
  * from the code would walk straight past every place the brand appears, and
  * a copy would ship still calling itself by its parent's name. The copy
  * STARTS as titleCase(code) and renames itself when it has a brand.
@@ -145,7 +145,7 @@ function titleCase(value) {
 
 /**
  * Ordered longest-match-first: every specific site is consumed before the generic
- * rules see the text, so `vxturebiz_bid_prod` becomes `vxturebiz_my_prod_prod`
+ * rules see the text, so `vxturebiz_bidproposal_prod` becomes `vxturebiz_my_prod_prod`
  * (snake) rather than the invalid `vxturebiz_my-prod_prod`.
  */
 const REPLACEMENTS = [
@@ -247,15 +247,15 @@ if (renamed.length) {
 }
 
 if (skippedHistory.length) {
-  console.log(`[rename] ${skippedHistory.length} file(s) left untouched (bid's own history):`);
+  console.log(`[rename] ${skippedHistory.length} file(s) left untouched (bidproposal's own history):`);
   for (const s of skippedHistory) console.log(`  ${s}`);
 }
 
 console.log(`
 [rename] Not done yet. This script only renames; the following are yours:
 
-  1. Delete or archive bid's history listed above - liaison correspondence,
-     the batch tracker, and the tech-debt register belong to bid, not to you.
+  1. Delete or archive bidproposal's history listed above - liaison correspondence,
+     the batch tracker, and the tech-debt register belong to bidproposal, not to you.
   2. Replace docs/20-specs/ with your own product definition, and start a fresh
      ADR register in docs/30-design/decisions/ (ADR-001 onward).
   3. Run 'pnpm install' to regenerate pnpm-lock.yaml under the @${code} scope,
@@ -266,7 +266,7 @@ console.log(`
   5. Work docs/50-deployment/20-github-bootstrap-checklist.md to create the repo
      and apply the branch-protection ruleset LAST.
   6. Re-point configs/edge/${code}.vxture.com.conf at your allocated port (it
-     still carries bid's 4000), set APP_PUBLISH_PORT to the same number on the
+     still carries bidproposal's 4000), set APP_PUBLISH_PORT to the same number on the
      deploy host, and hand the vhost to the edge operator. Those two are one
      number - the app listens on it, is published on it, and is proxied to it.
 `);

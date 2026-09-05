@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1.7
 # Multi-stage build for the Next.js standalone app in a pnpm workspace.
 # Build context = repo root (so the workspace and lockfile are visible).
-# Produces the single owned image bid-app.
+# Produces the single owned image bidproposal-app.
 
 FROM node:22-alpine AS base
 ENV PNPM_HOME=/pnpm PATH=/pnpm:$PATH
@@ -19,7 +19,7 @@ RUN --mount=type=secret,id=node_auth_token \
     --mount=type=cache,id=pnpm,target=/pnpm/store \
     NODE_AUTH_TOKEN="$(cat /run/secrets/node_auth_token 2>/dev/null || true)" \
     pnpm install --frozen-lockfile
-RUN pnpm --filter @bid/app build
+RUN pnpm --filter @bidproposal/app build
 
 # --- runner (Next standalone, non-root, never migrates) ---
 FROM base AS runner
@@ -30,7 +30,7 @@ WORKDIR /app
 # the client bundle). HOSTNAME=0.0.0.0 keeps loopback healthchecks reachable
 # (020 section 3: Next standalone otherwise binds the container ID only).
 #
-# PORT/EXPOSE are bid's allocated number, not a generic 3000. One number: the
+# PORT/EXPOSE are bidproposal's allocated number, not a generic 3000. One number: the
 # app listens on, is published on, and is proxied to the same port, so there is
 # no mapping anywhere that can be right in one place and stale in another. The
 # allocation comes from the org port registry, which is the only source allowed

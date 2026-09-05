@@ -3,7 +3,7 @@
 //
 // `docs/50-deployment/rebuild/main-ruleset.json` is not documentation. It is the
 // artifact applied verbatim at bootstrap - `gh api repos/vxture/<repo>/rulesets
-// --method POST --input <this file>` - so every product repo created from bid
+// --method POST --input <this file>` - so every product repo created from bidproposal
 // inherits exactly what it says. That makes an error here different in kind from
 // an error in a normal file: it does not affect one repo, it affects every repo
 // created after it.
@@ -18,7 +18,7 @@
 // surfaced by accident in another repo when a commit pushed straight to main
 // succeeded, against a CLAUDE.md that said direct pushes were blocked. Checking
 // the API afterwards found the same bypass on every repo in the org, because they
-// were all bootstrapped from this file (bid#37).
+// were all bootstrapped from this file (bidproposal#37).
 //
 // The live rulesets were fixed. This file was not, so the next repo created would
 // have inherited it again. That is the failure this check exists to prevent: not
@@ -51,7 +51,7 @@ try {
   ruleset = JSON.parse(readFileSync(FILE, "utf8"));
 } catch (err) {
   console.error(`[ruleset] cannot read ${FILE}: ${err.message}`);
-  console.error(`\nThis file is applied verbatim at bootstrap. If it is gone or malformed,\nthe next repo created from bid has no branch protection at all.`);
+  console.error(`\nThis file is applied verbatim at bootstrap. If it is gone or malformed,\nthe next repo created from bidproposal has no branch protection at all.`);
   process.exit(STRICT ? 1 : 0);
 }
 
@@ -111,7 +111,7 @@ if (problems.length === 0) {
 console.error(`[ruleset] ${problems.length} problem(s) in ${FILE}:\n`);
 for (const p of problems) console.error(`  - ${p}\n`);
 console.error(
-  `This file is applied verbatim to every repo bootstrapped from bid, so a weakened\n` +
-    `protection here is inherited rather than contained. See bid#37.`,
+  `This file is applied verbatim to every repo bootstrapped from bidproposal, so a weakened\n` +
+    `protection here is inherited rather than contained. See bidproposal#37.`,
 );
 process.exit(STRICT ? 1 : 0);

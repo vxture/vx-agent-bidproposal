@@ -1,7 +1,7 @@
 import type { GameStore, GameRunRow, LeaderboardRow, RunOutcome, RunStatus } from "./store";
 import { getPrismaClient } from "../lib/db";
 
-// Prisma-backed GameStore over bid_game.run. Used when DATABASE_URL is set.
+// Prisma-backed GameStore over bidproposal_game.run. Used when DATABASE_URL is set.
 
 interface DbRun {
   id: string;
@@ -114,7 +114,7 @@ export class PrismaGameStore implements GameStore {
     const rows = await p.$queryRaw<{ sub: string; score_ms: number; finished_at: Date }[]>`
       SELECT sub, score_ms, finished_at FROM (
         SELECT DISTINCT ON (workspace_id, sub) sub, score_ms, finished_at
-        FROM bid_game.run
+        FROM bidproposal_game.run
         WHERE status = 'finished' AND score_ms IS NOT NULL AND finished_at IS NOT NULL
           AND finished_at >= ${floor}
         ORDER BY workspace_id, sub, score_ms DESC, finished_at ASC

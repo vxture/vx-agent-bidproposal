@@ -6,14 +6,14 @@ Deployment and bootstrap material for this repo.
 |------------|---------|
 | `10-platform-registration-checklist.md` | platform-side registration a product needs before any real call succeeds |
 | `20-github-bootstrap-checklist.md` | one-time GitHub bootstrap: create public repo, enable scanning, first-push main, run CI once, apply the ruleset (in that order) |
-| `30-l1-integration-plan.md` | where bid stands against Atlas and Runos, the version pins it is written against, and what is left |
+| `30-l1-integration-plan.md` | where bidproposal stands against Atlas and Runos, the version pins it is written against, and what is left |
 | `rebuild/` | rebuild artifacts; holds `main-ruleset.json` (the branch-protection ruleset) |
 
 ## The deploy chain
 
 Pushing a `vX.Y.Z` tag runs `deploy.yml`, which routes to the `production` GitHub
 Environment (required reviewer, so the job pauses), calls the reusable
-`build.yml` to publish `ghcr.io/vxture/bid-app:sha-<short>` with an Aliyun ACR
+`build.yml` to publish `ghcr.io/vxture/bidproposal-app:sha-<short>` with an Aliyun ACR
 mirror, then joins the tailnet via the `tailnet-ssh-connect` action and runs
 `deploy/deploy.sh` on worker02. `rollback.yml` re-points the app container at a
 previously built image; `db-init.yml` is the only path that touches DB structure.
@@ -26,5 +26,5 @@ Two properties are worth knowing before reading those files:
   `PRODUCT_CODE` repo variable in the path - the deployed image is built from the
   repository as it stands.
 
-bid is production-only (ADR-002): there is no beta environment and `deploy.yml`
+bidproposal is production-only (ADR-002): there is no beta environment and `deploy.yml`
 rejects any tag that is not `v*.*.*`.

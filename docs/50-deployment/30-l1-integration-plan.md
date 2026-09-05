@@ -1,8 +1,8 @@
 # L1 integration plan (Atlas, Runos)
 
-Where bid stands against the two L1 planes it consumes, what is already true in
+Where bidproposal stands against the two L1 planes it consumes, what is already true in
 code, and what is left. Written after the 2026-08-16/17 contract refresh, in
-which both planes shipped breaking changes in response to bid's own questions
+which both planes shipped breaking changes in response to bidproposal's own questions
 (vxture-atlas#198, vxture-runos#116).
 
 ## Version pins this plan is written against
@@ -22,7 +22,7 @@ alone would have produced a client that was wrong in three places.
 
 - **One error vocabulary** (`lib/platform-error.ts`). Both planes now answer
   `{code, message, retryable}` with five unprefixed rejection codes that mean the
-  same thing everywhere. bid matches one constant rather than a branch per
+  same thing everywhere. bidproposal matches one constant rather than a branch per
   callee - which is the entire point of the unprefixed set.
 - **`retryable` comes from the callee.** Never inferred from a status: a
   commercial ceiling can arrive as 429 and must not be retried, and a 501 is in
@@ -32,7 +32,7 @@ alone would have produced a client that was wrong in three places.
   value is what lets a turn that spent a capability call and model tokens be
   totalled back up as one unit of work; two ids would silently make that
   impossible.
-- **The model catalog is now checkable.** `GET /v1/endpoints` answers what bid
+- **The model catalog is now checkable.** `GET /v1/endpoints` answers what bidproposal
   may actually route to, resolved by the same code path a call authorizes
   through. `/platform-check` reconciles the shipped catalog against it and names
   any entry that would 404 - the failure that previously surfaced as a user
@@ -44,13 +44,13 @@ alone would have produced a client that was wrong in three places.
 
 **Blocking a first live call - platform/operator side:**
 
-1. `OIDC_CLIENT_SECRET` for bid in the host `.env`. One credential unlocks both
+1. `OIDC_CLIENT_SECRET` for bidproposal in the host `.env`. One credential unlocks both
    login and every S2S call.
-2. Atlas product-endpoint grants for bid. Without one, every call is
+2. Atlas product-endpoint grants for bidproposal. Without one, every call is
    `403 NOT_ENTITLED` regardless of token validity. `chat/default` alone is
    enough to start; `/platform-check` will then report exactly which of the
    shipped catalog entries are live.
-3. Workspace coverage. Minting is gated on bid itself holding a subscription or
+3. Workspace coverage. Minting is gated on bidproposal itself holding a subscription or
    provisioned state in the workspace it speaks for - the check is on the CALLER,
    not the callee.
 4. `ATLAS_API_URL` and `RUNOS_API_URL` in the host `.env` (base URLs only; the
@@ -58,7 +58,7 @@ alone would have produced a client that was wrong in three places.
 
 **Blocking public verification:**
 
-5. The port cutover. The registry reassigned bid and the move is registered but
+5. The port cutover. The registry reassigned bidproposal and the move is registered but
    not executed. The host `.env` and the edge vhost are one change in two places
    and must move together - the previous port move left the edge pointing at the
    old number and the site answered 502 until someone noticed (liaison letter 50).
@@ -67,7 +67,7 @@ alone would have produced a client that was wrong in three places.
 
 6. Runos's production capability catalog. Reported empty, though a first-party
    `runos.code-sandbox` may now be registered - worth re-asking, since it decides
-   whether skills can stop reporting `unavailable`. bid's implementation is
+   whether skills can stop reporting `unavailable`. bidproposal's implementation is
    complete either way.
 7. `RUNOS_ENTITLEMENT_ENFORCED` is off in production, so no capability grant is
    needed. Revisit if it is turned on.
@@ -83,7 +83,7 @@ them announce themselves:
   send. None produced a signal until the exact moment it mattered.
 - **Read the source for shape, the doc for liveness.** Docs lag releases; source
   cannot tell you what is deployed.
-- **A catalog you cannot verify will drift, and then be believed.** bid invented
+- **A catalog you cannot verify will drift, and then be believed.** bidproposal invented
   three endpoint codes and shipped them. The fix was not more care - it was
   asking for an endpoint that makes the assumption checkable.
 - **The unprefixed error codes are a contract, not a coincidence.** Branching per

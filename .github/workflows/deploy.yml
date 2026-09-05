@@ -1,6 +1,6 @@
 name: deploy
 
-# Tag-triggered production deploy. bid runs PROD ONLY (owner decision - see
+# Tag-triggered production deploy. bidproposal runs PROD ONLY (owner decision - see
 # docs/30-design/decisions/ADR-002-prod-only-deployment.md): a v*.*.* tag builds
 # the image and deploys the production stack on the deploy host (worker02,
 # tailnet, non-VPC -> GHCR primary + ACR fallback).
@@ -32,7 +32,7 @@ permissions:
   packages: write
 
 env:
-  PRODUCT_CODE: bid
+  PRODUCT_CODE: bidproposal
 
 jobs:
   detect:

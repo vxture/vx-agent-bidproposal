@@ -1,11 +1,11 @@
-# Bid (The 20-Second Challenge) - game and subscription specification
+# Bidproposal (The 20-Second Challenge) - game and subscription specification
 
-The product is named **Bid** (`BRAND.displayName`) - the arena is a
+The product is named **Bidproposal** (`BRAND.displayName`) - the arena is a
 storm of amber embers converging on the player; "The 20-Second Challenge" is
-the game mode it ships. `bid` stays the product CODE (platform key, name
+the game mode it ships. `bidproposal` stays the product CODE (platform key, name
 cascade) - plumbing, not brand.
 
-bid's business domain (ADR-006): a 20-second bullet-dodging challenge whose
+bidproposal's business domain (ADR-006): a 20-second bullet-dodging challenge whose
 three subscription tiers exercise the platform's quota / subscription /
 entitlement machinery with real users. Derived from the owner's product design
 document ("20-Second Challenge SaaS subscription product design", 2026-08);
@@ -48,7 +48,7 @@ enterprise add nothing on the game axis beyond pro.
   the first bullet), so abandoning a run mid-air does not refund it.
 - The day boundary is 00:00 UTC, stated in the UI.
 - The cap is 10 by product default (`FREE_DAILY_RUNS`); a platform-configured
-  `limits["bid.game.runs_per_day"]` in the C2 envelope overrides it. Tiers
+  `limits["bidproposal.game.runs_per_day"]` in the C2 envelope overrides it. Tiers
   holding `game:unlimited-runs` ignore both.
 - Exhausted quota answers 429 with the reset time and the tier that removes the
   limit; the surface renders that as the offer, not as an error.
@@ -116,8 +116,8 @@ this repo's own: no client anti-cheat arms race (see integrity posture).
 | Rules (pure) | `portals/app/app/game/rules.ts` |
 | Engine (pure, seeded) | `portals/app/app/game/engine.ts` |
 | Persistence port | `portals/app/app/game/store.ts` (+ `prisma-store.ts`) |
-| Schema | `deploy/database/ddl/incr/0001_bid_game.sql` (`bid_game.run`) |
+| Schema | `deploy/database/ddl/incr/0001_bidproposal_game.sql` (`bidproposal_game.run`) |
 | APIs | `portals/app/app/api/game/{,run,run/finish,records,leaderboard}/route.ts` |
 | Surface | the deck at `/` - `portals/app/app/(product)/page.tsx` + `(product)/deck/` (renderer, side modules, trend chart); `/challenge` redirects |
 | Tier keys | `portals/app/app/entitlement/capability.ts` (`game:*`) |
-| Usage metric | `bid.game.runs`, buffered like `bid.chat.messages` (liaison letter 130) |
+| Usage metric | `bidproposal.game.runs`, buffered like `bidproposal.chat.messages` (liaison letter 130) |

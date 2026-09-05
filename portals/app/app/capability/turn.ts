@@ -13,7 +13,7 @@ import type { CapabilityCaller } from "./caller";
 // and expects exactly one of
 //   { kind: "tool_calls", calls }  { kind: "content", content }  { kind: "verdict", passed, reason? }
 //
-// This file is where bid's phrasing lives. The system text below is bid's own
+// This file is where bidproposal's phrasing lives. The system text below is bidproposal's own
 // business voice; ruyin never composes it (ADR-011), and neither should Atlas be
 // left to guess it.
 
@@ -96,7 +96,7 @@ export function validateTurnRequest(body: unknown): TurnRequest {
 }
 
 /**
- * bid's phrasing. Everything the model reads about the task is composed HERE,
+ * bidproposal's phrasing. Everything the model reads about the task is composed HERE,
  * from the facts ruyin sent. Context items are quoted as material, never as
  * instructions - ruyin marked them with an origin for exactly this reason
  * (a tender document was written by whoever issued it).
@@ -164,7 +164,7 @@ export class MockTurnResolver implements TurnResolver {
   }
 }
 
-/** Atlas-backed: bid composes the messages, Atlas answers; the reply becomes content. */
+/** Atlas-backed: bidproposal composes the messages, Atlas answers; the reply becomes content. */
 export class AtlasTurnResolver implements TurnResolver {
   readonly mode = "atlas" as const;
   constructor(private readonly cfg: { baseUrl: string }) {}

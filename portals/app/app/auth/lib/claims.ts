@@ -1,8 +1,8 @@
 // Access-token claim parsing and the governance-role gate (080-rp section 2.6).
 //
 // CRITICAL - this is where two CONFIRMED integration bugs live in arda
-// (product_240 section 6 #27/#28). bid must not repeat them, and neither must
-// anything copied from bid - the tests below are the guard:
+// (product_240 section 6 #27/#28). bidproposal must not repeat them, and neither must
+// anything copied from bidproposal - the tests below are the guard:
 //   1. The platform NEVER issues `admin`. The governance value domain is exactly
 //      owner / manager / member / readonly / guest (data_identity_200 section
 //      6.4 seed). Treating `admin` as a manage role, or expecting it, is wrong.

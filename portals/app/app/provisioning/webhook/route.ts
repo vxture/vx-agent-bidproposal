@@ -1,4 +1,4 @@
-import { BRAND } from "@bid/shared/brand";
+import { BRAND } from "@bidproposal/shared/brand";
 import { verifySignature, webhookSecrets } from "../lib/verify";
 import { handleProvisioning, type ProvisioningEvent } from "../lib/handler";
 import { getProvisioningStore } from "../lib/store";
@@ -11,7 +11,7 @@ import { getEntitlementResolver } from "../../entitlement/resolver";
 export const dynamic = "force-dynamic";
 
 // The product this webhook accepts events for. BRAND, never OIDC_CLIENT_ID: the
-// beta client is `bid-beta` while the product code stays `bid`, so deriving
+// beta client is `bidproposal-beta` while the product code stays `bidproposal`, so deriving
 // it from the client id would make a beta stack reject every event as
 // wrong-product.
 function productCode(): string {

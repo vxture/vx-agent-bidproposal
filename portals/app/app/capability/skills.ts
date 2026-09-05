@@ -14,11 +14,11 @@ import type { CapabilityCaller } from "./caller";
 // Runos catalogues Skills and DISTRIBUTES them - it never executes one (Runos
 // ADR-006 / ADR-009). Execution happens in the agent runtime, which is Ruyin on
 // the user's machine. Ruyin cannot reach Runos itself (zero-secret public
-// client), so bid's capability surface fetches on the user's behalf and hands
+// client), so bidproposal's capability surface fetches on the user's behalf and hands
 // the content over:
 //
-//   GET /products/bid/skills          -> catalogue: name, description, id@version
-//   GET /products/bid/skills/:name    -> SKILL.md text + resources + content_digest
+//   GET /products/bidproposal/skills          -> catalogue: name, description, id@version
+//   GET /products/bidproposal/skills/:name    -> SKILL.md text + resources + content_digest
 //
 // Ruyin files these into its "product-distributed" source layer and caches by
 // digest, so a skill fetched once keeps working offline.
@@ -87,7 +87,7 @@ export async function listDistributedSkills(
     return { status: { configured: false, reason: "RUNOS_API_URL is unset on this deployment" }, skills: [] };
   }
   const opts = { taskId, identity: caller.mint };
-  // Discovery is over the ENTITLED surface: a skill outside bid's grants is
+  // Discovery is over the ENTITLED surface: a skill outside bidproposal's grants is
   // invisible here, not forbidden - that is Runos's design, and it is why the
   // catalogue is asked for rather than hard-coded.
   const found = await deps.discover(deps.cfg, "skill", { ...opts, limit: 200, primitiveType: "skill" });

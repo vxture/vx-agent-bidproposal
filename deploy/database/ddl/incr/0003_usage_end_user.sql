@@ -1,7 +1,7 @@
 -- 0003_usage_end_user.sql - optional per-user attribution on buffered usage.
 --
 -- The consume contract (integration general rules, C3 up) accepts an optional
--- end_user_id for end-user attribution. bid's units of work are personal
+-- end_user_id for end-user attribution. bidproposal's units of work are personal
 -- (a challenge run, a chat message), so the buffer carries the sub and the
 -- flush forwards it. [ref] platform-issued sub, full "usr_<uuid>"; nullable -
 -- rows recorded before this column, or without a user context, stay valid.

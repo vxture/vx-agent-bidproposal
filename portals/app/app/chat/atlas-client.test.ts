@@ -10,7 +10,7 @@ import { resetS2STokenCache } from "../lib/s2s-token";
 
 const ENV = {
   OIDC_ISSUER: "http://accounts.internal",
-  OIDC_CLIENT_ID: "bid",
+  OIDC_CLIENT_ID: "bidproposal",
   OIDC_CLIENT_SECRET: "s3cret",
   ATLAS_API_URL: "http://worker-02:3100",
 };
@@ -20,7 +20,7 @@ const IDENTITY = { subjectToken: "user-access-token" };
 const MESSAGES = [{ role: "user" as const, content: "hi" }];
 
 const TENANT = "7f1d1a1e-0000-4000-8000-00000000abcd";
-const TASK_ID = "bid-task-under-test";
+const TASK_ID = "bidproposal-task-under-test";
 
 /** Minted claims are read from the JWT payload, so the stub must produce a real one. */
 function jwtWith(claims: Record<string, unknown>): string {
@@ -81,11 +81,11 @@ test("tenantId is the tenant UUID from the token, never the product code", async
   await fetchChatCompletion(getAtlasClientConfig()!, IDENTITY, MESSAGES, { taskId: TASK_ID, endpointCode: "chat/default" });
 
   assert.equal(calls[0].url, "http://worker-02:3100/v1/chat");
-  // Sending "bid" here validates fine and works while a product grant exists,
+  // Sending "bidproposal" here validates fine and works while a product grant exists,
   // then fails 400 INVALID_TENANT_ID the moment it does not - and writes NULL
   // into the request log in the meantime, so the traffic vanishes from rollups.
   assert.equal(calls[0].body.tenantId, TENANT);
-  assert.notEqual(calls[0].body.tenantId, "bid");
+  assert.notEqual(calls[0].body.tenantId, "bidproposal");
   assert.equal(calls[0].body.endpointCode, "chat/default");
   assert.ok(calls[0].body.requestId, "requestId is also the C3 idempotency key");
   // Required since Atlas v0.15.0 - a call without it is 400 TASK_ID_REQUIRED,

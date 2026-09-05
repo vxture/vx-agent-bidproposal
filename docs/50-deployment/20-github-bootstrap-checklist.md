@@ -4,7 +4,7 @@ One-time GitHub setup for a Vxture product repo. Code-external, owner action.
 Authority: `140-repo-governance-standard.md` section 1 / section 6 and
 `product_240_repo-template.md` section 2.8.
 
-For bid the boxes below are already ticked; a product copied from bid works
+For bidproposal the boxes below are already ticked; a product copied from bidproposal works
 this list from the top.
 
 ## Repo and branch protection
@@ -46,28 +46,31 @@ this list from the top.
 
 ## Deployment - prod only on worker02
 
-bid deploys **production only** (ADR-002) on **worker02** (in the tailnet,
-non-VPC, so GHCR primary + ACR fallback), stack root `/srv/md0/bid` on the data
+bidproposal deploys **production only** (ADR-002) on **worker02** (in the tailnet,
+non-VPC, so GHCR primary + ACR fallback), stack root `/srv/md0/bidproposal` on the data
 array. The workflows (`deploy` / `build` / `rollback` / `db-init` plus the
 `tailnet-ssh-connect` action) are in the repo, and the product code is a literal
 in them - there is no build-time substitution step and no `PRODUCT_CODE` repo
 variable in the path any more.
 
-### Configured for bid
+### Configured for bidproposal
 
-- [ ] `APP_PUBLISH_PORT` in the host `.env`, set to bid's allocation from the
+- [ ] `APP_PUBLISH_PORT` in the host `.env`, set to bidproposal's allocation from the
       port registry (the repo does not restate the number - see CLAUDE.md). It is
       one number: the app listens on it and is published on it. No workflow reads
-      the repo variable. **Pending: the registry has reassigned bid and the
+      the repo variable. **Pending: the registry has reassigned bidproposal and the
       cutover is not executed** - the host `.env` and the edge vhost move in the
       same window, or the site 502s the way it did in liaison letter 50.
-- [x] `production` GitHub Environment + required reviewer (deploy pauses until
-      approved). No `beta` environment - prod only.
-- [x] Non-secret host secrets: `DEPLOY_HOST` = `vx-worker-02` (tailnet MagicDNS,
+- [ ] `production` GitHub Environment + required reviewer (deploy pauses until
+      approved). No `beta` environment - prod only. **Not created for
+      bidproposal** (the repo was created with a plain push on 2026-09-05; no
+      environment, no ruleset yet).
+- [ ] Non-secret host secrets: `DEPLOY_HOST` = `vx-worker-02` (tailnet MagicDNS,
       IP `100.76.219.48`), `DEPLOY_USER` = `stone`, `DEPLOY_PORT` = `22`.
-- [x] Domain `bid.vxture.com` created and resolving (shared edge -> worker02
-      over the tailnet); vhost source in `configs/edge/`.
-- [x] Org-level shared credentials available to the repo: `NODE_AUTH_TOKEN`,
+- [ ] Domain `bidproposal.vxture.com` created and resolving (shared edge -> worker02
+      over the tailnet); vhost source in `configs/edge/`. **Provisional name, not
+      created** - requested in vxture-platform/vxture-platform#198.
+- [ ] Org-level shared credentials available to the repo: `NODE_AUTH_TOKEN`,
       `ALIYUN_ACR_USERNAME/PASSWORD`, `TAILSCALE_OAUTH_*`; org vars
       `ALIYUN_ACR_REGISTRY/NAMESPACE`, `VXTURE_NPM_REGISTRY`,
       `TAILSCALE_OAUTH_CLIENT_TAG`.
@@ -80,9 +83,9 @@ variable in the path any more.
       network. Fail-closed; there is no TOFU fallback.
 - [ ] `ENV_FILE_BASE64` - base64 of the host `.env`. Start from the committed
       `.env.example`, which is the authoritative key list. It is written to
-      `/srv/md0/bid/etc/.env` only when that file is ABSENT, so re-cutting this
+      `/srv/md0/bidproposal/etc/.env` only when that file is ABSENT, so re-cutting this
       secret does not update a running host - drift is silent until a rebuild.
-- [ ] SSH `vx-worker-02` once: create `/srv/md0/bid`, confirm GHCR/ACR login.
+- [ ] SSH `vx-worker-02` once: create `/srv/md0/bidproposal`, confirm GHCR/ACR login.
 - [ ] `OIDC_CLIENT_SECRET` in the host `.env`. This one credential unlocks both
       login and all S2S calls (ADR-003).
 - [ ] `ATLAS_API_URL` and `RUNOS_API_URL` in the host `.env` - base URLs only,

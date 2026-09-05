@@ -1,6 +1,6 @@
-# vx-agent-bid
+# vx-agent-bidproposal
 
-**bid**（标书编写）是 Ruyin 的首个业务产品。本仓是它的**云端能力面**：Ruyin（桌面
+**bidproposal**（标书编写）是 Ruyin 的首个业务产品。本仓是它的**云端能力面**：Ruyin（桌面
 本地运行环境）是零秘密的 public client，替用户换票、调 Atlas 与 Runos 的是这里
 （vxture-ruyin ADR-009 / ADR-020）。它同时是 **Runos 的第一个消费者**（本仓 ADR-001，
 vxture-foundation/vxture-runos#14）。
@@ -15,7 +15,7 @@ vxture-foundation/vxture-runos#14）。
 | `GET /api/products/{product}/skills` | Runos 分发给本产品的技能目录（转交，不执行） |
 | `GET /api/products/{product}/skills/{name}` | 一条技能的 `SKILL.md` + 资源 + 摘要 |
 
-仓从 `vxture/vx-agent-vxtpl@fabef44` 复制并 `rename-product.mjs bid` 而来：范本的
+仓从 `vxture/vx-agent-vxtpl@fabef44` 复制并 `rename-product.mjs bidproposal` 而来：范本的
 三通道（C1 / C2 / C3）、守卫、CI 与发布链原样保留，下面的说明仍然成立；范本的示例
 产品界面（挑战游戏）暂留作示例区，与能力面无关。
 
@@ -93,10 +93,10 @@ pnpm lint:data-design
 
 ---
 
-## Creating a new product from bid
+## Creating a new product from bidproposal
 
 ```bash
-git clone https://github.com/vxture/vxture-bid.git vxture-<code>
+git clone https://github.com/vxture/vxture-bidproposal.git vxture-<code>
 cd vxture-<code>
 node scripts/init/rename-product.mjs <code>        # --dry-run to preview
 ```
@@ -105,7 +105,7 @@ The rename script rewrites the whole name cascade - OIDC clients, compose projec
 and containers, image name, database and service role, workspace package scope,
 secret names, the public vhost - in file contents *and* in file and directory
 names, then reports what a human still has to do. It is pure Node with zero
-dependencies. See `docs/40-implementation/20-creating-a-product-from-bid.md`
+dependencies. See `docs/40-implementation/20-creating-a-product-from-bidproposal.md`
 for the full procedure, and the two checklists in `docs/50-deployment/`:
 
 1. Platform-side registration (owner / platform-line actions)
@@ -119,4 +119,4 @@ for the full procedure, and the two checklists in `docs/50-deployment/`:
 See [CLAUDE.md](CLAUDE.md) for the full repository working agreement: branch
 model, tag-triggered release flow, the five required CI checks, secret hygiene,
 SCA policy, docs taxonomy, and the rigid-zone / exemplar-zone boundary that says
-which parts of bid a copy is expected to replace.
+which parts of bidproposal a copy is expected to replace.

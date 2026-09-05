@@ -10,7 +10,7 @@ export interface UsageEvent {
   metric: string;
   amount: number;
   idempotencyKey: string;
-  /** Optional end-user attribution (consume end_user_id) - bid's units of
+  /** Optional end-user attribution (consume end_user_id) - bidproposal's units of
    * work are personal, so callers that know the sub pass it. */
   endUserId?: string;
 }

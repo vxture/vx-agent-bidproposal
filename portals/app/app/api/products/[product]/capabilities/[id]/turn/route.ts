@@ -53,7 +53,7 @@ export async function POST(
 
   try {
     const turn = await resolver.turn(request, id, caller);
-    return NextResponse.json(turn, { headers: { "x-bid-turn-mode": resolver.mode } });
+    return NextResponse.json(turn, { headers: { "x-bidproposal-turn-mode": resolver.mode } });
   } catch (cause) {
     // Downstream (Atlas) trouble is "try again later" from ruyin's point of view.
     return NextResponse.json(

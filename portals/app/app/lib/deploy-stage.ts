@@ -1,6 +1,6 @@
 // Deploy-stage guard for the offline mock resolvers.
 //
-// bid's mock entitlement and mock chat resolvers exist so the whole UI is
+// bidproposal's mock entitlement and mock chat resolvers exist so the whole UI is
 // explorable with an empty .env - that is a genuine local-dev and CI
 // convenience. On a deployed stack it is a trap: a missing PLATFORM_API_URL
 // would make the app serve entitlements out of MOCK_TIER, granting or denying

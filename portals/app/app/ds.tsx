@@ -59,7 +59,7 @@ export {
  *
  * They are only usable from a client component anyway, but they are re-exported
  * here so the repo has ONE import path for the design system. That is the point
- * of this file more than any individual re-export: bid is copied, and an
+ * of this file more than any individual re-export: bidproposal is copied, and an
  * `import ... from "@vxture/design-system/server"` pasted from a client page
  * into a server page is a 500 with a stack trace that names React, not the DS.
  * Routing everything through here means the trap cannot be copied.

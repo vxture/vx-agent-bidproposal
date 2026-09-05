@@ -2,8 +2,8 @@ import type { Entitlement, QuotaPool } from "./types";
 
 // Quota/limits accessors over the C2 envelope. Limits stay an open
 // `metric -> number` map with consumable `quota_pools` rather than a fixed set
-// of fields, because the metric keys are the product's (bid meters
-// `bid.chat.messages`; another product meters something else entirely) while
+// of fields, because the metric keys are the product's (bidproposal meters
+// `bidproposal.chat.messages`; another product meters something else entirely) while
 // the accessors below are shared.
 
 export const UNLIMITED = -1;

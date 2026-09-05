@@ -1,6 +1,6 @@
 // Chat module. Calls Atlas (the L1 model supply plane) for the reply and,
 // when a skill is selected, Runos (the L1 capability plane) to actually run
-// that skill - both on S2S tokens minted per call from bid's own OIDC client.
+// that skill - both on S2S tokens minted per call from bidproposal's own OIDC client.
 // An offline Mock stands in for local dev and CI so the UI and route are
 // verifiable with no credentials; it is refused on a deployed stage
 // (lib/deploy-stage.ts).

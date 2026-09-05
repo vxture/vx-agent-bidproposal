@@ -1,6 +1,6 @@
--- 0001_bid_game.sql - the challenge-game domain schema (ADR-006).
+-- 0001_bidproposal_game.sql - the challenge-game domain schema (ADR-006).
 --
--- bid's first domain schema: one append-mostly table recording every
+-- bidproposal's first domain schema: one append-mostly table recording every
 -- challenge run. Naming follows data_platform_100 section 3.2 (uuid PK via
 -- gen_random_uuid(), TIMESTAMPTZ, status VARCHAR(32)+CHECK, idx_/uidx_/chk_
 -- prefixes). workspace_id / sub are platform REFERENCE keys, never
@@ -11,13 +11,13 @@
 -- so on a fresh database a grant in 97 would name a schema that does not exist
 -- yet. A domain increment is self-contained - create, grant, lock, in order.
 
-CREATE SCHEMA IF NOT EXISTS bid_game;
+CREATE SCHEMA IF NOT EXISTS bidproposal_game;
 
 -- One row per challenge run. Two-phase: INSERT at start (status 'started' -
 -- this is the row the daily quota counts, so abandoning a run mid-air still
 -- spends it), UPDATE at finish with the outcome. score_ms is survival time in
 -- milliseconds, capped at the 20s run length.
-CREATE TABLE IF NOT EXISTS bid_game.run (
+CREATE TABLE IF NOT EXISTS bidproposal_game.run (
   id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   workspace_id  UUID NOT NULL,                        -- [ref] isolation key
   sub           VARCHAR(128) NOT NULL,                -- [ref] full "usr_<uuid>"
@@ -35,20 +35,20 @@ CREATE TABLE IF NOT EXISTS bid_game.run (
 
 -- Daily quota count + personal history both scan by player and recency.
 CREATE INDEX IF NOT EXISTS idx_run_ws_sub_started
-  ON bid_game.run (workspace_id, sub, started_at DESC);
+  ON bidproposal_game.run (workspace_id, sub, started_at DESC);
 
 -- Global leaderboard: best finished scores first.
 CREATE INDEX IF NOT EXISTS idx_run_finished_score
-  ON bid_game.run (score_ms DESC, finished_at ASC)
+  ON bidproposal_game.run (score_ms DESC, finished_at ASC)
   WHERE status = 'finished';
 
 -- Service-role access (mirrors 97_service_role.sql for the contract schemas).
-GRANT USAGE ON SCHEMA bid_game TO bid_svc;
-GRANT SELECT, INSERT, DELETE ON ALL TABLES IN SCHEMA bid_game TO bid_svc;
+GRANT USAGE ON SCHEMA bidproposal_game TO bidproposal_svc;
+GRANT SELECT, INSERT, DELETE ON ALL TABLES IN SCHEMA bidproposal_game TO bidproposal_svc;
 
 -- Column locks (mirrors 98_column_locks.sql): only the finish-phase columns are
 -- writable. Anchor columns (id, workspace_id, sub, seed, started_at,
 -- created_at) are immutable once the run row exists.
-REVOKE UPDATE ON bid_game.run FROM bid_svc;
+REVOKE UPDATE ON bidproposal_game.run FROM bidproposal_svc;
 GRANT UPDATE (status, outcome, score_ms, finished_at)
-  ON bid_game.run TO bid_svc;
+  ON bidproposal_game.run TO bidproposal_svc;

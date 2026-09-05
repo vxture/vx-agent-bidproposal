@@ -15,7 +15,7 @@ import { verifySignature, webhookSecrets } from "../../provisioning/lib/verify";
 import { getProvisioningStore } from "../../provisioning/lib/store";
 
 // GET /api/platform-check - consumer-perspective verification of every
-// platform channel bid consumes, per the integration general rules'
+// platform channel bidproposal consumes, per the integration general rules'
 // go-live checklist: C1 (OIDC discovery + JWKS), C2 (live entitlement
 // resolve, envelope + cache header), C3 up (consume target + buffer state),
 // C3 down (verifier self-test + recorded deliveries), plus the two L1
@@ -24,7 +24,7 @@ import { getProvisioningStore } from "../../provisioning/lib/store";
 // POST { probe: "c3-replay" } is the ONE spending probe - the checklist's
 // idempotency check (same key sent twice; the second answer must say
 // replayed:true and carry the FIRST event's id). It consumes at most one
-// unit of bid.chat.messages per workspace per day (the key is
+// unit of bidproposal.chat.messages per workspace per day (the key is
 // date-stable), and only on an explicit click - never on page load.
 export const dynamic = "force-dynamic";
 
@@ -158,7 +158,7 @@ async function checkAtlas(identity: MintOptions | null): Promise<ProbeResult> {
 }
 
 /**
- * Reconcile the shipped model catalog against what bid is actually granted.
+ * Reconcile the shipped model catalog against what bidproposal is actually granted.
  *
  * This is the check that could not exist before `GET /v1/endpoints`: every entry
  * in `MODEL_CATALOG` is an `endpointCode` whose only previous failure signal was
@@ -272,7 +272,7 @@ export async function POST(req: Request): Promise<Response> {
   const day = new Date().toISOString().slice(0, 10).replaceAll("-", "");
   const row = {
     workspaceId: session.workspaceId,
-    metric: "bid.chat.messages",
+    metric: "bidproposal.chat.messages",
     amount: 1,
     idempotencyKey: `probe-replay-${session.workspaceId}-${day}`,
     endUserId: session.sub,

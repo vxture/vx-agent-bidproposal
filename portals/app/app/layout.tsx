@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { BRAND } from "@bid/shared/brand";
+import { BRAND } from "@bidproposal/shared/brand";
 import { AppTheme } from "./ds";
 import "./globals.css";
 
@@ -19,7 +19,7 @@ export const metadata = {
  * `<html>`, and it never uses `prefers-color-scheme` - so a stylesheet that
  * reaches for the media query instead is answering a different question from
  * the one the DS is answering, and the two disagree the moment the OS is dark.
- * bid had exactly that bug after the 5.x migration: its own surfaces flipped
+ * bidproposal had exactly that bug after the 5.x migration: its own surfaces flipped
  * and the DS's tokens did not.
  *
  * `AppTheme` carries both halves: the pre-paint class-setter and the provider.

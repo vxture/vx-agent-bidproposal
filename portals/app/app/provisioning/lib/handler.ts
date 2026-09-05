@@ -72,7 +72,7 @@ export async function handleProvisioning(
       deps.onSubscriptionChanged?.(event.workspace_id);
       break;
     case "grant.invalidated":
-      // bid owns no per-grant assets to re-scope, so recording the delivery
+      // bidproposal owns no per-grant assets to re-scope, so recording the delivery
       // (which the caller already did) is the whole correct response. A product
       // that hands out asset-level grants re-scopes them here.
       break;

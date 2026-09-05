@@ -80,7 +80,7 @@ export default function StatusPage() {
         title="Integration status"
         description={<span className="block max-w-[62ch]">Non-secret config presence + live channel probes across every platform-integration surface.</span>}
       >
-        {gate && <p style={{ color: "var(--bid-slate)" }}>{gate}</p>}
+        {gate && <p style={{ color: "var(--bidproposal-slate)" }}>{gate}</p>}
 
         {status?.mockOnDeployedStage && (
           <Banner

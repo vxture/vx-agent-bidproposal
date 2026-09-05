@@ -2,7 +2,7 @@ import { assertInternalTarget } from "../lib/internal-target";
 import { mintS2SToken, type MintOptions } from "../lib/s2s-token";
 import type { PlatformErrorBody } from "../lib/platform-error";
 
-// Runos client - the commercial capability plane (L1). bid uses it two ways:
+// Runos client - the commercial capability plane (L1). bidproposal uses it two ways:
 // a read-only well-known probe on /platform-check, and a real
 // discover -> resolve -> invoke -> report_outcome loop behind a chat skill.
 //
@@ -19,7 +19,7 @@ import type { PlatformErrorBody } from "../lib/platform-error";
 //
 // `identity` takes the full MintOptions shape: Runos accepts both modes since
 // its v0.6.0 (service-mode audit attributes to `act.sub` instead of a user).
-// bid's only caller today is a chat turn, which is user-initiated and so
+// bidproposal's only caller today is a chat turn, which is user-initiated and so
 // mints OBO - that is also what lets Runos attribute the call to a real person.
 
 export const RUNOS_AUDIENCE = "runos";

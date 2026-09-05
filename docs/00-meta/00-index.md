@@ -11,7 +11,7 @@ The `lint:docs-numbering --strict` guardrail enforces this on every push.
 |--------|-----------|-------|
 | `00-meta` | this directory | the docs map and meta-notes about the docs themselves |
 | `10-standards` | `10-standards/` | thin index pointing at the org standards (text lives in the platform repo, not copied here) |
-| `20-specs` | `20-specs/` | product/business specifications - bid's product definition |
+| `20-specs` | `20-specs/` | product/business specifications - bidproposal's product definition |
 | `30-design` | `30-design/` | architecture, ADRs, domain design, DB schema |
 | `40-implementation` | `40-implementation/` | package/layer guides, coding rules, dev setup |
 | `50-deployment` | `50-deployment/` | infra, CI/CD, environments, bootstrap checklists, the branch-protection ruleset |
@@ -22,7 +22,7 @@ The `lint:docs-numbering --strict` guardrail enforces this on every push.
 
 ## Authority
 
-This repo IS `vxture-bid` - the deployed product other product repos are copied
+This repo IS `vxture-bidproposal` - the deployed product other product repos are copied
 from. The governing standards are NOT copied here; they live in the platform repo
 (`D:\MyWebSite\vxture`):
 

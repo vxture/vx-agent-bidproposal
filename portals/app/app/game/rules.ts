@@ -34,8 +34,8 @@ export const LEADERBOARD_SIZE = 100;
  * time by at most this much (network + countdown jitter). */
 export const FINISH_SLACK_MS = 3000;
 
-export const RUNS_METRIC = "bid.game.runs";
-export const DAILY_LIMIT_KEY = "bid.game.runs_per_day";
+export const RUNS_METRIC = "bidproposal.game.runs";
+export const DAILY_LIMIT_KEY = "bidproposal.game.runs_per_day";
 
 // --- daily quota ---------------------------------------------------------
 

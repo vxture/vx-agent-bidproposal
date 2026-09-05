@@ -1,21 +1,33 @@
-# vxture-bid Repository Standards
+# vxture-bidproposal Repository Standards
 
 Authoritative working agreement for this repo. The goal is a clean, predictable
 branch and deploy flow with no direct human writes to protected branches, and a
 governance base that every product repo copied from here inherits unchanged.
 
-## What bid is
+## What bidproposal is
 
-`bid` is a real, deployed Vxture product (`https://bid.vxture.com`, worker02)
-AND the reference build every new Vxture product is copied from.
-Those are one thing, not two: the only way to keep a template honest is to run it
-in production, so bid proves the platform integration surface by actually
-consuming it - it signs users in against the central accounts service, gates them
-by subscription tier, receives provisioning webhooks, calls Atlas for model
-inference, and calls Runos for capability execution. What ships here is the
-working shape of a Vxture product, not a diagram of one.
+`bidproposal` is the platform product code of 标书方案智能体 (Proposal Writing
+Agent; `product.products` row seeded by the platform on 2026-09-01,
+`release_stage=developing`). This repo is its **cloud capability surface**: the
+confidential service that the RUYIN desktop runtime (a zero-secret public
+client) calls for model turns and for Runos-distributed skills (vxture-ruyin
+ADR-009 / ADR-020; this repo's ADR-001). It is **not deployed yet** and it is
+**not registered on the platform yet** - both are tracked in
+vxture-platform/vxture-platform#198 and in
+`docs/50-deployment/10-platform-registration-checklist.md`. Anything below that
+reads as "runs in production" is the template's story, inherited from
+`vx-agent-vxtpl@fabef44` (copied 2026-09-05 and renamed), and does not describe
+this product until the checklist says so.
 
-There are no placeholders. Every name is the concrete `bid` value that runs in
+The template's three platform channels (C1 login, C2 entitlement, C3
+provisioning), the guardrails, CI and release chain are kept as-is; the
+capability surface is the four endpoints added on top
+(`docs/20-specs/30-capability-surface.md`). The template's sample product UI
+(the 20-Second Challenge game) is still in the tree as a sample area and has
+nothing to do with the capability surface.
+
+
+There are no placeholders. Every name is the concrete `bidproposal` value that runs in
 production, and that is enforced rather than asked for:
 `scripts/guardrails/check-no-placeholders.mjs` fails CI on any `__TOKEN__`
 outside the frozen liaison letters. A new product repo is created by copying this
@@ -35,19 +47,19 @@ not invent a standard inside a product repo.
 
 ## Name cascade
 
-The product code `bid` (matching `^[a-z][a-z0-9_-]{0,31}$`) determines every
+The product code `bidproposal` (matching `^[a-z][a-z0-9_-]{0,31}$`) determines every
 downstream name in the repo. These are literals in the source, not substitutions:
 
-| Slot | bid value |
+| Slot | bidproposal value |
 |------|-------------|
-| OIDC client pair | `bid` / `bid-beta` |
-| compose project + containers | `bid` / `bid-app`, `bid-redis`, `bid-db` |
-| image | `ghcr.io/vxture/bid-app` (ACR fallback mirrors it) |
-| database / service role | `vxturebiz_bid_prod` / `bid_svc` |
-| workspace package scope | `@bid/*` |
-| platform-side secret names | `BID_DB_SVC_PASSWORD`, `BID_PROVISION_WEBHOOK_SECRET`, `BID_WEBHOOK_BASE_URL` |
-| stack root on the deploy host | `/srv/md0/bid` |
-| public vhost | `bid.vxture.com` (beta `beta-bid.vxture.com`, reserved) |
+| OIDC client pair | `bidproposal` / `bidproposal-beta` |
+| compose project + containers | `bidproposal` / `bidproposal-app`, `bidproposal-redis`, `bidproposal-db` |
+| image | `ghcr.io/vxture/bidproposal-app` (ACR fallback mirrors it) |
+| database / service role | `vxturebiz_bidproposal_prod` / `bidproposal_svc` |
+| workspace package scope | `@bidproposal/*` |
+| platform-side secret names | `BIDPROPOSAL_DB_SVC_PASSWORD`, `BIDPROPOSAL_PROVISION_WEBHOOK_SECRET`, `BIDPROPOSAL_WEBHOOK_BASE_URL` |
+| stack root on the deploy host | `/srv/md0/bidproposal` |
+| public vhost | `bidproposal.vxture.com` (beta `beta-bidproposal.vxture.com`, reserved) |
 
 **Ports are not in this table, and not anywhere else in the repo.** They are
 allocated by the org port registry, which is the only source permitted to assign
@@ -55,12 +67,12 @@ one - a repo that restates a port becomes a second source, and the second source
 is the one that goes stale. The runtime value lives where it has to: the
 `APP_PUBLISH_PORT` default in `docker-compose.yml` / `deploy.sh` and the edge
 vhost's `$upstream`. Those are configuration, not documentation. If you need to
-know bid's number, read the registry, not this file.
+know bidproposal's number, read the registry, not this file.
 
 `BRAND.productCode` (`portals/packages/shared/src/brand.ts`) is the single source
 of product identity in application code. Never derive the product code from
-`OIDC_CLIENT_ID`: the beta client is `bid-beta` while the product code stays
-`bid`, so the two diverge on any non-prod stack.
+`OIDC_CLIENT_ID`: the beta client is `bidproposal-beta` while the product code stays
+`bidproposal`, so the two diverge on any non-prod stack.
 
 `scripts/init/rename-product.mjs` is the only supported way to re-derive this
 cascade for a copied repo; it is site-aware (DB and role names take the snake_case
@@ -76,9 +88,9 @@ they are triggered only by pushing a release tag:
 - `vX.Y.Z` tag - deploys the production stack. Gated by a required reviewer on
   the `production` GitHub Environment - the deploy job pauses until approved.
 
-bid runs **prod-only** (ADR-002): there is no beta stack, no `beta` GitHub
+bidproposal runs **prod-only** (ADR-002): there is no beta stack, no `beta` GitHub
 Environment, and `deploy.yml` rejects any tag that is not `v*.*.*`. The
-`bid-beta` OIDC client stays reserved but unused. A product copied from bid
+`bidproposal-beta` OIDC client stays reserved but unused. A product copied from bidproposal
 that wants two tiers adds the beta routing and a beta compose project itself.
 
 `dev-*` and `varda-*` tags are platform-repo-only; product repos do not build
@@ -187,7 +199,7 @@ shared to selected repos, not duplicated per repo.
 `audit` = osv-scanner hard gate over `pnpm-lock.yaml`. Fix (upgrade / pnpm
 override / exact pin for peer-only deps) or record a named `[[PackageOverrides]]`
 exception with a reason - never widen the gate (no `continue-on-error`, never
-removed from required). bid ships an empty ignore baseline, and a product
+removed from required). bidproposal ships an empty ignore baseline, and a product
 copied from it starts empty too; do not copy another repo's named ignores.
 
 **Three mechanisms, and each covers a case the others cannot.** Losing any one of
@@ -243,7 +255,7 @@ endpoints/signing/idempotency/gating formula/cache discipline; value-domain
 consumption; DB governance (DDL three-part + column locks + db-init as the sole
 structure-change path); docs numbering; the data-face hard constraints.
 
-**Exemplar (concrete bid content a copy is expected to replace):** the product
+**Exemplar (concrete bidproposal content a copy is expected to replace):** the product
 surfaces under `portals/app/app/` and their components; the domain schemas beyond
 the three reserved contract schemas (`vx_provision` / `local_authz` /
 `local_usage` are reserved names and must not be reused for domain data);
@@ -251,7 +263,7 @@ role/permission catalog values; the contents of the capability matrix
 (`portals/app/app/entitlement/capability.ts`) and the model/skill catalog; the
 `20-specs/` product definition; domain guardrails.
 
-The distinction is mechanism versus content. bid fills every exemplar slot with
+The distinction is mechanism versus content. bidproposal fills every exemplar slot with
 something real and working, so a copy has a worked example to edit rather than an
 empty file to guess at - but it edits the content and leaves the mechanism alone.
 

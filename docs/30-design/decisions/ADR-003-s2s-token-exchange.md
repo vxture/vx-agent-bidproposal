@@ -5,7 +5,7 @@
 
 ## Context
 
-bid calls three services machine-to-machine: Atlas for inference, Runos for
+bidproposal calls three services machine-to-machine: Atlas for inference, Runos for
 capability execution, and the platform's own `/platform/*` and `/usage/*`
 endpoints. Each needs a service-to-service credential.
 
@@ -24,13 +24,13 @@ that reads as "Runos is broken" rather than "this was never possible".
 
 The exchange also needs no new credential. It authenticates with the caller's
 existing confidential OIDC client - the same `OIDC_CLIENT_ID` /
-`OIDC_CLIENT_SECRET` pair bid already holds for the C1 login flow. So the
+`OIDC_CLIENT_SECRET` pair bidproposal already holds for the C1 login flow. So the
 liaison asks were requesting something that does not exist, while the thing
 actually required was already provisioned.
 
 ## Decision
 
-bid mints S2S tokens per call and caches them in memory.
+bidproposal mints S2S tokens per call and caches them in memory.
 `portals/app/app/lib/s2s-token.ts` is the single place that speaks to the token
 endpoint. `ATLAS_S2S_TOKEN` and `RUNOS_S2S_TOKEN` are removed; the clients keep
 only their base URLs.
@@ -47,7 +47,7 @@ elsewhere:
    This started as a hard constraint rather than a choice - Runos v0.5.0's guard
    required `sub`, which service-mode tokens do not carry. Runos ADR-013 lifted
    that in their v0.6.0, which is live, so a background path to the capability
-   plane now exists. bid has no scheduled capability work today, but the client
+   plane now exists. bidproposal has no scheduled capability work today, but the client
    takes the general identity shape, so adding one is a caller-side change only.
 2. **Cache keys carry identity.** An OBO token is scoped to one user and one
    workspace. The cache is keyed by audience plus mode plus context, so one
@@ -65,17 +65,17 @@ elsewhere:
    there. So the egress guard must keep its https-anywhere branch open even
    though every subsequent tool call is tailnet-internal.
 6. **`invalid_target` means coverage, not a typo.** With a valid audience string
-   that error is the D2 gate: bid must itself hold an active subscription or a
+   that error is the D2 gate: bidproposal must itself hold an active subscription or a
    provisioned state in the workspace it is speaking for. It is the first error a
    newly registered product hits, and it is a platform-side action, not a code fix.
 
 ## Consequences
 
 - One fewer secret per platform, and the two that remain (`OIDC_CLIENT_SECRET`,
-  `PROVISION_WEBHOOK_SECRET`) are ones bid already had.
+  `PROVISION_WEBHOOK_SECRET`) are ones bidproposal already had.
 - Liaison letters 60 and 70 asked for the wrong thing. They stay as written -
   they are dated records - and a new letter states the corrected ask.
-- A background path to Runos exists as of their v0.6.0. bid does not use one
+- A background path to Runos exists as of their v0.6.0. bidproposal does not use one
   yet; when it needs one, the change is a service-mode identity at the call site,
   not new machinery.
 - The C2 entitlement client still uses the older `x-vxture-internal-auth` shared

@@ -3,7 +3,7 @@
 // tokens - so the frequency is capped per (workspace, sub), fixed window.
 //
 // In-memory on globalThis (the per-route-bundle singleton rule; see
-// provisioning/lib/store.ts). bid runs one container, so process-local is
+// provisioning/lib/store.ts). bidproposal runs one container, so process-local is
 // the honest scope; a horizontally scaled copy moves this into Redis.
 
 export const CHAT_TURNS_PER_MINUTE = 6;

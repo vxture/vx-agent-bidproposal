@@ -1,4 +1,4 @@
-import { BRAND } from "@bid/shared/brand";
+import { BRAND } from "@bidproposal/shared/brand";
 import { EMPTY_ENTITLEMENT, type Entitlement, type SubscriptionStatus, type Tier } from "./types";
 import { getPlatformClientConfig } from "./platform-client";
 import { PlatformEntitlementResolver } from "./platform-resolver";

@@ -26,7 +26,7 @@ test("http is allowed to single-label hosts (container DNS / MagicDNS short name
   for (const u of [
     "http://worker-02:3100/v1/chat", // how the platform line publishes Atlas
     "http://vx-worker-02:3120/v1/mcp",
-    "http://bid-db:5432/x",
+    "http://bidproposal-db:5432/x",
   ]) {
     assert.ok(assertInternalTarget(u), u);
   }

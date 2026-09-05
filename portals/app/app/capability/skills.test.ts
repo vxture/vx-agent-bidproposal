@@ -5,7 +5,7 @@ import { DEV_WORKSPACE_ID, type CapabilityCaller } from "./caller";
 import type { RunosCapability, RunosContract, RunosResult } from "../runos/client";
 
 // The skill relay hands Runos-distributed Skills to the Ruyin runtime
-// (vxture-ruyin ADR-020 section 3c). Runos is injected: these tests pin what bid
+// (vxture-ruyin ADR-020 section 3c). Runos is injected: these tests pin what bidproposal
 // does with what Runos says, never whether Runos is reachable.
 
 const caller: CapabilityCaller = { workspaceId: DEV_WORKSPACE_ID, mint: { workspaceId: DEV_WORKSPACE_ID } };
@@ -104,7 +104,7 @@ test("fetch: text + resources + Runos's digest + resolved version come back; unk
   assert.ok(!("content" in missing) && missing.notFound === true);
 });
 
-test("fetch: when Runos sends no digest, bid computes one and says it did", async () => {
+test("fetch: when Runos sends no digest, bidproposal computes one and says it did", async () => {
   const r = await fetchDistributedSkill(
     caller,
     "t1",

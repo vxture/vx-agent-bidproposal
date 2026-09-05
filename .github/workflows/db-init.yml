@@ -15,7 +15,7 @@ name: db-init
 #
 # `apply` runs the three-part baseline + incr/ increments (idempotent create-once
 # + ADD COLUMN IF NOT EXISTS) against the production db container as the DB
-# superuser (docker exec, in-container trust), then sets the bid_svc role's
+# superuser (docker exec, in-container trust), then sets the bidproposal_svc role's
 # password from the operator .env's DATABASE_URL so the app can authenticate
 # (generating + patching one in place if the URL has none yet). `verify` reports
 # schema tables + whether the role has a password, non-destructively.
@@ -47,7 +47,7 @@ permissions:
   contents: read
 
 env:
-  PRODUCT_CODE: bid
+  PRODUCT_CODE: bidproposal
 
 jobs:
   db-init:
@@ -149,15 +149,15 @@ jobs:
           tar -xzf "$DDL_TGZ" -C "$DDL_DIR"
           DDL="$DDL_DIR/database/ddl"
           run() { docker exec -i "$CONT" psql -U postgres -d "$DB" -v ON_ERROR_STOP=1 "$@"; }
-          # The DDL carries bid's real role name (bid_svc) - it is applied
+          # The DDL carries bidproposal's real role name (bidproposal_svc) - it is applied
           # verbatim, with no substitution layer between the file and the database.
           apply_file() { run < "$1"; }
           list_tables() {
-            run -c "SELECT table_schema||'.'||table_name FROM information_schema.tables WHERE table_schema IN ('vx_provision','local_authz','local_usage','bid_game') ORDER BY 1;"
+            run -c "SELECT table_schema||'.'||table_name FROM information_schema.tables WHERE table_schema IN ('vx_provision','local_authz','local_usage','bidproposal_game') ORDER BY 1;"
           }
 
           # Service-role password. The role is created LOGIN-only (no password) by
-          # 97_service_role.sql; the app connects as bid_svc over TCP (scram),
+          # 97_service_role.sql; the app connects as bidproposal_svc over TCP (scram),
           # so the role needs a password matching the operator .env's DATABASE_URL
           # (postgresql://<svc>:PASSWORD@host...). Parse it here - it lives only on
           # the host and never transits CI. Empty if the URL carries no password.

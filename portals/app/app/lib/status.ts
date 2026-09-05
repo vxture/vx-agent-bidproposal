@@ -1,4 +1,4 @@
-import { BRAND } from "@bid/shared/brand";
+import { BRAND } from "@bidproposal/shared/brand";
 import { serviceIdentity } from "@vxture/shared";
 
 // Integration-status surface (the /status dashboard + /api/status). Summarizes

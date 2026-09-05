@@ -1,5 +1,5 @@
-# Three-container stack for bid: bid-app (Next.js) + bid-redis (RP session
-# store) + bid-db (business data). PROJECT_NAME drives the compose project +
+# Three-container stack for bidproposal: bidproposal-app (Next.js) + bidproposal-redis (RP session
+# store) + bidproposal-db (business data). PROJECT_NAME drives the compose project +
 # container-name prefix, so a second stack on the same host never collides.
 # Backing services are internal-only; only the app publishes a port.
 #
@@ -18,11 +18,11 @@
 # value, and reported a health failure against a container Docker had already
 # marked healthy. A literal cannot drift. Every other product on the deploy host
 # (atlas 3100, runos 3120, arda 3230) is written this way.
-name: ${PROJECT_NAME:-bid}
+name: ${PROJECT_NAME:-bidproposal}
 
 services:
   app:
-    container_name: ${PROJECT_NAME:-bid}-app
+    container_name: ${PROJECT_NAME:-bidproposal}-app
     build:
       context: .
       dockerfile: portals/app/Dockerfile
@@ -33,7 +33,7 @@ services:
         GIT_SHA: ${GIT_SHA:-unknown}
         BUILD_TIME: ${BUILD_TIME:-unknown}
         DEPLOY_STAGE: ${DEPLOY_STAGE:-dev}
-    image: ${IMAGE_REGISTRY:-ghcr.io}/${IMAGE_NAMESPACE:-vxture}/${PRODUCT_CODE:-bid}-app:${IMAGE_TAG:-local}
+    image: ${IMAGE_REGISTRY:-ghcr.io}/${IMAGE_NAMESPACE:-vxture}/${PRODUCT_CODE:-bidproposal}-app:${IMAGE_TAG:-local}
     # Load the full operator .env into the app so ALL runtime config (OIDC,
     # platform client, webhook, INTERNAL_JOB_TOKEN, STATUS_PAGE, ...) reaches it -
     # not just the few keys in `environment:` below. APP_ENV_FILE is the absolute
@@ -44,7 +44,7 @@ services:
     environment:
       NODE_ENV: production
       PORT: "4000"
-      REDIS_URL: redis://${PROJECT_NAME:-bid}-redis:6379
+      REDIS_URL: redis://${PROJECT_NAME:-bidproposal}-redis:6379
       DATABASE_URL: ${DATABASE_URL:-}
     ports:
       - "${APP_PUBLISH_PORT:-4000}:4000"
@@ -60,7 +60,7 @@ services:
     restart: unless-stopped
 
   redis:
-    container_name: ${PROJECT_NAME:-bid}-redis
+    container_name: ${PROJECT_NAME:-bidproposal}-redis
     image: redis:7-alpine
     command: ["redis-server", "--appendonly", "yes"]
     volumes:
@@ -69,14 +69,14 @@ services:
     restart: unless-stopped
 
   db:
-    container_name: ${PROJECT_NAME:-bid}-db
+    container_name: ${PROJECT_NAME:-bidproposal}-db
     image: postgres:16-alpine
     environment:
       # The container superuser is the DB OWNER, NOT the service role. The DDL
-      # (db-init, as this owner) creates the least-privilege bid_svc role that
+      # (db-init, as this owner) creates the least-privilege bidproposal_svc role that
       # the app connects as via DATABASE_URL (product_240 section 2.7: connect
-      # identity = bid_svc, never owner-direct).
-      POSTGRES_DB: ${POSTGRES_DB:-vxturebiz_${PRODUCT_CODE_SNAKE:-bid}_prod}
+      # identity = bidproposal_svc, never owner-direct).
+      POSTGRES_DB: ${POSTGRES_DB:-vxturebiz_${PRODUCT_CODE_SNAKE:-bidproposal}_prod}
       POSTGRES_USER: ${POSTGRES_DB_OWNER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-}
     volumes:
@@ -86,4 +86,4 @@ services:
 
 networks:
   appnet:
-    name: ${PROJECT_NAME:-bid}-net
+    name: ${PROJECT_NAME:-bidproposal}-net

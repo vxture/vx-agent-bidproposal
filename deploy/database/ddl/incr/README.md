@@ -10,12 +10,12 @@ Each increment must be idempotent: `ADD COLUMN IF NOT EXISTS`,
 `../98_column_locks.sql`, or the service-role write fails with permission denied.
 
 A domain-schema increment is SELF-CONTAINED: it creates the schema, then grants
-the service role and locks columns itself (`0001_bid_game.sql` is the worked
+the service role and locks columns itself (`0001_bidproposal_game.sql` is the worked
 example). Do not put a domain schema's grants in `97_service_role.sql` /
 `98_column_locks.sql` - those apply BEFORE incr/, so on a fresh database they
 would name a schema that does not exist yet.
 
-The contract tables all live in `00_baseline.sql`; bid's own domain schema
-(`bid_game`, ADR-006) starts the increments. A product copied from bid
+The contract tables all live in `00_baseline.sql`; bidproposal's own domain schema
+(`bidproposal_game`, ADR-006) starts the increments. A product copied from bidproposal
 replaces the domain increments with its own (rename-product rewrites the schema
 name; the domain itself is exemplar content).
