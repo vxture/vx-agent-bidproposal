@@ -11,3 +11,4 @@ exposes, and which platform contracts it consumes.
 Files use `NN-slug.md` numbering. A product repo copied from bid replaces this
 decade wholesale with its own specification - bid's product definition is not
 inherited, only the shape of it.
+| `30-capability-surface.md` | bid 云端能力面规格 v0.1：四个端点、身份、待核实项、已知缺口 |

@@ -216,11 +216,14 @@ export interface RunosContract {
 export function runosDiscover(
   cfg: RunosClientConfig,
   query: string,
-  opts: CallToolOptions & { limit?: number; category?: string; tags?: string[] },
+  opts: CallToolOptions & { limit?: number; category?: string; tags?: string[]; primitiveType?: "connector" | "skill" | "executor" | "asset" },
 ): Promise<RunosResult<{ capabilities: RunosCapability[] }>> {
   const args: Record<string, unknown> = { query, limit: opts.limit ?? 25 };
   if (opts.category) args.category = opts.category;
   if (opts.tags?.length) args.tags = opts.tags;
+  // Runos 210 section 4: `filter: { primitive_type }` - the skill relay asks for
+  // Skills only, so a Connector never masquerades as one in the catalogue.
+  if (opts.primitiveType) args.filter = { primitive_type: opts.primitiveType };
   return callTool(cfg, "runos_discover", args, { ...opts, timeoutMs: opts.timeoutMs ?? PROBE_TIMEOUT_MS });
 }
 

@@ -1,16 +1,23 @@
-# vxture-bid
+# vx-agent-bid
 
-**bid** is a deployed Vxture product and the reference build every new Vxture
-product is copied from. Those are deliberately the same thing: a template nobody
-runs drifts from reality, so bid proves the platform integration surface by
-consuming it in production at `https://bid.vxture.com`.
+**bid**（标书编写）是 Ruyin 的首个业务产品。本仓是它的**云端能力面**：Ruyin（桌面
+本地运行环境）是零秘密的 public client，替用户换票、调 Atlas 与 Runos 的是这里
+（vxture-ruyin ADR-009 / ADR-020）。它同时是 **Runos 的第一个消费者**（本仓 ADR-001，
+vxture-foundation/vxture-runos#14）。
 
-Its product is **Bid** (game mode: The 20-Second Challenge) - a
-bullet-dodging reaction game whose three subscription tiers (daily quota,
-personal record, global leaderboard + trend) run the platform's real quota /
-entitlement machinery with real users (ADR-006,
-`docs/20-specs/20-challenge-game.md`). `bid` is the product code;
-Bid is the brand (`BRAND.displayName`).
+能力面的四个端点（规格：`docs/20-specs/30-capability-surface.md`，实现：
+`portals/app/app/capability/`、`portals/app/app/api/products/[product]/`）：
+
+| 端点 | 作用 |
+|---|---|
+| `GET /api/products/{product}/contract` | `ruyin.product.yaml` 原文，Ruyin 据此更新契约 |
+| `POST /api/products/{product}/capabilities/{id}/turn` | Ruyin Harness 循环的一个回合：事实进、`tool_calls | content | verdict` 出 |
+| `GET /api/products/{product}/skills` | Runos 分发给本产品的技能目录（转交，不执行） |
+| `GET /api/products/{product}/skills/{name}` | 一条技能的 `SKILL.md` + 资源 + 摘要 |
+
+仓从 `vxture/vx-agent-vxtpl@fabef44` 复制并 `rename-product.mjs bid` 而来：范本的
+三通道（C1 / C2 / C3）、守卫、CI 与发布链原样保留，下面的说明仍然成立；范本的示例
+产品界面（挑战游戏）暂留作示例区，与能力面无关。
 
 It signs users in against the central accounts service (C1), gates them by
 subscription tier (C2), receives provisioning webhooks (C3), calls **Atlas** for
