@@ -1,0 +1,7 @@
+# pnpm workspace roots. The app profile roots packages under portals/, per the
+# governance source-directory slots: portals/app is the Next.js application
+# (@bid/app) and portals/packages/* holds shared workspace packages
+# (@bid/shared).
+packages:
+  - "portals/*"
+  - "portals/packages/*"

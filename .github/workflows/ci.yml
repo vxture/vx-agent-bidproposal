@@ -1,0 +1,200 @@
+name: ci
+
+# Trunk-based CI: runs on PRs to main and on push:main (the squash commit that
+# lands on main is a new SHA, so it gets its own gate run). Does NOT deploy.
+#
+# Produces four of the five required status checks named in
+# docs/50-deployment/rebuild/main-ruleset.json: `quality-gate` / `build` /
+# `test-coverage` / `audit` (the fifth, `gitleaks`, is in secret-scan.yml). Job
+# names are a stable contract - renaming one breaks branch protection. All four
+# do real work: `build` installs the workspace and produces the Next.js
+# standalone build, `test-coverage` runs the app's node:test suite, `audit` is
+# the osv-scanner SCA gate, `quality-gate` aggregates the static guardrails.
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: ci-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || format('push-{0}', github.ref_name) }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  # -- Audit (SCA hard gate) --------------------------------------------------
+  # Real SCA: osv-scanner scans pnpm-lock.yaml's full dependency tree against
+  # the OSV vulnerability database and hard-blocks on any new finding. Runs the
+  # pinned, sha256-verified binary directly (no third-party action: no license
+  # or supply-chain concern), mirroring the gitleaks pattern in secret-scan.yml.
+  # The baseline is empty (.osv-scanner.toml); new advisories must be fixed, not
+  # suppressed. `audit` is a required check on main.
+  audit:
+    name: audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      # Single point of upgrade (see https://github.com/google/osv-scanner/releases).
+      # Bump both the version and the sha256 below together.
+      OSV_SCANNER_VERSION: "2.4.0"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Cache osv-scanner binary
+        id: osv-cache
+        uses: actions/cache@v6
+        with:
+          path: /tmp/osv-bin
+          key: osv-scanner-${{ env.OSV_SCANNER_VERSION }}-linux-amd64
+
+      - name: Download osv-scanner (cache miss only)
+        if: ${{ steps.osv-cache.outputs.cache-hit != 'true' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          sha256=15314940c10d26af9c6649f150b8a47c1262e8fc7e17b1d1029b0e479e8ed8a0
+          url="https://github.com/google/osv-scanner/releases/download/v${OSV_SCANNER_VERSION}/osv-scanner_linux_amd64"
+          mkdir -p /tmp/osv-bin
+          # --proto/--proto-redir: -L follows redirects, and without these a
+          # redirect to http:// would be followed silently. The sha256 below
+          # catches a swapped artifact; this stops the plaintext hop.
+          curl -fsSL --proto "=https" --proto-redir "=https" --tlsv1.2 "$url" -o /tmp/osv-bin/osv-scanner
+          echo "${sha256}  /tmp/osv-bin/osv-scanner" | sha256sum -c -
+
+      - name: OSV dependency scan
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x /tmp/osv-bin/osv-scanner
+          # Must pass --config explicitly: when scanning a --lockfile,
+          # osv-scanner does not auto-discover the repo-root config, so the
+          # ignore baseline would silently not apply. A new advisory exits
+          # non-zero and fails this required check.
+          # --allow-no-lockfiles: the governance-shell batch has zero runtime
+          # dependencies, so the lockfile lists 0 packages; without this flag
+          # osv-scanner exits 128 ("no package sources"). Once batch 2 adds real
+          # dependencies the flag is a no-op and this becomes a real scan.
+          /tmp/osv-bin/osv-scanner scan -L pnpm-lock.yaml --config .osv-scanner.toml --allow-no-lockfiles
+
+  # -- Static checks (feed quality-gate) --------------------------------------
+  # Pure-node, zero-dependency checks that run without a pnpm install: the docs
+  # numbering hard gate and a whitespace/marker check. quality-gate aggregates
+  # this; later batches add type-check / lint / guardrails as they become real.
+  static-checks:
+    name: static-checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Whitespace and conflict-marker check
+        run: git diff --check
+
+      - name: Docs numbering guardrail (strict)
+        run: node scripts/guardrails/check-docs-numbering.mjs --strict
+
+      - name: Data architecture guardrail (DDL <-> Prisma lockstep)
+        run: node scripts/guardrails/check-data-architecture.mjs --strict
+
+      # ADR-001 removed the build-time substitution step so the deployed
+      # artifact IS the repo. Without a check that stays true only as long as
+      # everyone remembers it - and this repo is copied.
+      - name: Placeholder guardrail (no build-time substitution tokens)
+        run: node scripts/guardrails/check-no-placeholders.mjs --strict
+
+      # One product, one number. The port is stated in ten files because a
+      # Dockerfile cannot read compose and an nginx vhost cannot read a shell
+      # script; what it must not do is disagree with itself.
+      - name: Port guardrail (every site states the same port)
+        run: node scripts/guardrails/check-port-consistency.mjs --strict
+
+      # main-ruleset.json is applied verbatim to every repo bootstrapped from
+      # bid, so a weakened protection here is inherited, not contained (#37).
+      - name: Ruleset guardrail (no bypass, five checks still required)
+        run: node scripts/guardrails/check-ruleset.mjs --strict
+
+      # The `audit` job above is the gate on incoming change; sca-watch.yml is
+      # the scheduled scan of the idle trunk, which the gate cannot see. Two
+      # copies of one scan can drift, and a watcher pinned to an older scanner
+      # reports clean on findings the gate blocks.
+      - name: SCA consistency guardrail (the watch scans like the gate)
+        run: node scripts/guardrails/check-sca-consistency.mjs --strict
+
+  # -- Quality gate (aggregator; stable required-check name) ------------------
+  quality-gate:
+    name: quality-gate
+    runs-on: ubuntu-latest
+    needs: [static-checks]
+    steps:
+      - name: Aggregate
+        run: |
+          echo "quality gate: all aggregated checks passed"
+
+  # -- Build (required check): install the pnpm workspace, type-check the
+  # shared package, and produce the Next.js standalone build for the app.
+  build:
+    name: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+
+      - name: Enable corepack (pnpm from packageManager)
+        run: corepack enable
+
+      - name: Install (frozen lockfile)
+        run: pnpm install --frozen-lockfile
+        env:
+          # @vxture/shared resolves from GitHub Packages (org secret, visibility
+          # "all" - every org repo's Actions can read it).
+          NODE_AUTH_TOKEN: ${{ secrets.NODE_AUTH_TOKEN }}
+
+      - name: Type-check (shared)
+        run: pnpm type-check:all
+
+      - name: Build app (Next.js standalone)
+        run: pnpm build
+        env:
+          # Provenance is read at runtime (server env), not baked by `next build`;
+          # set GIT_SHA so the CI build environment is representative.
+          GIT_SHA: ${{ github.sha }}
+
+  # -- Test coverage (required check): run the app unit tests (node:test + tsx).
+  test-coverage:
+    name: test-coverage
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+
+      - name: Enable corepack (pnpm from packageManager)
+        run: corepack enable
+
+      - name: Install (frozen lockfile)
+        run: pnpm install --frozen-lockfile
+        env:
+          # @vxture/shared resolves from GitHub Packages (org secret, visibility
+          # "all" - every org repo's Actions can read it).
+          NODE_AUTH_TOKEN: ${{ secrets.NODE_AUTH_TOKEN }}
+
+      - name: Run tests
+        run: pnpm --filter @bid/app test

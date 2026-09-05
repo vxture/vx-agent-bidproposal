@@ -1,0 +1,165 @@
+// Prisma is the CLIENT-GENERATION SOURCE only (product_240 section 2.4 E). The
+// DDL under deploy/database/ddl/ is the single structure authority; this schema
+// stays in lockstep with it (enforced by check-data-architecture.mjs). There is
+// no migrations directory - structure changes go through db-init, not prisma.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  schemas  = ["vx_provision", "local_authz", "local_usage", "bid_game"]
+}
+
+// ===== vx_provision =====
+
+model AppInstance {
+  id            String    @id @default(uuid()) @db.Uuid
+  workspaceId   String    @map("workspace_id") @db.Uuid
+  tenantId      String?   @map("tenant_id") @db.Uuid
+  productCode   String    @map("product_code") @db.VarChar(32)
+  status        String    @default("pending") @db.VarChar(32)
+  env           String    @default("prod") @db.VarChar(32)
+  provisionedAt DateTime? @map("provisioned_at") @db.Timestamptz()
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt     DateTime  @default(now()) @map("updated_at") @db.Timestamptz()
+
+  @@unique([workspaceId, productCode], map: "uidx_app_instance_ws_product")
+  @@map("app_instance")
+  @@schema("vx_provision")
+}
+
+model WebhookDelivery {
+  id         String    @id @default(uuid()) @db.Uuid
+  deliveryId String    @map("delivery_id") @db.VarChar(128)
+  type       String    @db.VarChar(64)
+  occurredAt DateTime? @map("occurred_at") @db.Timestamptz()
+  result     String    @default("processed") @db.VarChar(32)
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+
+  @@unique([deliveryId], map: "uidx_webhook_delivery_delivery_id")
+  @@map("webhook_delivery")
+  @@schema("vx_provision")
+}
+
+model ProvisionSeq {
+  id          String   @id @default(uuid()) @db.Uuid
+  workspaceId String   @map("workspace_id") @db.Uuid
+  productCode String   @map("product_code") @db.VarChar(32)
+  lastSeq     BigInt   @default(0) @map("last_seq")
+  updatedAt   DateTime @default(now()) @map("updated_at") @db.Timestamptz()
+
+  @@unique([workspaceId, productCode], map: "uidx_provision_seq_ws_product")
+  @@map("provision_seq")
+  @@schema("vx_provision")
+}
+
+// ===== local_authz =====
+
+model Member {
+  id          String   @id @default(uuid()) @db.Uuid
+  workspaceId String   @map("workspace_id") @db.Uuid
+  sub         String   @db.VarChar(128)
+  displayName String?  @map("display_name") @db.VarChar(255)
+  avatarHash  String?  @map("avatar_hash") @db.VarChar(128)
+  status      String   @default("active") @db.VarChar(32)
+  firstSeenAt DateTime @default(now()) @map("first_seen_at") @db.Timestamptz()
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt   DateTime @default(now()) @map("updated_at") @db.Timestamptz()
+
+  @@unique([workspaceId, sub], map: "uidx_member_ws_sub")
+  @@map("member")
+  @@schema("local_authz")
+}
+
+model Role {
+  id        String   @id @default(uuid()) @db.Uuid
+  roleCode  String   @map("role_code") @db.VarChar(64)
+  name      String   @db.VarChar(255)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  @@unique([roleCode], map: "uidx_role_role_code")
+  @@map("role")
+  @@schema("local_authz")
+}
+
+model Permission {
+  id        String   @id @default(uuid()) @db.Uuid
+  permCode  String   @map("perm_code") @db.VarChar(64)
+  name      String   @db.VarChar(255)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  @@unique([permCode], map: "uidx_permission_perm_code")
+  @@map("permission")
+  @@schema("local_authz")
+}
+
+model MemberRole {
+  id        String   @id @default(uuid()) @db.Uuid
+  memberId  String   @map("member_id") @db.Uuid
+  roleId    String   @map("role_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  @@unique([memberId, roleId], map: "uidx_member_role_member_role")
+  @@map("member_role")
+  @@schema("local_authz")
+}
+
+model RolePermission {
+  id           String   @id @default(uuid()) @db.Uuid
+  roleId       String   @map("role_id") @db.Uuid
+  permissionId String   @map("permission_id") @db.Uuid
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  @@unique([roleId, permissionId], map: "uidx_role_permission_role_perm")
+  @@map("role_permission")
+  @@schema("local_authz")
+}
+
+// ===== local_usage =====
+
+model Raw {
+  id             String   @id @default(uuid()) @db.Uuid
+  workspaceId    String   @map("workspace_id") @db.Uuid
+  metric         String   @db.VarChar(128)
+  amount         BigInt
+  idempotencyKey String   @map("idempotency_key") @db.VarChar(128)
+  endUserId      String?  @map("end_user_id") @db.VarChar(128)
+  flushed        Boolean  @default(false)
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  @@unique([idempotencyKey], map: "uidx_raw_idempotency_key")
+  @@map("raw")
+  @@schema("local_usage")
+}
+
+model Checkpoint {
+  id          String   @id @default(uuid()) @db.Uuid
+  workspaceId String   @map("workspace_id") @db.Uuid
+  metric      String   @db.VarChar(128)
+  flushedAt   DateTime @default(now()) @map("flushed_at") @db.Timestamptz()
+
+  @@unique([workspaceId, metric], map: "uidx_checkpoint_ws_metric")
+  @@map("checkpoint")
+  @@schema("local_usage")
+}
+
+// ===== bid_game (domain schema, incr/0001) =====
+
+model GameRun {
+  id          String    @id @default(uuid()) @db.Uuid
+  workspaceId String    @map("workspace_id") @db.Uuid
+  sub         String    @db.VarChar(128)
+  status      String    @default("started") @db.VarChar(32)
+  outcome     String?   @db.VarChar(32)
+  scoreMs     Int?      @map("score_ms")
+  seed        String    @db.VarChar(64)
+  startedAt   DateTime  @default(now()) @map("started_at") @db.Timestamptz()
+  finishedAt  DateTime? @map("finished_at") @db.Timestamptz()
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+
+  @@index([workspaceId, sub, startedAt(sort: Desc)], map: "idx_run_ws_sub_started")
+  @@map("run")
+  @@schema("bid_game")
+}

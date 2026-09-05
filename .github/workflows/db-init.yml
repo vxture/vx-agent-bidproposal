@@ -1,0 +1,229 @@
+name: db-init
+
+# The ONLY pipeline allowed to touch DB structure (governance section 6). Manual,
+# gated: confirm=yes + expected_sha pin (defeats a floating ref applying stale
+# DDL) + the production Environment's required-reviewer approval. The container
+# entrypoint never migrates and the regular deploy chain never touches schema;
+# every structure change comes through here.
+#
+#   gh workflow run db-init.yml -f action=apply -f confirm=yes -f expected_sha=<sha>
+#
+# The DDL applied is the DDL IN THIS CHECKOUT, packed and shipped to the host by
+# the job - never the copy a past deploy left in the deploy directory. That is
+# what makes expected_sha mean anything, and the increments are counted on both
+# sides so a tree that arrives empty fails instead of passing quietly.
+#
+# `apply` runs the three-part baseline + incr/ increments (idempotent create-once
+# + ADD COLUMN IF NOT EXISTS) against the production db container as the DB
+# superuser (docker exec, in-container trust), then sets the bid_svc role's
+# password from the operator .env's DATABASE_URL so the app can authenticate
+# (generating + patching one in place if the URL has none yet). `verify` reports
+# schema tables + whether the role has a password, non-destructively.
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: "DDL action"
+        required: true
+        type: choice
+        default: apply
+        options:
+          - apply
+          - verify
+      confirm:
+        description: "Type 'yes' to confirm a structure change"
+        required: true
+        type: string
+      expected_sha:
+        description: "Commit SHA this run must match (version pin)"
+        required: true
+        type: string
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  PRODUCT_CODE: bid
+
+jobs:
+  db-init:
+    name: db-init
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment:
+      name: production
+    steps:
+      - name: Gate on confirm + expected_sha
+        shell: bash
+        env:
+          CONFIRM: ${{ inputs.confirm }}
+          EXPECTED_SHA: ${{ inputs.expected_sha }}
+          ACTUAL_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          if [ "$CONFIRM" != "yes" ]; then echo "confirm must be 'yes'" >&2; exit 1; fi
+          if [ "$EXPECTED_SHA" != "$ACTUAL_SHA" ]; then
+            echo "expected_sha ($EXPECTED_SHA) != run sha ($ACTUAL_SHA) - refusing" >&2
+            exit 1
+          fi
+
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.sha }}
+
+      - name: Validate secrets
+        shell: bash
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          TAILSCALE_OAUTH_CLIENT_ID: ${{ secrets.TAILSCALE_OAUTH_CLIENT_ID }}
+          TAILSCALE_OAUTH_CLIENT_SECRET: ${{ secrets.TAILSCALE_OAUTH_CLIENT_SECRET }}
+        run: |
+          set -euo pipefail
+          test -n "$DEPLOY_HOST"
+          test -n "$DEPLOY_USER"
+          test -n "$DEPLOY_SSH_KEY"
+          test -n "$TAILSCALE_OAUTH_CLIENT_ID"
+          test -n "$TAILSCALE_OAUTH_CLIENT_SECRET"
+
+      - name: Join tailnet and prepare SSH
+        uses: ./.github/actions/tailnet-ssh-connect
+        with:
+          tailscale-oauth-client-id: ${{ secrets.TAILSCALE_OAUTH_CLIENT_ID }}
+          tailscale-oauth-secret: ${{ secrets.TAILSCALE_OAUTH_CLIENT_SECRET }}
+          tailscale-tag: ${{ vars.TAILSCALE_OAUTH_CLIENT_TAG }}
+          deploy-host: ${{ secrets.DEPLOY_HOST }}
+          deploy-port: ${{ secrets.DEPLOY_PORT }}
+          deploy-ssh-key: ${{ secrets.DEPLOY_SSH_KEY }}
+          deploy-ssh-passphrase: ${{ secrets.DEPLOY_SSH_KEY_PASSPHRASE }}
+          deploy-known-hosts: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+
+      - name: Apply DDL over SSH
+        shell: bash
+        env:
+          ACTION: ${{ inputs.action }}
+          PINNED_SHA: ${{ github.sha }}
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
+          DEPLOY_DIR: ${{ secrets.DEPLOY_DIR }}
+        run: |
+          set -euo pipefail
+          port="${DEPLOY_PORT:-22}"
+          deploy_dir="${DEPLOY_DIR:-/srv/md0/${PRODUCT_CODE}/deploy}"
+          snake="${PRODUCT_CODE//-/_}"
+          ssh_opts=(-i ~/.ssh/deploy_key -p "$port" -o ServerAliveInterval=30 -o ServerAliveCountMax=20 -o ConnectTimeout=30)
+
+          # Ship the DDL from THIS checkout - the commit expected_sha pinned.
+          #
+          # It used to be applied from $REPO_DIR on the host, i.e. from whatever
+          # the last SUCCESSFUL deploy happened to rsync there, which made the
+          # version pin a promise this job could not keep. That cost a
+          # production outage: the 2026-09-01 run went green against a host
+          # still carrying v0.1.5, whose incr/ held a README and no .sql, so
+          # `shopt -s nullglob` silently applied zero increments, the challenge
+          # schema was never created, and every /api/game call 500'd until
+          # someone read the log closely enough to notice a missing line.
+          # Packing the tree here closes the gap between the pinned commit and
+          # the SQL the database actually sees.
+          test -d deploy/database/ddl || { echo "no deploy/database/ddl in this checkout" >&2; exit 1; }
+          incr_count="$(find deploy/database/ddl/incr -maxdepth 1 -name '*.sql' | wc -l | tr -d ' ')"
+          echo "[db-init] shipping DDL from ${PINNED_SHA:0:8}: $incr_count increment(s)"
+          tar -czf /tmp/db-init-ddl.tgz -C deploy database/ddl
+
+          cat > /tmp/db-init.sh <<'REMOTE_SCRIPT'
+          set -euo pipefail
+          DB="vxturebiz_${SNAKE}_prod"
+          CONT="${PRODUCT_CODE}-db"
+          # The operator .env still comes from the deploy root - it lives on the
+          # host by design and never transits CI. Only the DDL is shipped.
+          ENV_FILE="$(cd "$REPO_DIR/.." && pwd)/etc/.env"
+          DDL_DIR="$(mktemp -d)"
+          trap 'rm -rf "$DDL_DIR" "$DDL_TGZ"' EXIT
+          tar -xzf "$DDL_TGZ" -C "$DDL_DIR"
+          DDL="$DDL_DIR/database/ddl"
+          run() { docker exec -i "$CONT" psql -U postgres -d "$DB" -v ON_ERROR_STOP=1 "$@"; }
+          # The DDL carries bid's real role name (bid_svc) - it is applied
+          # verbatim, with no substitution layer between the file and the database.
+          apply_file() { run < "$1"; }
+          list_tables() {
+            run -c "SELECT table_schema||'.'||table_name FROM information_schema.tables WHERE table_schema IN ('vx_provision','local_authz','local_usage','bid_game') ORDER BY 1;"
+          }
+
+          # Service-role password. The role is created LOGIN-only (no password) by
+          # 97_service_role.sql; the app connects as bid_svc over TCP (scram),
+          # so the role needs a password matching the operator .env's DATABASE_URL
+          # (postgresql://<svc>:PASSWORD@host...). Parse it here - it lives only on
+          # the host and never transits CI. Empty if the URL carries no password.
+          svc_pw=""
+          if [ -f "$ENV_FILE" ]; then
+            db_url="$(grep -E '^DATABASE_URL=' "$ENV_FILE" | head -1 | sed 's/^DATABASE_URL=//')"
+            db_url="${db_url%\"}"; db_url="${db_url#\"}"
+            creds="${db_url#*://}"; creds="${creds%%@*}"
+            case "$creds" in *:*) svc_pw="${creds#*:}" ;; esac
+          fi
+
+          if [ "$ACTION" = "verify" ]; then
+            echo "[db-init] contract + domain schema tables:"
+            list_tables
+            echo "[db-init] service role state:"
+            run -c "SELECT rolname, rolcanlogin, (rolpassword IS NOT NULL) AS has_password FROM pg_roles WHERE rolname = '${SNAKE}_svc';"
+            if [ -n "$svc_pw" ]; then echo "[db-init] .env DATABASE_URL carries a svc password: yes"; else echo "[db-init] .env DATABASE_URL carries a svc password: no"; fi
+            exit 0
+          fi
+
+          for f in "$DDL/00_baseline.sql" "$DDL/97_service_role.sql" "$DDL/98_column_locks.sql"; do
+            echo "[db-init] applying $(basename "$f")"
+            apply_file "$f"
+          done
+          # Increments, counted. CI told us how many the pinned commit carries,
+          # so "the glob matched nothing" can no longer pass as success - the
+          # exact failure that let a missing domain schema ship green.
+          shopt -s nullglob
+          applied=0
+          for f in "$DDL"/incr/*.sql; do
+            echo "[db-init] applying incr $(basename "$f")"
+            apply_file "$f"
+            applied=$((applied + 1))
+          done
+          if [ "$applied" -ne "$EXPECTED_INCR" ]; then
+            echo "[db-init] FATAL: applied $applied increment(s); the pinned commit carries $EXPECTED_INCR" >&2
+            exit 1
+          fi
+          echo "[db-init] applied $applied increment(s), matching the pinned commit"
+
+          # Give the service role its password so the app can authenticate. Source
+          # of truth is the operator .env's DATABASE_URL. If it has none yet,
+          # generate one, patch DATABASE_URL in place (600 file, host-only), and
+          # bounce the app so it reconnects with the new URL - keeping runtime and
+          # DB in agreement without a full .env re-bootstrap.
+          if [ -z "$svc_pw" ]; then
+            svc_pw="$(openssl rand -hex 24 2>/dev/null || head -c 18 /dev/urandom | od -An -tx1 | tr -d ' \n')"
+            if [ ! -f "$ENV_FILE" ]; then
+              echo "[db-init] ERROR: $ENV_FILE not found; cannot persist svc password" >&2
+              exit 1
+            fi
+            sed -i -E "s#(^DATABASE_URL=\"?postgresql://${SNAKE}_svc:)[^@]*@#\1${svc_pw}@#" "$ENV_FILE"
+            echo "[db-init] no svc password in .env; generated one and patched DATABASE_URL"
+            docker restart "${PRODUCT_CODE}-app" >/dev/null 2>&1 || true
+          fi
+          # Pipe the ALTER over stdin (never argv) so the password stays out of ps.
+          esc="$(printf '%s' "$svc_pw" | sed "s/'/''/g")"
+          printf "ALTER ROLE %s_svc PASSWORD '%s';\n" "$SNAKE" "$esc" | run
+          echo "[db-init] service-role password set"
+          # Every apply ends by SHOWING what the database now has. A structure
+          # change that reports only "done" is a change nobody checked.
+          echo "[db-init] resulting contract + domain schema tables:"
+          list_tables
+          echo "[db-init] done."
+          REMOTE_SCRIPT
+          scp -i ~/.ssh/deploy_key -P "$port" -o ConnectTimeout=30 \
+            /tmp/db-init.sh /tmp/db-init-ddl.tgz "$DEPLOY_USER@$DEPLOY_HOST:/tmp/"
+          printf '%s\n' "REPO_DIR=$(printf %q "$deploy_dir") ACTION=$(printf %q "$ACTION") PRODUCT_CODE=$(printf %q "$PRODUCT_CODE") SNAKE=$(printf %q "$snake") DDL_TGZ=/tmp/db-init-ddl.tgz EXPECTED_INCR=$(printf %q "$incr_count") bash /tmp/db-init.sh" \
+            | ssh "${ssh_opts[@]}" "$DEPLOY_USER@$DEPLOY_HOST" bash -s
