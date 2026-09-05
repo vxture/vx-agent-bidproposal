@@ -10,7 +10,7 @@
 
 Ruyin（桌面本地运行环境）不直连 Atlas、不直连 Runos：它是零秘密的 public client，
 换不到 S2S 令牌。每个业务产品必须出一个云端服务替用户换票、调模型与能力面 ——
-这是 vxture-ruyin ADR-009 的代价，也是它的解。bidproposal（标书编写）是 Ruyin 的首个产品，
+这是 vxture-ruyin ADR-009 的代价，也是它的解。bidproposal（标书方案智能体）是 Ruyin 的首个产品，
 它的云端服务此前不存在。
 
 Runos 按「baseline-only until first consumer」运行，台账近乎空；owner 定 bidproposal 的云端

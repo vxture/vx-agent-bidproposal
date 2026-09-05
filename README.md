@@ -1,6 +1,6 @@
 # vx-agent-bidproposal
 
-**bidproposal**（标书编写）是 Ruyin 的首个业务产品。本仓是它的**云端能力面**：Ruyin（桌面
+**bidproposal**（标书方案智能体）是 Ruyin 的首个业务产品。本仓是它的**云端能力面**：Ruyin（桌面
 本地运行环境）是零秘密的 public client，替用户换票、调 Atlas 与 Runos 的是这里
 （vxture-ruyin ADR-009 / ADR-020）。它同时是 **Runos 的第一个消费者**（本仓 ADR-001，
 vxture-foundation/vxture-runos#14）。

@@ -25,7 +25,7 @@ unregistered product gets a plausible-looking `400 invalid_client` or
 ## Directory and plan
 
 - [ ] **bidproposal** product row in the platform product directory (`product.products`,
-      `product_code='bidproposal'`, `status='active'`, name 标书编写). The contract's
+      `product_code='bidproposal'`, `status='active'`, name 标书方案智能体). The contract's
       `product.id='bidproposal'` is ruyin-side and needs nothing here.
 - [ ] Plan structure (subscription tiers) seeded for the product (provisional
       `bidproposal-free`), or provisioning coverage. Without either, the subscription leg

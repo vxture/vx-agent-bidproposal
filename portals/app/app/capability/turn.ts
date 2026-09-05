@@ -103,7 +103,7 @@ export function validateTurnRequest(body: unknown): TurnRequest {
  */
 export function composeMessages(req: TurnRequest, capability: string): ChatMessage[] {
   const lines: string[] = [];
-  lines.push(`你是「标书编写」产品的 ${capability} 能力。只依据下面给出的资料作答，不得虚构企业能力。`);
+  lines.push(`你是「标书方案智能体」产品的 ${capability} 能力。只依据下面给出的资料作答，不得虚构企业能力。`);
   lines.push(`任务目标：${req.objective}`);
   if (req.constraints.length) lines.push(`约束：\n- ${req.constraints.join("\n- ")}`);
   if (req.tools.length) {
