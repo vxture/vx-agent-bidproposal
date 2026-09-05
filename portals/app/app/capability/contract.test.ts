@@ -10,7 +10,7 @@ test("loadContract: serves the bidproposal contract with a stable validator", ()
   const a = loadContract();
   // 契约文件是从 ruyin 的 products/bid 镜像来的，标题仍写 Bid（产品目录名），id 才是 bidproposal。
   assert.match(a.text, /^﻿?# Bid product runtime contract/);
-  assert.match(a.text, /id: vxture\.bidproposal/);
+  assert.match(a.text, /id: bidproposal/);
   assert.match(a.etag, /^W\/"[0-9a-f]+-\d+"$/);
   // Cached: the same bytes give the same tag.
   assert.equal(loadContract().etag, a.etag);
