@@ -32,8 +32,11 @@ Runos 按「baseline-only until first consumer」运行，台账近乎空；owne
 
 ## 后果
 
-- 平台侧登记项：bid 产品码、OIDC client 对、`RUYIN_CLIENT_ID` 互认（规格 §4 第 1 条
-  是生产能不能通的前提）。
+- 平台侧：vxture-platform/vxture-platform#198 —— OBO subject_token 受众（现规则
+  `resolveOboContext` 必拒 `aud='ruyin'` 的票，是生产能不能通的前提，规格 §4 第 1 条）
+  + bid 按暂用名登记（产品行 / OIDC client / `product_id` 回填 / ruyin↔bid 关系 / plan）。
+  平台 seed 里此前没有任何 bid 行；`docs/50-deployment/10-platform-registration-checklist.md`
+  已改成真实状态（全部未办）。
 - Runos 侧：为主体 `product=bid` 建授权；技能按清单注册（#14）。
 - Ruyin 侧：`RUYIN_CAPABILITY_BASE` 指向本服务 `/api`；`TurnRequest.skills` 落地后自然接上。
 - 范本里 vxtpl 的联络信件已删（它们是 vxtpl 的历史）；本仓 ADR 从 001 起。
