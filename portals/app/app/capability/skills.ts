@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import {
   getRunosClientConfig,
+  RUNOS_MATCH_ALL,
   runosDiscover,
   runosInvoke,
   runosResolve,
@@ -44,6 +45,15 @@ export interface SkillsStatus {
   configured: boolean;
   /** Present only when not configured: the honest reason, never a fake empty catalogue. */
   reason?: string;
+  /**
+   * False when the catalogue we got back is known (or suspected) to be partial.
+   * Ruyin PRUNES its product-distributed layer against this list - anything not
+   * named here is deleted locally. So a truncated catalogue does not merely
+   * under-report: it destroys skills the user already has. When this is false we
+   * also report `configured: false`, because that is the branch Ruyin already
+   * treats as "leave the local copy alone".
+   */
+  complete?: boolean;
 }
 
 /**
@@ -53,6 +63,34 @@ export interface SkillsStatus {
 export function skillNameOf(capabilityId: string): string {
   const tail = capabilityId.split(".").pop() ?? capabilityId;
   return tail.toLowerCase();
+}
+
+/**
+ * How many rows we ask for. Above the 288-entry preset ledger with room to grow;
+ * Runos 210 section 4 caps it server-side anyway. The number only has to be large
+ * enough that hitting it exactly is a signal rather than routine.
+ */
+const CATALOGUE_LIMIT = 500;
+
+/**
+ * Says whether the catalogue came back whole, and if not, why we think it did not.
+ *
+ * Two cases, and the second is why this is a function rather than one comparison:
+ *
+ * - `total` present (Runos #18 onward): it matched more than it returned. Certain.
+ * - `total` absent (older deployment): the only evidence is that we got back
+ *   exactly as many rows as we asked for. That is not proof - a ledger of exactly
+ *   `limit` entries looks identical - but a caller whose answer drives deletion
+ *   cannot afford to guess in the other direction.
+ */
+export function truncationOf(returned: number, total: number | undefined): string | undefined {
+  if (typeof total === "number" && total > returned) {
+    return `catalogue truncated: Runos matched ${total} capabilities, this call returned ${returned} (limit ${CATALOGUE_LIMIT})`;
+  }
+  if (total === undefined && returned >= CATALOGUE_LIMIT) {
+    return `catalogue possibly truncated: got exactly the limit (${CATALOGUE_LIMIT}) and this Runos deployment does not report a total`;
+  }
+  return undefined;
 }
 
 /** One line for a Runos failure envelope, whichever fields it carried. */
@@ -90,9 +128,22 @@ export async function listDistributedSkills(
   // Discovery is over the ENTITLED surface: a skill outside bidproposal's grants is
   // invisible here, not forbidden - that is Runos's design, and it is why the
   // catalogue is asked for rather than hard-coded.
-  const found = await deps.discover(deps.cfg, "skill", { ...opts, limit: 200, primitiveType: "skill" });
+  //
+  // This is an ENUMERATION, not a search. It used to pass the literal string
+  // "skill" as the query, which is a keyword search that merely looks like one:
+  // only capabilities whose text tokenised to "skill" came back. Against a
+  // 288-entry preset ledger that silently returned a fraction of the catalogue -
+  // and a fraction is worse than nothing here, because Ruyin prunes against it.
+  const found = await deps.discover(deps.cfg, RUNOS_MATCH_ALL, { ...opts, limit: CATALOGUE_LIMIT, primitiveType: "skill" });
   if (!found.ok) {
     return { status: { configured: true, reason: `runos_discover failed: ${describeFailure(found.failure)}` }, skills: [] };
+  }
+  const truncation = truncationOf(found.data.capabilities.length, found.data.total);
+  if (truncation) {
+    // Fail closed. Reporting `configured: false` is what makes Ruyin keep what it
+    // has instead of pruning to a partial list; the reason says what actually
+    // happened, so nobody reads this as "the surface has no Runos".
+    return { status: { configured: false, complete: false, reason: truncation }, skills: [] };
   }
   const skills: DistributedSkillSummary[] = [];
   for (const c of found.data.capabilities) {
