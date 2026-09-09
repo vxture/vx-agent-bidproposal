@@ -9,7 +9,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  schemas  = ["vx_provision", "local_authz", "local_usage", "bid_game"]
+  schemas  = ["vx_provision", "local_authz", "local_usage", "bidproposal_game"]
 }
 
 // ===== vx_provision =====
@@ -145,7 +145,7 @@ model Checkpoint {
   @@schema("local_usage")
 }
 
-// ===== bid_game (domain schema, incr/0001) =====
+// ===== bidproposal_game (domain schema, incr/0001) =====
 
 model GameRun {
   id          String    @id @default(uuid()) @db.Uuid
@@ -161,5 +161,5 @@ model GameRun {
 
   @@index([workspaceId, sub, startedAt(sort: Desc)], map: "idx_run_ws_sub_started")
   @@map("run")
-  @@schema("bid_game")
+  @@schema("bidproposal_game")
 }
