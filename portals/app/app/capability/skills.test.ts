@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { fetchDistributedSkill, listDistributedSkills, skillNameOf, type SkillsRelayDeps } from "./skills";
+import { fetchDistributedSkill, listDistributedSkills, skillNameOf, truncationOf, type SkillsRelayDeps } from "./skills";
 import { DEV_WORKSPACE_ID, type CapabilityCaller } from "./caller";
 import type { RunosCapability, RunosContract, RunosResult } from "../runos/client";
 
@@ -116,4 +116,65 @@ test("fetch: when Runos sends no digest, bidproposal computes one and says it di
     assert.match(r.contentDigest, /^sha256:[0-9a-f]{64}$/);
     assert.equal(r.digestSource, "computed");
   }
+});
+
+// --- enumeration, and what happens when it comes back short ------------------
+// The relay's answer drives DELETION on the Ruyin side (it prunes its
+// product-distributed layer to whatever this catalogue names). That is why a
+// short answer is a failure here rather than a smaller success.
+
+test("list: enumerates with match-all, not a keyword that happens to read like one", async () => {
+  const seen: Array<{ query: string; limit?: number; primitiveType?: string }> = [];
+  await listDistributedSkills(
+    caller,
+    "t1",
+    deps({
+      discover: async (_cfg, query, opts) => {
+        seen.push({ query, limit: opts.limit, primitiveType: opts.primitiveType });
+        return ok({ capabilities: [skill("a.b", "x")], total: 1 });
+      },
+    }),
+  );
+  // "skill" was a keyword search all along: it returned only capabilities whose
+  // text tokenised to that word, which is a fraction of the ledger.
+  assert.equal(seen[0]?.query, "*");
+  assert.equal(seen[0]?.primitiveType, "skill");
+  assert.ok((seen[0]?.limit ?? 0) >= 288, "limit must clear the preset ledger");
+});
+
+test("list: total greater than returned is certain truncation - fail closed", async () => {
+  const r = await listDistributedSkills(
+    caller,
+    "t1",
+    deps({ discover: async () => ok({ capabilities: [skill("a.b", "x")], total: 288 }) }),
+  );
+  assert.equal(r.status.complete, false);
+  // configured:false is the branch Ruyin already treats as "keep what you have".
+  assert.equal(r.status.configured, false);
+  assert.match(r.status.reason ?? "", /truncated: Runos matched 288/);
+  assert.deepEqual(r.skills, []);
+});
+
+test("list: no total and exactly limit rows - suspect, and said out loud", async () => {
+  const many = Array.from({ length: 500 }, (_, i) => skill(`a.s${i}`, "x"));
+  const r = await listDistributedSkills(caller, "t1", deps({ discover: async () => ok({ capabilities: many }) }));
+  assert.equal(r.status.complete, false);
+  assert.match(r.status.reason ?? "", /possibly truncated/);
+});
+
+test("list: no total but fewer rows than the limit is a whole catalogue", async () => {
+  const r = await listDistributedSkills(caller, "t1", deps());
+  assert.equal(r.status.configured, true);
+  assert.equal(r.status.complete, undefined);
+  assert.equal(r.skills.length, 2);
+});
+
+test("truncationOf: the two cases, and the two that are not", () => {
+  assert.match(truncationOf(200, 288) ?? "", /truncated: Runos matched 288/);
+  assert.match(truncationOf(500, undefined) ?? "", /possibly truncated/);
+  // Matched exactly what came back - whole.
+  assert.equal(truncationOf(288, 288), undefined);
+  // A total below the returned count is nonsense, but it is not truncation:
+  // do not invent a failure out of a number we cannot interpret.
+  assert.equal(truncationOf(5, 3), undefined);
 });

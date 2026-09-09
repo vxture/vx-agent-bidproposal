@@ -212,12 +212,29 @@ export interface RunosContract {
   };
 }
 
-/** Search the entitled catalog. An empty list is a valid answer, not an error. */
+/**
+ * The match-all query. Runos 210 section 4: a query yielding no usable search
+ * tokens matches everything, and `"*"` is the discoverable spelling of that
+ * (written into the tool schema by Runos #18). Enumerating a catalogue is NOT
+ * the same call as searching it - pass this, never a keyword that happens to
+ * describe what you want.
+ */
+export const RUNOS_MATCH_ALL = "*";
+
+/**
+ * Search the entitled catalog. An empty list is a valid answer, not an error.
+ *
+ * `total` is how many matched, not how many came back - the two differ exactly
+ * when `limit` truncated the answer. It is optional because a Runos deployment
+ * predating #18 does not send it: absent `total`, a caller enumerating a
+ * catalogue cannot tell a full answer from a truncated one, and must treat
+ * "exactly `limit` rows" as suspect.
+ */
 export function runosDiscover(
   cfg: RunosClientConfig,
   query: string,
   opts: CallToolOptions & { limit?: number; category?: string; tags?: string[]; primitiveType?: "connector" | "skill" | "executor" | "asset" },
-): Promise<RunosResult<{ capabilities: RunosCapability[] }>> {
+): Promise<RunosResult<{ capabilities: RunosCapability[]; total?: number }>> {
   const args: Record<string, unknown> = { query, limit: opts.limit ?? 25 };
   if (opts.category) args.category = opts.category;
   if (opts.tags?.length) args.tags = opts.tags;
