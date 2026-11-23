@@ -43,16 +43,16 @@ services:
         required: false
     environment:
       NODE_ENV: production
-      PORT: "4000"
+      PORT: "4070"
       REDIS_URL: redis://${PROJECT_NAME:-bidproposal}-redis:6379
       DATABASE_URL: ${DATABASE_URL:-}
     ports:
-      - "${APP_PUBLISH_PORT:-4000}:4000"
+      - "${APP_PUBLISH_PORT:-4070}:4070"
     depends_on:
       - redis
       - db
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:4000/api/health"]
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:4070/api/health"]
       interval: 30s
       timeout: 5s
       retries: 3

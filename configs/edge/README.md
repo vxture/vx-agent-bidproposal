@@ -1,29 +1,23 @@
 # configs/edge - public-edge vhost source
 
-This product does NOT own the public edge. It only contributes the vhost source
-artifact(s) here; an operator installs them on the shared vxture public edge host
-(which terminates TLS with the `*.vxture.com` wildcard cert and reverse-proxies
-over tailscale to the app on the deploy host).
+The public origin for Bid is `https://bidproposal.ruyin.work`. The existing
+shared edge terminates TLS for `*.ruyin.work` and proxies to the approved
+product runtime using the Opera registration.
 
-- `bidproposal.vxture.com.conf` - bidproposal's prod vhost, **not installed anywhere yet**
-  (host name provisional, vxture-platform/vxture-platform#198). Once installed it
-  is the source of record: it must stay byte-identical to what is on the edge, so
-  a drift between the two is a bug in one of them. The upstream port is in the file itself and
-  is not restated here; ports are allocated by the Vxture port registry and this
-  repo deliberately keeps no second copy of the number.
+- `bidproposal.vxture.com.conf` is the inherited example for the retired
+  candidate name. **Do not install it.** Register Bid's allocation in the
+  [Vxture port registry](https://claude.ai/code/artifact/0f44735a-c6bc-4881-a440-3446a2411a5f)
+  before preparing the live route.
 
-## Install (operator, on the edge / vxture project repo)
+## Release checks
 
-1. Copy the `.conf` into the vxture project repository's edge nginx config dir.
-2. Run the edge nginx-sync script and reload nginx.
-3. Verify: `curl https://bidproposal.vxture.com/api/health` returns the app's payload
-   (`status`/`product`/`gitSha`/`time`), not a generic edge stub.
+1. Confirm the approved runtime and allocated port. The existing
+   `*.ruyin.work` edge accepts TLS for the Bid hostname.
+2. Use the existing Bid record in Opera. Only after the upstream is ready,
+   set it and use the existing edge synchronization workflow. A separate
+   Nginx vhost is not required.
+3. Verify that `https://bidproposal.ruyin.work/api/health` reports
+   `product=bidproposal` and the released Git SHA.
 
-The app itself runs on the deploy host tailnet, listening on and published at the
-same port; there is no on-host TLS or nginx in this repo.
-
-`scripts/init/rename-product.mjs` renames this file to `<its-code>.vxture.com.conf`
-and rewrites the server names, but it does NOT touch the port - that is bidproposal's
-allocation and the script has no way to know the new one. A copied product must
-get its own allocation from the port registry and set `$upstream` by hand, or its
-vhost will proxy to bidproposal.
+The upstream must agree with the product's published port; DNS alone
+does not establish the application route.
