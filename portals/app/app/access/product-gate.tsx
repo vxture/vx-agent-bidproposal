@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ShellBootScreen, ShellBrand } from "../ds";
 import "./gate.css";
-import { subscribeUrl, type Intent } from "../entitlement/deeplink";
+import { productPricingUrl } from "../entitlement/deeplink";
 import type { Cta } from "../entitlement/types";
 import { isThrough, type AccessState } from "./types";
 
@@ -215,8 +215,8 @@ function describe(phase: Phase, destination: string): View {
       return {
         message: ctaMessage(cta),
         hint: state.entitlement.tier ? `当前订阅：${state.entitlement.tier}` : "当前工作空间尚未开通本产品",
-        idleLabel: ctaLabel(cta),
-        action: { label: ctaLabel(cta), href: subscribeUrl({ intent: ctaIntent(cta) }) },
+        idleLabel: "查看套餐",
+        action: { label: "查看套餐", href: productPricingUrl() },
       };
     }
 
@@ -253,20 +253,6 @@ function ctaMessage(cta: Cta): string {
   if (cta === "pay") return "您的订阅有待支付的账单";
   if (cta === "renew") return "您的订阅已到期";
   return "该工作空间尚未订阅本产品";
-}
-
-function ctaLabel(cta: Cta): string {
-  if (cta === "pay") return "去支付";
-  if (cta === "renew") return "去续订";
-  return "去订阅";
-}
-
-/**
- * The console's own intent vocabulary is narrower than the gate's CTA set:
- * there is no "pay" intent, and an overdue account is renewing the same plan.
- */
-function ctaIntent(cta: Cta): Intent {
-  return cta === "pay" || cta === "renew" ? "renew" : "upgrade";
 }
 
 function consoleUrl(): string {

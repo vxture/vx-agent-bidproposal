@@ -78,3 +78,22 @@ ports, secrets or environment settings. Bidproposal is an agent product.
   passed public HTTPS acceptance. Do not push a release tag until the existing
   reviewed deployment path is available. No live registration or server
   configuration has been changed by B1.
+
+## B2 contract check
+
+Rechecked the [Product Integration Rules](https://claude.ai/code/artifact/20e37039-ea59-4c5d-9fab-ba3ca3ad54f0)
+and [Product Integration Template](https://claude.ai/code/artifact/f0bd83c7-6296-4200-a7d8-108b7755f584).
+The product now uses the registerable `POST /api/webhooks/vxture` path and
+sends users to public product pricing, before checkout. The webhook verifies
+raw bytes, accepts versionless invalidations without advancing the lifecycle
+sequence, and commits lifecycle state and receipt in one database
+transaction. Live callback storage and provisioning delivery still need a
+production-shaped product database and an operator test delivery. Startup and
+periodic reconciliation must be verified before relying on provisioning
+events to initialize business data.
+
+Local evidence: 256 product tests and the standalone release smoke passed.
+The compiled webhook ran against a disposable PostgreSQL-compatible PGlite
+database with the product DDL. Replays and stale events were harmless;
+an injected sequence-write failure rolled back both the lifecycle update and
+the receipt, and the same signed delivery could be retried successfully.
