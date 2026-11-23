@@ -42,6 +42,7 @@ jobs:
     permissions:
       contents: read
       checks: read
+      actions: read
     outputs:
       environment: ${{ steps.route.outputs.environment }}
     steps:
@@ -62,6 +63,8 @@ jobs:
           for check in quality-gate build test-coverage audit gitleaks; do
             grep -Fxq "$(printf '%s\tsuccess' "$check")" "$RUNNER_TEMP/bid-release-checks.tsv"
           done
+          gh api "repos/$GITHUB_REPOSITORY/environments/production" \
+            --jq '.protection_rules[] | .type' | grep -Fxq required_reviewers
       - name: Route tag to GitHub Environment
         id: route
         shell: bash
@@ -140,26 +143,21 @@ jobs:
           deploy-ssh-passphrase: ${{ secrets.DEPLOY_SSH_KEY_PASSPHRASE }}
           deploy-known-hosts: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
 
-      - name: Bootstrap .env on target host
+      - name: Require existing product configuration on target host
         shell: bash
         env:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
           DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
-          ENV_FILE_B64: ${{ secrets.ENV_FILE_BASE64 }}
         run: |
           set -euo pipefail
           port="${DEPLOY_PORT:-22}"
           stack_root="/srv/md0/${PRODUCT_CODE}"
           ssh_opts=(-i ~/.ssh/deploy_key -p "$port" -o ServerAliveInterval=30 -o ServerAliveCountMax=20 -o ConnectTimeout=30)
-          if ssh "${ssh_opts[@]}" "$DEPLOY_USER@$DEPLOY_HOST" "test -f '$stack_root/etc/.env'"; then
-            echo "[bootstrap] $stack_root/etc/.env exists - skipping"
-          else
-            ssh "${ssh_opts[@]}" "$DEPLOY_USER@$DEPLOY_HOST" "mkdir -p '$stack_root/etc'"
-            printf '%s' "$ENV_FILE_B64" | ssh "${ssh_opts[@]}" "$DEPLOY_USER@$DEPLOY_HOST" \
-              "base64 -d > '$stack_root/etc/.env' && chmod 600 '$stack_root/etc/.env'"
-            echo "[bootstrap] .env created"
-          fi
+          ssh "${ssh_opts[@]}" "$DEPLOY_USER@$DEPLOY_HOST" "test -r '$stack_root/etc/.env'" || {
+            echo "::error::Existing product runtime configuration is required. This workflow does not create it."
+            exit 1
+          }
 
       - name: Deploy over SSH
         shell: bash
