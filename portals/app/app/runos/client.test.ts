@@ -93,6 +93,13 @@ test("_meta.vxture sits on params, NOT inside arguments", async () => {
   assert.equal(args.query, "run python");
 });
 
+test("enumeration passes the opaque cursor unchanged and preserves the next page", async () => {
+  const calls = stub({ jsonrpc: "2.0", id: 1, result: { structuredContent: { capabilities: [], total: 900, next_cursor: "next-opaque" } } });
+  const result = await runosDiscover(getRunosClientConfig()!, "*", { ...CALL, cursor: "opaque+/=", primitiveType: "skill" });
+  assert.equal((calls[0].body.params as { arguments: { cursor: string } }).arguments.cursor, "opaque+/=");
+  assert.equal(result.ok && result.data.next_cursor, "next-opaque");
+});
+
 test("delegation forwards the MINTED token, never the user's session token", async () => {
   const calls = stub({ jsonrpc: "2.0", id: 1, result: { structuredContent: {} } });
   await runosInvoke(getRunosClientConfig()!, "runos.code-sandbox", "run_code", { code: "print(1)" }, {

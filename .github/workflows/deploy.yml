@@ -39,9 +39,29 @@ jobs:
     name: detect-target-environment
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    permissions:
+      contents: read
+      checks: read
     outputs:
       environment: ${{ steps.route.outputs.environment }}
     steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Verify release source passed the required checks on main
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          [[ "${GITHUB_REF_TYPE}" == tag && "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]
+          git merge-base --is-ancestor HEAD origin/main
+          gh api --paginate "repos/$GITHUB_REPOSITORY/commits/$(git rev-parse HEAD)/check-runs?per_page=100" \
+            --jq '.check_runs[] | [.name,.conclusion] | @tsv' > "$RUNNER_TEMP/bid-release-checks.tsv"
+          for check in quality-gate build test-coverage audit gitleaks; do
+            grep -Fxq "$(printf '%s\tsuccess' "$check")" "$RUNNER_TEMP/bid-release-checks.tsv"
+          done
       - name: Route tag to GitHub Environment
         id: route
         shell: bash

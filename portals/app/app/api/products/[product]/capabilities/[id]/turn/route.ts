@@ -2,12 +2,16 @@ import { NextResponse } from "next/server";
 import { isRefusal, resolveCapabilityCaller } from "../../../../../../capability/caller";
 import { isOurProduct } from "../../../../../../capability/contract";
 import { getTurnResolver, TurnRequestError, validateTurnRequest } from "../../../../../../capability/turn";
+import { AtlasError } from "../../../../../../chat/atlas-client";
+import { S2STokenError } from "../../../../../../lib/s2s-token";
+import { capabilityAccess } from "../../../../../../capability/access";
 
 // POST /api/products/:product/capabilities/:id/turn - one round of the Ruyin
 // harness loop (vxture-ruyin ADR-002 / ADR-009 / ADR-011).
 //
-// Identity comes from the bearer (the signed-in user's platform token, verified
-// in capability/caller.ts); the body carries FACTS only. `projectId` in the body
+// Identity comes from our RP session or own-audience user bearer, verified in
+// capability/caller.ts; C2 data access is checked before provider work. The body
+// carries FACTS only. `projectId` in the body
 // is ruyin's local container id and is echoed nowhere - it must never be read
 // as a workspace.
 //
@@ -26,8 +30,10 @@ export async function POST(
     return NextResponse.json({ error: "unknown product", product }, { status: 404 });
   }
 
-  const caller = await resolveCapabilityCaller(req.headers);
-  if (isRefusal(caller)) return NextResponse.json({ error: caller.error }, { status: caller.status });
+  const caller = await resolveCapabilityCaller(req.headers, { method: req.method });
+  if (isRefusal(caller)) return NextResponse.json({ error: caller.error, ...(caller.code ? { code: caller.code, retryable: caller.retryable } : {}) }, { status: caller.status });
+  const access = await capabilityAccess(caller);
+  if (access) return NextResponse.json({ error: access.error, code: access.code, retryable: access.retryable }, { status: access.status });
 
   let body: unknown;
   try {
@@ -48,16 +54,20 @@ export async function POST(
     resolver = getTurnResolver();
   } catch (cause) {
     // Not wired yet is a real condition; say so rather than mock silently.
-    return NextResponse.json({ error: cause instanceof Error ? cause.message : String(cause) }, { status: 503 });
+    return NextResponse.json({ error: cause instanceof Error ? cause.message : "model service is not configured",
+      code: "MODEL_NOT_CONFIGURED", retryable: false }, { status: 503 });
   }
 
   try {
     const turn = await resolver.turn(request, id, caller);
     return NextResponse.json(turn, { headers: { "x-bidproposal-turn-mode": resolver.mode } });
   } catch (cause) {
-    // Downstream (Atlas) trouble is "try again later" from ruyin's point of view.
+    // A quota/configuration refusal is not a transient provider outage.
+    const retryable = cause instanceof AtlasError || cause instanceof S2STokenError ? cause.retryable : !(cause instanceof TurnRequestError);
     return NextResponse.json(
-      { error: cause instanceof Error ? cause.message : String(cause) },
+      { error: cause instanceof Error ? cause.message : "capability call failed", retryable,
+        ...(cause instanceof AtlasError ? { code: cause.envelope.code, ...(cause.retryAfterMs !== undefined ? { retryAfterMs: cause.retryAfterMs } : {}) } : {}),
+        ...(cause instanceof S2STokenError ? { code: cause.code } : {}) },
       { status: 503 },
     );
   }

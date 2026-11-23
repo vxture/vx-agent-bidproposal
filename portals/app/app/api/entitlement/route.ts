@@ -1,31 +1,21 @@
-import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
-import { getOidcConfig } from "../../auth/lib/config";
-import { getAuthUser } from "../../auth/lib/session";
-import { getEntitlementResolver } from "../../entitlement/resolver";
-import { hasProductAccess, hasDataAccess, ctaFor } from "../../entitlement/types";
+import type { AccessState } from "../../access/types";
+import { GET as readAccess } from "../access/route";
 
 // GET /api/entitlement (C2 verification channel): resolve the current session's
 // workspace entitlement and expose the gate outcomes. Read-only; never returns
-// the platform secret. Works offline via the Mock resolver.
+// a platform credential or a fabricated commercial entitlement.
 export const dynamic = "force-dynamic";
 
 export async function GET(): Promise<Response> {
-  const cfg = getOidcConfig();
-  const jar = await cookies();
-  const rpsid = jar.get(cfg.cookieName)?.value;
-  const user = rpsid ? await getAuthUser(cfg, rpsid).catch(() => null) : null;
-  if (!user || !user.activeWorkspace) {
-    return NextResponse.json({ authenticated: false }, { status: 401 });
+  const access = await readAccess();
+  const decision = await access.json() as AccessState;
+  const headers = { "cache-control": "private, no-store" };
+  if (decision.status === "authenticated") {
+    return NextResponse.json({ entitlement: decision.entitlement, gates: decision.gates }, { headers });
   }
-
-  const entitlement = await getEntitlementResolver().resolve(user.activeWorkspace);
-  return NextResponse.json({
-    entitlement,
-    gates: {
-      productAccess: hasProductAccess(entitlement),
-      dataAccess: hasDataAccess(entitlement),
-      cta: ctaFor(entitlement),
-    },
-  });
+  const status = decision.status === "unavailable" || decision.status === "unconfigured" ? 503
+    : decision.status === "unassigned" || decision.status === "inactive-account" || decision.status === "no-workspace" ? 403
+    : 401;
+  return NextResponse.json({ authenticated: false, status: decision.status }, { status, headers });
 }

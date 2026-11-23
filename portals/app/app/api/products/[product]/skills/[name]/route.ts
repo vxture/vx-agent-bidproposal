@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { isRefusal, resolveCapabilityCaller } from "../../../../../capability/caller";
 import { isOurProduct } from "../../../../../capability/contract";
 import { fetchDistributedSkill } from "../../../../../capability/skills";
+import { capabilityAccess } from "../../../../../capability/access";
 
 // GET /api/products/:product/skills/:name - one distributed Skill: SKILL.md
 // text, its resources, and a content digest for ruyin's cache.
@@ -27,7 +28,9 @@ export async function GET(
     return NextResponse.json({ error: "invalid skill name" }, { status: 400 });
   }
   const caller = await resolveCapabilityCaller(req.headers);
-  if (isRefusal(caller)) return NextResponse.json({ error: caller.error }, { status: caller.status });
+  if (isRefusal(caller)) return NextResponse.json({ error: caller.error, ...(caller.code ? { code: caller.code, retryable: caller.retryable } : {}) }, { status: caller.status });
+  const access = await capabilityAccess(caller);
+  if (access) return NextResponse.json({ error: access.error, code: access.code, retryable: access.retryable }, { status: access.status });
 
   const url = new URL(req.url);
   const taskId = url.searchParams.get("taskId")?.trim() || `skills-refresh-${Date.now().toString(36)}`;

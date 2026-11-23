@@ -1,7 +1,6 @@
 import {
   getRunosClientConfig,
   runosDiscover,
-  runosInvoke,
   runosReportOutcome,
   runosResolve,
   RunosError,
@@ -11,6 +10,8 @@ import {
 } from "../runos/client";
 import { isEntitlementRejection } from "../lib/platform-error";
 import { findSkill } from "./catalog";
+import { invokeResolvedRunosOperation } from "../runos/operation";
+import { readSkillDelivery } from "../runos/skill-delivery";
 import type { ChatMessage, SkillOutcome } from "./types";
 
 // Skill execution: turn a selected skill into a real Runos capability call.
@@ -120,13 +121,21 @@ export async function runSkill(
     }
 
     const args = buildArguments(operation.inputSchema, userText);
-    const invoked = await runosInvoke(cfg, capability.capability_id, operation.operation, args, call);
+    const invoked = await invokeResolvedRunosOperation(cfg, {
+      capabilityId: capability.capability_id, contract: resolved.data, operation: operation.operation, arguments: args,
+    }, call);
+    let distributedText: string | undefined;
+    if (invoked.ok && invoked.meta?.result_kind === "distributed") {
+      const delivery = readSkillDelivery(capability.capability_id, resolved.data.version, invoked.content ?? [], invoked.meta);
+      if (delivery.integrity !== "verified") throw new RunosError(502, "Skill was distributed without verified delivery integrity; instructions were not followed");
+      distributedText = delivery.content;
+    }
 
     const outcome: SkillOutcome = invoked.ok
       ? {
           code: skillCode,
           capabilityId: capability.capability_id,
-          status: "ran",
+          status: invoked.meta?.result_kind === "distributed" ? "distributed" : "ran",
           // A Skill primitive answers with its CONTENT, not a result: Runos
           // distributes skills and never executes them (ADR-006), so what comes
           // back is instructions for the caller's own runtime. Feeding that to
@@ -134,7 +143,7 @@ export async function runSkill(
           // like a connector payload would bury the instructions in escaping.
           detail:
             invoked.meta?.result_kind === "distributed"
-              ? (invoked.text ?? "").slice(0, 4000)
+              ? (distributedText ?? "").slice(0, 4000)
               : summarize(invoked.data),
           callId: invoked.callId,
         }

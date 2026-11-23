@@ -51,7 +51,7 @@ export function ProductGate({ productName, destination, tagline }: ProductGatePr
 
     fetch("/api/access", { cache: "no-store" })
       .then(async (res) => {
-        if (!res.ok) throw new Error(`access check failed (HTTP ${res.status})`);
+        if (!res.ok && res.status !== 503) throw new Error(`access check failed (HTTP ${res.status})`);
         return (await res.json()) as AccessState;
       })
       .then((state) => {
@@ -187,6 +187,17 @@ function describe(phase: Phase, destination: string): View {
   const returnTo = encodeURIComponent(destination);
 
   switch (state.status) {
+    case "unassigned":
+      return { message: "尚未分配应用权限", hint: "请联系工作区管理员。", idleLabel: "无法进入" };
+    case "unavailable":
+      return {
+        message: "暂时无法验证工作区权限",
+        idleLabel: "重试",
+        action: {
+          label: "重试",
+          href: destination === "/" ? "/gate" : `/gate?from=${encodeURIComponent(destination)}`,
+        },
+      };
     case "anonymous":
       return {
         message: "请登录以验证您的订阅并访问产品",

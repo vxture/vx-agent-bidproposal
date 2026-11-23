@@ -6,9 +6,11 @@ import {
   runosInvoke,
   runosResolve,
   type RunosClientConfig,
+  type RunosCapability,
   type RunosFailure,
 } from "../runos/client";
 import type { CapabilityCaller } from "./caller";
+import { readSkillDelivery, type SkillDelivery } from "../runos/skill-delivery";
 
 // Skill distribution relay (vxture-ruyin ADR-020 section 3c, ADR-018 v2.2).
 //
@@ -39,6 +41,9 @@ export interface DistributedSkill extends DistributedSkillSummary {
   /** Runos's digest when it sent one; otherwise sha256 of the content, and we say so. */
   contentDigest: string;
   digestSource: "runos" | "computed";
+  deliveryIntegrity: "verified" | "unverified";
+  deliveryDigest?: string;
+  deliveryDigestFormat?: "skill-package-v1";
 }
 
 export interface SkillsStatus {
@@ -71,6 +76,8 @@ export function skillNameOf(capabilityId: string): string {
  * enough that hitting it exactly is a signal rather than routine.
  */
 const CATALOGUE_LIMIT = 500;
+const MAX_CATALOGUE_PAGES = 200;
+const MAX_CATALOGUE_ENTRIES = 20_000;
 
 /**
  * Says whether the catalogue came back whole, and if not, why we think it did not.
@@ -110,10 +117,22 @@ export interface SkillsRelayDeps {
   discover: typeof runosDiscover;
   resolve: typeof runosResolve;
   invoke: typeof runosInvoke;
+  bindings?: Record<string, string>;
+  bindingError?: string;
 }
 
 export function defaultSkillsRelayDeps(): SkillsRelayDeps {
-  return { cfg: getRunosClientConfig(), discover: runosDiscover, resolve: runosResolve, invoke: runosInvoke };
+  const base = { cfg: getRunosClientConfig(), discover: runosDiscover, resolve: runosResolve, invoke: runosInvoke };
+  try {
+    const bindings: unknown = JSON.parse(process.env.RUNOS_SKILL_BINDINGS ?? "{}");
+    if (!bindings || typeof bindings !== "object" || Array.isArray(bindings) ||
+        Object.entries(bindings).some(([name, id]) => typeof id !== "string" || skillNameOf(id) !== name)) {
+      throw new Error("Invalid bindings");
+    }
+    return { ...base, bindings: bindings as Record<string, string> };
+  } catch {
+    return { ...base, bindingError: "RUNOS_SKILL_BINDINGS must map skill names to matching capability IDs" };
+  }
 }
 
 export async function listDistributedSkills(
@@ -134,22 +153,70 @@ export async function listDistributedSkills(
   // only capabilities whose text tokenised to "skill" came back. Against a
   // 288-entry preset ledger that silently returned a fraction of the catalogue -
   // and a fraction is worse than nothing here, because Ruyin prunes against it.
-  const found = await deps.discover(deps.cfg, RUNOS_MATCH_ALL, { ...opts, limit: CATALOGUE_LIMIT, primitiveType: "skill" });
-  if (!found.ok) {
-    return { status: { configured: true, reason: `runos_discover failed: ${describeFailure(found.failure)}` }, skills: [] };
-  }
-  const truncation = truncationOf(found.data.capabilities.length, found.data.total);
-  if (truncation) {
-    // Fail closed. Reporting `configured: false` is what makes Ruyin keep what it
-    // has instead of pruning to a partial list; the reason says what actually
-    // happened, so nobody reads this as "the surface has no Runos".
-    return { status: { configured: false, complete: false, reason: truncation }, skills: [] };
+  const incomplete = (reason: string) => ({ status: { configured: false, complete: false, reason }, skills: [] });
+  if (deps.bindingError) return incomplete(deps.bindingError);
+  const capabilities: RunosCapability[] = [];
+  const cursors = new Set<string>();
+  const ids = new Set<string>();
+  let cursor: string | undefined;
+  let total: number | undefined;
+  for (let page = 0; page < MAX_CATALOGUE_PAGES; page++) {
+    let found: Awaited<ReturnType<SkillsRelayDeps["discover"]>>;
+    try {
+      found = await deps.discover(deps.cfg, RUNOS_MATCH_ALL, { ...opts, limit: CATALOGUE_LIMIT, primitiveType: "skill", ...(cursor ? { cursor } : {}) });
+    } catch (cause) {
+      return incomplete(`runos_discover unavailable: ${cause instanceof Error ? cause.message : "transport failure"}`);
+    }
+    if (!found.ok) return incomplete(`runos_discover failed: ${describeFailure(found.failure)}`);
+    const data = found.data;
+    if (!data || !Array.isArray(data.capabilities)) return incomplete("Runos catalogue page is malformed");
+    if (data.total !== undefined && (!Number.isSafeInteger(data.total) || data.total < 0 || data.total > MAX_CATALOGUE_ENTRIES)) {
+      return incomplete("Runos catalogue total is invalid or exceeds the synchronization limit");
+    }
+    if (page === 0) total = data.total;
+    else if (data.total !== total) return incomplete("Runos catalogue total changed while paging");
+    for (const capability of data.capabilities) {
+      if (!capability || typeof capability.capability_id !== "string" || !capability.capability_id || ids.has(capability.capability_id)) {
+        return incomplete("Runos catalogue contains an invalid or duplicate capability ID");
+      }
+      ids.add(capability.capability_id);
+      capabilities.push(capability);
+    }
+    if (capabilities.length > MAX_CATALOGUE_ENTRIES || (total !== undefined && capabilities.length > total)) {
+      return incomplete("Runos catalogue count exceeds its declared total or synchronization limit");
+    }
+    const next = data.next_cursor;
+    if (next === undefined) {
+      const truncation = truncationOf(capabilities.length, total);
+      if (truncation) return incomplete(truncation);
+      break;
+    }
+    if (typeof next !== "string" || !next || cursors.has(next) || data.capabilities.length === 0 ||
+        total === undefined || capabilities.length >= total || page === MAX_CATALOGUE_PAGES - 1) {
+      return incomplete("Runos catalogue cursor is invalid, repeated or exceeds the synchronization limit");
+    }
+    cursors.add(next);
+    cursor = next;
   }
   const skills: DistributedSkillSummary[] = [];
-  for (const c of found.data.capabilities) {
+  const candidates = new Map<string, RunosCapability[]>();
+  for (const c of capabilities) {
     if (c.primitive_type !== "skill") continue;
+    const name = skillNameOf(c.capability_id);
+    if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(name) || name.length > 64) {
+      return incomplete("Runos skill name is invalid");
+    }
+    candidates.set(name, [...(candidates.get(name) ?? []), c]);
+  }
+  for (const name of Object.keys(deps.bindings ?? {})) {
+    if (!candidates.has(name)) return incomplete(`Configured Runos skill is absent from the caller catalog: ${name}`);
+  }
+  for (const [name, group] of candidates) {
+    const selected = Object.prototype.hasOwnProperty.call(deps.bindings ?? {}, name) ? deps.bindings![name] : undefined;
+    const c = selected ? group.find(item => item.capability_id === selected) : group.length === 1 ? group[0] : undefined;
+    if (!c) return incomplete(`Runos skill source is ambiguous or unavailable: ${name}; configure RUNOS_SKILL_BINDINGS`);
     skills.push({
-      name: skillNameOf(c.capability_id),
+      name,
       description: c.summary ?? c.title ?? "",
       capabilityId: c.capability_id,
       // discover returns stable versions only (Runos 210 section 4); the exact
@@ -175,29 +242,35 @@ export async function fetchDistributedSkill(
   const opts = { taskId, identity: caller.mint };
   const contract = await deps.resolve(deps.cfg, hit.capabilityId, { ...opts, version: hit.version });
   if (!contract.ok) return { status: { configured: true, reason: `runos_resolve failed: ${describeFailure(contract.failure)}` } };
+  const pinnedVersion = contract.data?.version;
+  if (contract.data?.capability_id !== hit.capabilityId || !pinnedVersion || ["stable", "latest"].includes(pinnedVersion)) {
+    return { status: { configured: true, reason: "Runos skill has no matching concrete resolved version" } };
+  }
 
   // A Skill's only operation is `fetch` (Runos 120 section 4.3); invoking it is a
   // DISTRIBUTION event on Runos's ledger, not an execution.
-  const fetched = await deps.invoke(deps.cfg, hit.capabilityId, "fetch", {}, { ...opts, version: hit.version });
+  const fetched = await deps.invoke(deps.cfg, hit.capabilityId, "fetch", {}, { ...opts, version: pinnedVersion });
   if (!fetched.ok) return { status: { configured: true, reason: `runos_invoke(fetch) failed: ${describeFailure(fetched.failure)}` } };
 
   const raw = fetched.data as {
     content?: Array<{ type: string; text?: string; uri?: string; mimeType?: string; blob?: string }>;
-    _meta_vxture?: { content_digest?: string; result_kind?: string };
   };
-  const blocks = Array.isArray(raw.content) ? raw.content : [];
-  const text = blocks.find((b) => b.type === "text")?.text ?? "";
-  const resources = blocks
-    .filter((b) => b.type === "resource" && typeof b.uri === "string")
-    .map((b) => ({ uri: b.uri as string, ...(b.mimeType ? { mimeType: b.mimeType } : {}), ...(b.text ? { text: b.text } : {}), ...(b.blob ? { blob: b.blob } : {}) }));
-  const runosDigest = raw._meta_vxture?.content_digest;
-  const resolvedVersion = (fetched.meta as { version_resolved?: string } | undefined)?.version_resolved ?? hit.version;
+  const blocks = fetched.content ?? (Array.isArray(raw?.content) ? raw.content : []);
+  const runosDigest = fetched.meta?.content_digest;
+  const resolvedVersion = fetched.meta?.version_resolved ?? pinnedVersion;
+  if (resolvedVersion !== pinnedVersion) return { status: { configured: true, reason: "Runos skill delivery returned another version" } };
+  let delivery: SkillDelivery;
+  try { delivery = readSkillDelivery(hit.capabilityId, resolvedVersion, blocks, fetched.meta); }
+  catch (error) { return { status: { configured: true, reason: error instanceof Error ? error.message : "Invalid skill delivery" } }; }
+  const { content: text, resources } = delivery;
   return {
     ...hit,
     version: resolvedVersion,
     content: text,
     resources,
-    contentDigest: runosDigest ?? digestOf(text),
+    contentDigest: runosDigest ?? digestOf(JSON.stringify({ content: text, resources })),
     digestSource: runosDigest ? "runos" : "computed",
+    deliveryIntegrity: delivery.integrity,
+    ...(delivery.digest ? { deliveryDigest: delivery.digest, deliveryDigestFormat: "skill-package-v1" } : {}),
   };
 }

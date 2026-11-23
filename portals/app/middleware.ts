@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { ssoAttemptCookieName, ssoAttemptCookieOptions } from "./app/auth/lib/sso";
+import { isDeployedStage } from "./app/lib/deploy-stage";
 
 /**
  * Send an unverified visitor to the front door.
@@ -38,6 +38,11 @@ function sessionCookieName(): string {
 }
 
 export function middleware(req: NextRequest): NextResponse {
+  const path = req.nextUrl.pathname;
+  if (isDeployedStage() && ["/challenge", "/chat", "/platform-check", "/entitlement-matrix", "/api/game", "/api/chat", "/api/platform-check"]
+    .some((reference) => path === reference || path.startsWith(reference + "/"))) {
+    return new NextResponse(null, { status: 404, headers: { "cache-control": "no-store" } });
+  }
   // Sign-in not provisioned: never gate. On a developer machine this is the
   // normal state, and on a misconfigured deployment a gate would lock everyone
   // out of a product that is otherwise serving - `/api/access` reports the
@@ -65,5 +70,5 @@ export const config = {
    *                    to an HTML page would surface as a JSON parse error
    *   /_next, favicon  build output and assets
    */
-  matcher: ["/((?!gate|auth|api|_next/static|_next/image|favicon.ico).*)"],
+  matcher: ["/((?!gate|auth|api|_next/static|_next/image|favicon.ico).*)", "/api/game/:path*", "/api/chat", "/api/platform-check"],
 };

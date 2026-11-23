@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { BRAND } from "@bidproposal/shared/brand";
 import { ShellBrand } from "../ds";
 import { SessionControl } from "../session-control";
+import { isDeployedStage } from "../lib/deploy-stage";
 
 /**
  * The product chrome: everything a signed-in visitor navigates with.
@@ -17,16 +18,14 @@ import { SessionControl } from "../session-control";
  * else?" at exactly the moment we are asking someone to trust the sign-in.
  */
 
-// The app itself is the one deck at `/`, which covers this chrome entirely -
-// so the nav only ever shows on the debug/reference surfaces below, and it
-// links between them plus a way back to the deck.
 const NAV_LINKS = [
-  { href: "/", label: "Play" },
+  { href: "/challenge", label: "Template sample" },
   { href: "/chat", label: "Chat" },
   { href: "/status", label: "Status" },
   { href: "/platform-check", label: "Platform check" },
   { href: "/entitlement-matrix", label: "Entitlement matrix" },
 ];
+export const dynamic = "force-dynamic";
 
 export default function ProductLayout({ children }: { children: ReactNode }) {
   return (
@@ -34,7 +33,7 @@ export default function ProductLayout({ children }: { children: ReactNode }) {
       <header className="topnav">
         <ShellBrand href="/" label={BRAND.displayName} />
         <nav>
-          {NAV_LINKS.map((l) => (
+          {(!isDeployedStage() ? NAV_LINKS : []).map((l) => (
             <a key={l.href} href={l.href}>
               {l.label}
             </a>

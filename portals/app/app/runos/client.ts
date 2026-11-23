@@ -1,5 +1,6 @@
 import { assertInternalTarget } from "../lib/internal-target";
-import { mintS2SToken, type MintOptions } from "../lib/s2s-token";
+import { invalidateS2SToken, mintS2SToken, type MintOptions } from "../lib/s2s-token";
+import { isRecord } from "../chat/atlas-types";
 import type { PlatformErrorBody } from "../lib/platform-error";
 
 // Runos client - the commercial capability plane (L1). bidproposal uses it two ways:
@@ -13,8 +14,8 @@ import type { PlatformErrorBody } from "../lib/platform-error";
 // why this is a hand-written fetch client and not the MCP SDK: the SDK's only
 // added value here is the standalone GET SSE stream, which runos does not route.
 //
-// Auth: S2S bearer, aud=runos, scope=tool:runos, compared by EXACT string
-// equality - a space-delimited scope is rejected. Tokens live 300 seconds and
+// Auth: S2S bearer, aud=runos, scope granting tool:runos (an OAuth scope set).
+// Mixing tool:runos and mgmt:runos is refused. Tokens live 300 seconds and
 // are minted per use (see lib/s2s-token.ts), never configured.
 //
 // `identity` takes the full MintOptions shape: Runos accepts both modes since
@@ -70,10 +71,20 @@ export interface RunosCallMeta {
    */
   result_kind?: "executed" | "distributed";
   content_digest?: string;
+  delivery_digest?: string;
+  delivery_digest_format?: string;
+}
+
+export interface RunosContentBlock {
+  type: string;
+  text?: string;
+  uri?: string;
+  mimeType?: string;
+  blob?: string;
 }
 
 export type RunosResult<T> =
-  | { ok: true; data: T; meta?: RunosCallMeta; text?: string; callId?: string }
+  | { ok: true; data: T; meta?: RunosCallMeta; text?: string; content?: RunosContentBlock[]; callId?: string }
   | { ok: false; failure: RunosFailure };
 
 // The server's own invoke ceiling is 60s. Time out above it, or a
@@ -111,9 +122,11 @@ async function callTool<T>(
   opts: CallToolOptions,
 ): Promise<RunosResult<T>> {
   const url = assertInternalTarget(`${cfg.baseUrl.replace(/\/$/, "")}/v1/mcp`);
-  const token = await mintS2SToken(RUNOS_AUDIENCE, opts.identity);
-
-  const vxture: Record<string, unknown> = {
+  if (!opts.taskId.trim()) throw new RunosError(400, "taskId is required");
+  const id = ++rpcId;
+  const send = async (): Promise<Response> => {
+    const token = await mintS2SToken(RUNOS_AUDIENCE, opts.identity);
+    const vxture: Record<string, unknown> = {
     task_id: opts.taskId,
     agent_version: process.env.APP_VERSION ?? "unknown",
   };
@@ -122,7 +135,7 @@ async function callTool<T>(
   if (opts.delegate && opts.identity.subjectToken) vxture.delegation_token = token;
   if (opts.sessionId) vxture.session_id = opts.sessionId;
 
-  const res = await fetch(url, {
+  return fetch(url, {
     method: "POST",
     headers: {
       authorization: `Bearer ${token}`,
@@ -134,15 +147,25 @@ async function callTool<T>(
     },
     body: JSON.stringify({
       jsonrpc: "2.0",
-      id: ++rpcId,
+      id,
       method: "tools/call",
       // _meta is a sibling of name/arguments. Nesting it inside arguments makes
       // params._meta undefined and every tool answers caller_error/missing_metadata.
       params: { name, arguments: args, _meta: { vxture } },
     }),
     cache: "no-store",
+    redirect: "error",
     signal: AbortSignal.timeout(opts.timeoutMs ?? INVOKE_TIMEOUT_MS),
   });
+  };
+  let res = await send();
+  // HTTP 401 is the gateway guard before tool execution, not a capability
+  // failure (those are HTTP 200/isError). Never repeat an ambiguous invoke.
+  if (res.status === 401) {
+    await res.body?.cancel();
+    invalidateS2SToken(RUNOS_AUDIENCE, opts.identity);
+    res = await send();
+  }
 
   if (!res.ok) {
     const body = await res.text().catch(() => "");
@@ -151,12 +174,21 @@ async function callTool<T>(
 
   const rpc = (await res.json()) as {
     error?: { code: number; message: string };
-    result?: { isError?: boolean; structuredContent?: unknown; content?: { type: string; text: string }[] };
+    result?: { isError?: boolean; structuredContent?: unknown; content?: RunosContentBlock[] };
   };
+  if (!isRecord(rpc)) throw new RunosError(502, "unreadable MCP response");
   if (rpc.error) throw new RunosError(200, `jsonrpc ${rpc.error.code}: ${rpc.error.message}`);
 
-  const result = rpc.result ?? {};
-  if (result.isError) return { ok: false, failure: result.structuredContent as RunosFailure };
+  if (!isRecord(rpc.result)) throw new RunosError(502, "MCP response contains no result");
+  const result = rpc.result;
+  if (result.isError) {
+    if (!isRecord(result.structuredContent) || typeof result.structuredContent.code !== "string" ||
+        typeof result.structuredContent.message !== "string" || typeof result.structuredContent.retryable !== "boolean") {
+      throw new RunosError(502, "unreadable capability failure");
+    }
+    return { ok: false, failure: result.structuredContent as unknown as RunosFailure };
+  }
+  if (result.structuredContent === undefined && !Array.isArray(result.content)) throw new RunosError(502, "MCP result contains no content");
 
   const structured = result.structuredContent as (T & { _meta?: { vxture?: RunosCallMeta } }) | undefined;
   // `_meta.vxture`, nested, matching the request side. The gateway briefly
@@ -165,8 +197,9 @@ async function callTool<T>(
   // MCP's namespaced metadata slot - the capability's own keys live there too,
   // so read only `vxture` out of it and never assume the object is ours.
   const meta = structured?._meta?.vxture;
-  const text = result.content?.find((c) => c.type === "text")?.text;
-  return { ok: true, data: structured as T, meta, text, callId: meta?.call_id };
+  const blocks = Array.isArray(result.content) ? result.content as RunosContentBlock[] : undefined;
+  const text = blocks?.find((c) => c.type === "text")?.text;
+  return { ok: true, data: structured as T, meta, text, ...(blocks ? { content: blocks } : {}), callId: meta?.call_id };
 }
 
 // --- Tool wrappers ----------------------------------------------------------
@@ -233,11 +266,12 @@ export const RUNOS_MATCH_ALL = "*";
 export function runosDiscover(
   cfg: RunosClientConfig,
   query: string,
-  opts: CallToolOptions & { limit?: number; category?: string; tags?: string[]; primitiveType?: "connector" | "skill" | "executor" | "asset" },
-): Promise<RunosResult<{ capabilities: RunosCapability[]; total?: number }>> {
+  opts: CallToolOptions & { limit?: number; cursor?: string; category?: string; tags?: string[]; primitiveType?: "connector" | "skill" | "executor" | "asset" },
+): Promise<RunosResult<{ capabilities: RunosCapability[]; total?: number; next_cursor?: string }>> {
   const args: Record<string, unknown> = { query, limit: opts.limit ?? 25 };
   if (opts.category) args.category = opts.category;
   if (opts.tags?.length) args.tags = opts.tags;
+  if (opts.cursor !== undefined) args.cursor = opts.cursor;
   // Runos 210 section 4: `filter: { primitive_type }` - the skill relay asks for
   // Skills only, so a Connector never masquerades as one in the catalogue.
   if (opts.primitiveType) args.filter = { primitive_type: opts.primitiveType };

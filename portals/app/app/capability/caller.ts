@@ -1,102 +1,93 @@
-import { getOidcConfig } from "../auth/lib/config";
+import { getOidcConfig, type OidcConfig } from "../auth/lib/config";
 import { verifyToken } from "../auth/lib/oidc";
+import { getAuthContext } from "../auth/lib/session";
 import { isDeployedStage } from "../lib/deploy-stage";
 import type { MintOptions } from "../lib/s2s-token";
 
-// Who is calling the capability surface.
-//
-// The caller is the Ruyin runtime daemon on the user's machine (vxture-ruyin
-// ADR-009 / ADR-020). It is a zero-secret public client, so it cannot present a
-// product credential; what it presents is the SIGNED-IN USER's platform access
-// token (`platform.bearerToken()` in ruyin's local-host). That token is verified
-// here against the platform issuer, and it then becomes the `subject_token` of
-// every OBO exchange bidproposal performs downstream (Atlas, Runos) - which is exactly
-// how the browser path in api/chat works, minus the cookie.
-//
-// The one thing this module must not do is trust a body field for identity.
-// ruyin sends `projectId` (its LOCAL container id) for correlation only; the
-// workspace and the subject come from the verified token and nowhere else.
-
-/**
- * The audience ruyin's user token is minted for. ruyin is registered as its own
- * native/public OIDC client, so the token's `aud` is ruyin's client id, not
- * bidproposal's. Which id that is belongs to platform registration, not to this repo -
- * hence an env with a documented default rather than a constant.
- *
- * OPEN INTEGRATION POINT (docs/20-specs/30-capability-surface.md section 4):
- * whether the platform's token-exchange accepts a subject_token whose `aud` is
- * another RP has to be confirmed against the platform, not assumed here.
- */
-export const RUYIN_CLIENT_ID_ENV = "RUYIN_CLIENT_ID";
-const DEFAULT_RUYIN_CLIENT_ID = "ruyin";
-
-/** Stand-in caller for local development with no IdP. Unreachable on a deployed stage. */
+// Product-owned RP identity, shared with the cloud application's /api/chat.
+// The browser sends only its opaque product cookie. Access/S2S tokens remain
+// server-side. Console native rpsid and the legacy ruyin bearer are not this
+// product's login; desktop handoff remains a separate #198 prerequisite.
+// OBO accepts exactly our client audience, including on beta registrations.
 export const DEV_WORKSPACE_ID = "ws_local_dev";
 
 export interface CapabilityCaller {
   workspaceId: string;
-  /** End-user subject; absent only on the dev stand-in. */
   sub?: string;
-  /** How to mint S2S tokens for this caller (OBO when we have their token). */
+  orgId?: string;
   mint: MintOptions;
 }
 
 export interface CallerRefusal {
   status: number;
   error: string;
+  code?: string;
+  retryable?: boolean;
 }
 
-function bearerOf(headers: Headers): string | null {
-  const raw = headers.get("authorization") ?? "";
-  const m = /^Bearer\s+(.+)$/i.exec(raw);
-  return m ? m[1].trim() : null;
+interface CallerOptions {
+  method?: string;
+  verify?: (token: string, audience: string) => Promise<Record<string, unknown>>;
+  session?: (cfg: OidcConfig, rpsid: string) => Promise<Awaited<ReturnType<typeof getAuthContext>>>;
 }
 
-/**
- * Resolve the caller from the request, or say why there is none.
- *
- * `verify` is injectable so tests can hand in a local key; production uses the
- * platform JWKS through `verifyToken`.
- */
-export async function resolveCapabilityCaller(
-  headers: Headers,
-  verify: (token: string, audience: string) => Promise<Record<string, unknown>> = async (token, audience) =>
-    verifyToken(token, getOidcConfig(), { audience }) as Promise<Record<string, unknown>>,
-): Promise<CapabilityCaller | CallerRefusal> {
+function cookieSession(headers: Headers, name: string): string | undefined {
+  const values = (headers.get("cookie") ?? "").split(";")
+    .map(part => part.trim()).filter(part => part.slice(0, part.indexOf("=")) === name);
+  if (values.length !== 1) return;
+  try {
+    const value = decodeURIComponent(values[0]!.slice(name.length + 1));
+    return value && !/[\s,;]/.test(value) ? value : undefined;
+  } catch { return; }
+}
+
+/** Verify identity before consuming any project/task facts from the request. */
+export async function resolveCapabilityCaller(headers: Headers, options: CallerOptions = {}): Promise<CapabilityCaller | CallerRefusal> {
   const cfg = getOidcConfig();
   if (!cfg.enabled) {
-    if (isDeployedStage()) {
-      return { status: 503, error: "sign-in is not configured on this deployment (OIDC_RP_ENABLED is off)" };
-    }
-    // Local development: no IdP, no token to verify. Same posture as api/chat.
+    if (isDeployedStage()) return { status: 503, error: "sign-in is not configured on this deployment (OIDC_RP_ENABLED is off)" };
     return { workspaceId: DEV_WORKSPACE_ID, mint: { workspaceId: DEV_WORKSPACE_ID } };
   }
 
-  const token = bearerOf(headers);
-  if (!token) return { status: 401, error: "missing bearer token" };
-
-  const audience = process.env[RUYIN_CLIENT_ID_ENV] || DEFAULT_RUYIN_CLIENT_ID;
-  let claims: Record<string, unknown>;
-  try {
-    claims = await verify(token, audience);
-  } catch {
-    return { status: 401, error: "bearer token is not a valid platform user token" };
+  let token: string;
+  const authorization = headers.get("authorization");
+  if (authorization !== null) {
+    // Explicit credentials never fall back to another user's browser session.
+    const bearer = /^Bearer ([^\s,]+)$/i.exec(authorization);
+    if (!bearer) return { status: 401, error: "invalid bearer token" };
+    token = bearer[1]!;
+  } else {
+    const rpsid = cookieSession(headers, cfg.cookieName);
+    if (!rpsid) return { status: 401, error: "not signed in" };
+    const origin = headers.get("origin");
+    const write = !["GET", "HEAD", "OPTIONS"].includes((options.method ?? "GET").toUpperCase());
+    if (headers.get("sec-fetch-site") === "cross-site" ||
+        (write && (!cfg.appOrigin || origin !== cfg.appOrigin)) ||
+        (origin !== null && origin !== cfg.appOrigin)) {
+      return { status: 403, error: "request origin is not allowed" };
+    }
+    let session: Awaited<ReturnType<typeof getAuthContext>>;
+    try { session = await (options.session ?? getAuthContext)(cfg, rpsid); }
+    catch { return { status: 503, error: "sign-in service is temporarily unavailable", code: "SESSION_UNAVAILABLE", retryable: true }; }
+    if (!session) return { status: 401, error: "not signed in" };
+    token = session.accessToken;
   }
 
-  const sub = typeof claims["sub"] === "string" ? (claims["sub"] as string) : undefined;
-  const workspaceId =
-    typeof claims["active_workspace"] === "string" ? (claims["active_workspace"] as string) : undefined;
-  if (!sub) return { status: 401, error: "token carries no subject" };
-  if (!workspaceId) return { status: 403, error: "this session has no active workspace" };
-
-  return {
-    workspaceId,
-    sub,
-    // On-behalf-of: downstream reads workspace and subject FROM this token;
-    // nothing bidproposal declares can widen it. Runos additionally requires the `sub`
-    // that only an OBO token carries.
-    mint: { subjectToken: token },
-  };
+  const verify = options.verify ?? ((value: string, audience: string) => verifyToken(value, cfg, { audience }));
+  let claims: Record<string, unknown>;
+  try { claims = await verify(token, cfg.clientId); }
+  catch { return { status: 401, error: "not a valid product user token" }; }
+  // jwtVerify accepts audience arrays, but the platform's OBO contract does not.
+  if (claims["aud"] !== cfg.clientId) return { status: 401, error: "token audience does not match this product" };
+  const sub = claims["sub"];
+  const workspaceId = claims["active_workspace"];
+  const orgId = claims["active_org"];
+  if (typeof sub !== "string" || !sub.trim()) return { status: 401, error: "token carries no subject" };
+  if (claims["account_status"] !== undefined && claims["account_status"] !== "active") {
+    return { status: 403, error: "account is not active" };
+  }
+  if (typeof workspaceId !== "string" || !workspaceId.trim()) return { status: 403, error: "this session has no active workspace" };
+  return { workspaceId, sub, ...(typeof orgId === "string" && orgId ? { orgId } : {}), mint: { subjectToken: token } };
 }
 
 export function isRefusal(v: CapabilityCaller | CallerRefusal): v is CallerRefusal {
