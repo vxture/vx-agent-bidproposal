@@ -46,7 +46,7 @@ function hexEqual(a: string, b: string): boolean {
  * `nowSeconds` is injectable for tests.
  */
 export function verifySignature(
-  rawBody: string,
+  rawBody: string | Uint8Array,
   header: string | null,
   secrets: string[],
   nowSeconds: number = Math.floor(Date.now() / 1000),
@@ -55,10 +55,9 @@ export function verifySignature(
   if (!parsed) return false;
   if (Math.abs(nowSeconds - parsed.t) > TOLERANCE_SECONDS) return false;
 
-  const payload = `${parsed.t}.${rawBody}`;
   for (const secret of secrets) {
     if (!secret) continue;
-    const expected = createHmac("sha256", secret).update(payload).digest("hex");
+    const expected = createHmac("sha256", secret).update(`${parsed.t}.`).update(rawBody).digest("hex");
     if (parsed.v1.some((v) => hexEqual(v, expected))) return true;
   }
   return false;

@@ -60,3 +60,15 @@ test("provisioned runs the re-entrant init hook", async () => {
   assert.equal(res.handled, true);
   assert.equal(inited, "ws_1");
 });
+
+test("a versionless invalidation does not share the lifecycle sequence", async () => {
+  let invalidations = 0;
+  const d = deps({ onSubscriptionChanged: () => { invalidations++; } });
+  await handleProvisioning(ev({ id: "first", seq: 1 }), d);
+  const notification = ev({ id: "invalidate", type: "subscription_changed", seq: undefined });
+  assert.equal((await handleProvisioning(notification, d)).handled, true);
+  assert.equal((await handleProvisioning(notification, d)).reason, "duplicate");
+  assert.equal(await d.store.getLastSeq("ws_1", PRODUCT), 1);
+  assert.equal((await handleProvisioning(ev({ id: "stale", seq: 0 }), d)).reason, "stale");
+  assert.equal(invalidations, 2);
+});

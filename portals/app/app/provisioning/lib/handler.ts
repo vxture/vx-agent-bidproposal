@@ -13,7 +13,7 @@ export interface ProvisioningEvent {
   // takes no action, which is the spec's required posture.
   type: string;
   occurred_at?: number;
-  seq: number; // per (workspace, product), monotonic
+  seq?: number; // Lifecycle only, monotonic per (workspace, product).
   workspace_id: string;
   tenant_id?: string;
   application: string; // = product_code
@@ -49,8 +49,12 @@ export async function handleProvisioning(
   }
 
   // Ordering: ignore stale/replayed seq (but still ack 2xx at the route).
-  const lastSeq = await deps.store.getLastSeq(event.workspace_id, deps.product);
-  if (event.seq <= lastSeq) {
+  const lifecycle = event.type === "tenant.provisioned" || event.type === "tenant.deprovisioned";
+  const seq = lifecycle ? event.seq : undefined;
+  if (lifecycle && (seq === undefined || !Number.isSafeInteger(seq) || seq < 0)) {
+    throw new Error("Invalid lifecycle sequence");
+  }
+  if (seq !== undefined && seq <= await deps.store.getLastSeq(event.workspace_id, deps.product)) {
     return { ok: true, handled: false, reason: "stale" };
   }
 
@@ -82,6 +86,6 @@ export async function handleProvisioning(
   }
 
   await deps.store.markDelivered(event.id, { type: event.type, result: "processed" });
-  await deps.store.setSeq(event.workspace_id, deps.product, event.seq);
+  if (seq !== undefined) await deps.store.setSeq(event.workspace_id, deps.product, seq);
   return { ok: true, handled: true, reason: "processed" };
 }

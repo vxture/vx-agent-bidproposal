@@ -1,6 +1,13 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { subscribeUrl } from "./deeplink";
+import { productPricingUrl, subscribeUrl } from "./deeplink";
+
+test("live CTA goes to public pricing for the one Bid product", () => {
+  const url = new URL(productPricingUrl());
+  assert.equal(url.origin, "https://vxture.com");
+  assert.equal(url.pathname, "/zh-CN/pricing");
+  assert.deepEqual([...url.searchParams], [["product", "bidproposal"]]);
+});
 
 test("subscribe URL carries product + intent and never workspace_id", () => {
   const u = new URL(subscribeUrl({ intent: "upgrade", targetTier: "pro", metric: "member.max" }));

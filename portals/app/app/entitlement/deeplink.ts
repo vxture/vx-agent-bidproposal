@@ -8,6 +8,14 @@ import type { Tier } from "./types";
 
 export type Intent = "upgrade" | "renew" | "addon";
 
+/** The live product sends users to the pricing page to choose their plan. */
+export function productPricingUrl(): string {
+  const url = new URL("https://vxture.com/zh-CN/pricing");
+  url.searchParams.set("product", BRAND.productCode);
+  return url.href;
+}
+
+/** Legacy sample-game links, used only by the development reference surface. */
 export function subscribeUrl(opts: { intent: Intent; targetTier?: Tier; metric?: string }): string {
   const base = (process.env.NEXT_PUBLIC_CONSOLE_URL ?? "https://console.vxture.com").replace(/\/$/, "");
   const u = new URL(`${base}/subscribe`);

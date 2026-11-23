@@ -67,10 +67,18 @@ unregistered product gets a plausible-looking `400 invalid_client` or
 
 ## Provisioning webhook (C3)
 
-- [ ] **bidproposal** registered in `product_webhooks` with its delivery address
-      (`BIDPROPOSAL_WEBHOOK_BASE_URL`) - requested once a deploy host exists.
+- [ ] In the existing Opera entry, set the delivery URL to
+      `https://bidproposal.vxture.com/api/webhooks/vxture` only after the
+      approved product origin is reachable. The legacy template path is not
+      a valid first registration.
 - [ ] `BIDPROPOSAL_PROVISION_WEBHOOK_SECRET` live on the platform side and transported
       to the deploy host.
+
+Use the existing console configuration path. Do not change server variables
+or provision replacement secrets as part of this product configuration. If
+the product deployment lacks its approved runtime settings, stop before tag
+creation. Verify a signed test delivery and actual persistent receipt before
+activating a subscription.
 
 ## Provider grants (not the platform line's to do; tracked here so they are not forgotten)
 
