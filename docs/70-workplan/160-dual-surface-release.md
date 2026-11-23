@@ -97,3 +97,31 @@ The compiled webhook ran against a disposable PostgreSQL-compatible PGlite
 database with the product DDL. Replays and stale events were harmless;
 an injected sequence-write failure rolled back both the lifecycle update and
 the receipt, and the same signed delivery could be retried successfully.
+
+## B2 production entry
+
+- Confirmed origin: `https://bidproposal.ruyin.work`; DNS and wildcard TLS
+  work. Opera has saved the domain on the existing Bid record. There is no
+  upstream configured yet, so the shared edge has no Bid endpoint to serve.
+- The owner selected the production port and a reserved beta port. The source
+  is prepared for the selected production port; update the authoritative port
+  registry before changing the live runtime or edge route. Do not install the
+  old edge example.
+- Opera verified the existing agent record. The formal OIDC client is missing;
+  the webhook registration check could not read its configuration. Bid holds all
+  12 current Atlas routes and all 879 current Runos capabilities (read limit,
+  zero failed grants). The point-in-time grants do not include later resources
+  and belong to Bid rather than the RUYIN host.
+- Confirm the approved target and existing runtime configuration before tagging
+  a release. Reuse the existing protected GitHub production Environment and
+  shared Opera edge routing. Verify HTTPS health, the contract and a signed
+  webhook delivery before opening a pilot plan and workspace.
+
+## B3 desktop candidate
+
+- The 1.17.2 desktop source has been replayed onto the reviewed API main tree.
+  The combined lockfile installed frozen, 99 desktop tests passed, and the
+  rebuilt unsigned package matched the previous SHA-256 byte for byte.
+- The regular RUYIN checkout's packer rejected the project-document contract.
+  The rebuild used the delivery-readiness packer. Verify the released host
+  accepts the contract before signing and advertising desktop availability.

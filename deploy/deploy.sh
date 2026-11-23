@@ -33,7 +33,7 @@ PROJECT_NAME="${PRODUCT_CODE}"
 # had already marked healthy: CI does not export APP_PUBLISH_PORT over SSH, so
 # the shell fell back to the default while the container listened on the
 # operator .env's value. A constant cannot drift out of step with itself.
-APP_CONTAINER_PORT=4000
+APP_CONTAINER_PORT=4070
 
 # The published side, for the log only. If it ever disagrees with what the edge
 # proxies to, that is the whole failure mode - so print it rather than leave the
@@ -49,7 +49,7 @@ published_port() {
   # a backslash escape that survives one editor and not the next is how a
   # working script becomes a silently empty one.
   local v="$(printf '%s' "$line" | grep -oE '[0-9]+' | head -n 1)"
-  printf '%s' "${v:-${APP_PUBLISH_PORT:-4000}}"
+  printf '%s' "${v:-${APP_PUBLISH_PORT:-4070}}"
 }
 APP_PUBLISHED_PORT="$(published_port)"
 # Persistent data lives OUTSIDE the deploy dir (which is rsync --delete'd on every

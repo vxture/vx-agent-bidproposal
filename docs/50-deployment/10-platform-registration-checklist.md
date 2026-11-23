@@ -4,12 +4,11 @@ Platform-line actions that must exist before a product repo can make a real call
 They are code-external: performed in the platform repo and platform consoles, not
 here. Authority: `product_240_repo-template.md` section 2.8.
 
-**State for bidproposal (2026-09-05): nothing below exists yet.** The platform seed
-(`deploy/database`) carries no `bidproposal` row of any kind. Every item was requested,
-with provisional names, in vxture-platform/vxture-platform#198; that issue is the
-single place where a name change or a completed step gets recorded. An
-unregistered product gets a plausible-looking `400 invalid_client` or
-`400 invalid_target` and no hint about which of these steps is missing.
+**State for bidproposal (2026-11-24):** Opera has the existing agent record and
+the saved `bidproposal.ruyin.work` domain. DNS and wildcard TLS work; the Bid
+API is not deployed. Opera verifies 12 active Atlas routes and 879 Runos read
+grants. The formal login client and Webhook registration remain open.
+Web and desktop use this same product record.
 
 ## Blocker that is not a registration item
 
@@ -24,12 +23,12 @@ unregistered product gets a plausible-looking `400 invalid_client` or
 
 ## Directory and plan
 
-- [ ] **bidproposal** product row in the platform product directory (`product.products`,
-      `product_code='bidproposal'`, `status='active'`, name 标书方案智能体). The contract's
-      `product.id='bidproposal'` is ruyin-side and needs nothing here.
-- [ ] Plan structure (subscription tiers) seeded for the product (provisional
-      `bidproposal-free`), or provisioning coverage. Without either, the subscription leg
-      of the S2S coverage gate cannot be satisfied.
+- [x] Confirm the existing `bidproposal` product in Opera (标书方案智能体, agent product).
+- [ ] Enable each supported surface after its own acceptance. Verify the product
+      API before launch and commercial activation.
+- [ ] Publish the pilot plan in Admin after verifying the API and Opera onboarding.
+      Subscribe one real pilot workspace through Console; both surfaces share that
+      workspace's Bid subscription, entitlement, quota and usage.
 
 ## OIDC (customer realm)
 
@@ -41,10 +40,9 @@ unregistered product gets a plausible-looking `400 invalid_client` or
 - [ ] `client_secret_hash` provisioned; secret delivered out of band. **This same
       client_id/client_secret pair is also the S2S credential** (ADR-003 of the
       template) - there is no separate S2S secret to request.
-- [ ] `redirect_uri=https://bidproposal.vxture.com/auth/callback`,
-      `post_logout_redirect_uri=https://bidproposal.vxture.com/`,
-      `back_channel_logout_uri=https://bidproposal.vxture.com/auth/backchannel-logout`
-      (host provisional).
+- [ ] `redirect_uri=https://bidproposal.ruyin.work/auth/callback`,
+      `post_logout_redirect_uri=https://bidproposal.ruyin.work/`,
+      `back_channel_logout_uri=https://bidproposal.ruyin.work/auth/backchannel-logout`.
 - [ ] Allowed scopes `openid profile email phone`. Nothing needs adding for S2S:
       the exchange grant never reads `allowed_scopes` and derives the minted
       scope from the audience alone.
@@ -68,7 +66,7 @@ unregistered product gets a plausible-looking `400 invalid_client` or
 ## Provisioning webhook (C3)
 
 - [ ] In the existing Opera entry, set the delivery URL to
-      `https://bidproposal.vxture.com/api/webhooks/vxture` only after the
+      `https://bidproposal.ruyin.work/api/webhooks/vxture` only after the
       approved product origin is reachable. The legacy template path is not
       a valid first registration.
 - [ ] `BIDPROPOSAL_PROVISION_WEBHOOK_SECRET` live on the platform side and transported

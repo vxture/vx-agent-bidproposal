@@ -44,32 +44,27 @@ this list from the top.
       job log has no `ERR_PNPM_FETCH_401`. A repo where `github-actions`
       produces PRs and `npm` produces none is showing you this failure.
 
-## Deployment - prod only on worker02
+## Deployment - production only
 
-bidproposal deploys **production only** (ADR-002) on **worker02** (in the tailnet,
-non-VPC, so GHCR primary + ACR fallback), stack root `/srv/md0/bidproposal` on the data
-array. The workflows (`deploy` / `build` / `rollback` / `db-init` plus the
+Bid is **production only** (ADR-002). The candidate host is **worker02**, with
+stack root `/srv/md0/bidproposal`; confirm the host and existing product
+configuration before release. The workflows (`deploy` / `build` / `rollback` / `db-init` plus the
 `tailnet-ssh-connect` action) are in the repo, and the product code is a literal
 in them - there is no build-time substitution step and no `PRODUCT_CODE` repo
 variable in the path any more.
 
-### Configured for bidproposal
+### Preflight for bidproposal
 
-- [ ] `APP_PUBLISH_PORT` in the host `.env`, set to bidproposal's allocation from the
-      port registry (the repo does not restate the number - see CLAUDE.md). It is
-      one number: the app listens on it and is published on it. No workflow reads
-      the repo variable. **Pending: the registry has reassigned bidproposal and the
-      cutover is not executed** - the host `.env` and the edge vhost move in the
-      same window, or the site 502s the way it did in liaison letter 50.
-- [ ] `production` GitHub Environment + required reviewer (deploy pauses until
-      approved). No `beta` environment - prod only. **Not created for
-      bidproposal** (the repo was created with a plain push on 2026-09-05; no
-      environment, no ruleset yet).
+- [ ] Verify that the authoritative registry has the Bid allocation and that
+      the approved host and edge configuration agree. The inherited template
+      port is not available to Bid.
+- [x] `production` GitHub Environment + required reviewer (deploy pauses until
+      approved). No `beta` environment.
 - [ ] Non-secret host secrets: `DEPLOY_HOST` = `vx-worker-02` (tailnet MagicDNS,
       IP `100.76.219.48`), `DEPLOY_USER` = `stone`, `DEPLOY_PORT` = `22`.
-- [ ] Domain `bidproposal.vxture.com` created and resolving (shared edge -> worker02
-      over the tailnet); vhost source in `configs/edge/`. **Provisional name, not
-      created** - requested in vxture-platform/vxture-platform#198.
+- [x] DNS resolves for `bidproposal.ruyin.work`.
+- [ ] HTTPS route serves the Bid health and contract endpoints. DNS does not
+      verify the route; see `configs/edge/README.md` for the remaining checks.
 - [ ] Org-level shared credentials available to the repo: `NODE_AUTH_TOKEN`,
       `ALIYUN_ACR_USERNAME/PASSWORD`, `TAILSCALE_OAUTH_*`; org vars
       `ALIYUN_ACR_REGISTRY/NAMESPACE`, `VXTURE_NPM_REGISTRY`,
@@ -81,11 +76,11 @@ variable in the path any more.
       (plus optional `DEPLOY_SSH_KEY_PASSPHRASE`).
 - [ ] `DEPLOY_KNOWN_HOSTS` - `ssh-keyscan -p 22 vx-worker-02` from a trusted
       network. Fail-closed; there is no TOFU fallback.
-- [ ] `ENV_FILE_BASE64` - base64 of the host `.env`. Start from the committed
-      `.env.example`, which is the authoritative key list. It is written to
-      `/srv/md0/bidproposal/etc/.env` only when that file is ABSENT, so re-cutting this
-      secret does not update a running host - drift is silent until a rebuild.
-- [ ] SSH `vx-worker-02` once: create `/srv/md0/bidproposal`, confirm GHCR/ACR login.
+- [ ] Confirm the existing approved host configuration is readable by the
+      deploy account. The release workflow does not bootstrap or rewrite it.
+      The 2026-11-24 read-only check on worker02 did not find the product
+      stack directory, config file, listeners, or containers.
+- [ ] Confirm the approved deploy target can access GHCR and the ACR fallback.
 - [ ] `OIDC_CLIENT_SECRET` in the host `.env`. This one credential unlocks both
       login and all S2S calls (ADR-003).
 - [ ] `ATLAS_API_URL` and `RUNOS_API_URL` in the host `.env` - base URLs only,

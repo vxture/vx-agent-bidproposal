@@ -266,7 +266,7 @@ console.log(`
   5. Work docs/50-deployment/20-github-bootstrap-checklist.md to create the repo
      and apply the branch-protection ruleset LAST.
   6. Re-point configs/edge/${code}.vxture.com.conf at your allocated port (it
-     still carries bidproposal's 4000), set APP_PUBLISH_PORT to the same number on the
+     still carries bidproposal's 4070), set APP_PUBLISH_PORT to the same number on the
      deploy host, and hand the vhost to the edge operator. Those two are one
      number - the app listens on it, is published on it, and is proxied to it.
 `);

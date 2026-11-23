@@ -28,7 +28,7 @@ value domains. Import from it rather than re-implementing - a local copy of
 ```bash
 pnpm install                 # needs NODE_AUTH_TOKEN for the @vxture scope
 cp .env.example .env
-pnpm dev                     # http://localhost:4000
+pnpm dev                     # http://localhost:4070
 ```
 
 An empty `.env` works: entitlement and chat fall back to mock resolvers, and
