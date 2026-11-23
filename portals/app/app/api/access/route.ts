@@ -1,11 +1,10 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { getOidcConfig } from "../../auth/lib/config";
-import { getAuthUser } from "../../auth/lib/session";
-import { getEntitlementResolver } from "../../entitlement/resolver";
+import { getAuthContext } from "../../auth/lib/session";
+import { checkProductAssignment, readProductEntitlement } from "../../capability/access";
 import { ctaFor, hasDataAccess, hasProductAccess } from "../../entitlement/types";
 import { isDeployedStage } from "../../lib/deploy-stage";
-import { clearCookieOptions } from "../../auth/lib/cookie";
 import type { AccessState } from "../../access/types";
 
 // GET /api/access - the one call a product front door makes.
@@ -23,6 +22,10 @@ import type { AccessState } from "../../access/types";
 // and lets the gate render a single decision instead of reconciling two.
 export const dynamic = "force-dynamic";
 
+function accessResponse(state: AccessState, status = 200): Response {
+  return NextResponse.json(state, { status, headers: { "cache-control": "private, no-store" } });
+}
+
 export async function GET(): Promise<Response> {
   const cfg = getOidcConfig();
 
@@ -34,29 +37,44 @@ export async function GET(): Promise<Response> {
     const state: AccessState = isDeployedStage()
       ? { status: "unconfigured" }
       : { status: "open", reason: "dev-no-oidc" };
-    return NextResponse.json(state);
+    return accessResponse(state);
   }
 
   const jar = await cookies();
   const rpsid = jar.get(cfg.cookieName)?.value;
-  const user = rpsid ? await getAuthUser(cfg, rpsid).catch(() => null) : null;
-
-  if (!user) return NextResponse.json({ status: "anonymous" } satisfies AccessState);
+  let context;
+  try { context = rpsid ? await getAuthContext(cfg, rpsid) : null; }
+  catch { return accessResponse({ status: "unavailable" }, 503); }
+  if (!context) return accessResponse({ status: "anonymous" });
+  const { user, accessToken } = context;
 
   // A suspended or closed account is not a session (080-rp 2.6). Kept distinct
   // from anonymous: sending this user to sign in again would loop them.
   if (user.accountStatus && user.accountStatus !== "active") {
-    return NextResponse.json({ status: "inactive-account" } satisfies AccessState);
+    return accessResponse({ status: "inactive-account" });
   }
 
   // Signed in, but the session carries no workspace to scope entitlement to.
   // Nothing to resolve, and re-authenticating will not add one.
   if (!user.activeWorkspace) {
-    return NextResponse.json({ status: "no-workspace", user } satisfies AccessState);
+    return accessResponse({ status: "no-workspace", user });
   }
 
-  const entitlement = await getEntitlementResolver().resolve(user.activeWorkspace);
-  return NextResponse.json({
+  const caller = {
+    workspaceId: user.activeWorkspace,
+    sub: user.sub,
+    orgId: user.activeOrg ?? undefined,
+    mint: { subjectToken: accessToken },
+  };
+  const entitlement = await readProductEntitlement(caller);
+  if ("error" in entitlement) return accessResponse({ status: "unavailable" }, 503);
+  if (hasDataAccess(entitlement)) {
+    const assignment = await checkProductAssignment(caller);
+    if (assignment) return assignment.status === 403
+      ? accessResponse({ status: "unassigned" })
+      : accessResponse({ status: "unavailable" }, 503);
+  }
+  return accessResponse({
     status: "authenticated",
     user,
     entitlement,
@@ -65,5 +83,5 @@ export async function GET(): Promise<Response> {
       dataAccess: hasDataAccess(entitlement),
       cta: ctaFor(entitlement),
     },
-  } satisfies AccessState);
+  });
 }

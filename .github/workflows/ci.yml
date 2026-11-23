@@ -172,6 +172,9 @@ jobs:
           # set GIT_SHA so the CI build environment is representative.
           GIT_SHA: ${{ github.sha }}
 
+      - name: Smoke the standalone product API artifact
+        run: node scripts/guardrails/check-product-release.mjs
+
   # -- Test coverage (required check): run the app unit tests (node:test + tsx).
   test-coverage:
     name: test-coverage

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { isRefusal, resolveCapabilityCaller } from "../../../../capability/caller";
 import { isOurProduct } from "../../../../capability/contract";
 import { listDistributedSkills } from "../../../../capability/skills";
+import { capabilityAccess } from "../../../../capability/access";
 
 // GET /api/products/:product/skills - the Skills Runos distributes to this
 // product, relayed for the Ruyin runtime (vxture-ruyin ADR-020 section 3c).
@@ -19,7 +20,9 @@ export async function GET(req: Request, ctx: { params: Promise<{ product: string
     return NextResponse.json({ error: "unknown product", product }, { status: 404 });
   }
   const caller = await resolveCapabilityCaller(req.headers);
-  if (isRefusal(caller)) return NextResponse.json({ error: caller.error }, { status: caller.status });
+  if (isRefusal(caller)) return NextResponse.json({ error: caller.error, ...(caller.code ? { code: caller.code, retryable: caller.retryable } : {}) }, { status: caller.status });
+  const access = await capabilityAccess(caller);
+  if (access) return NextResponse.json({ error: access.error, code: access.code, retryable: access.retryable }, { status: access.status });
 
   const url = new URL(req.url);
   const taskId = url.searchParams.get("taskId")?.trim() || `skills-refresh-${Date.now().toString(36)}`;

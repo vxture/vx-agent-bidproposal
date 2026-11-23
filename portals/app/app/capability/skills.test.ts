@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { fetchDistributedSkill, listDistributedSkills, skillNameOf, truncationOf, type SkillsRelayDeps } from "./skills";
+import { createHash } from "node:crypto";
+import { defaultSkillsRelayDeps, fetchDistributedSkill, listDistributedSkills, skillNameOf, truncationOf, type SkillsRelayDeps } from "./skills";
 import { DEV_WORKSPACE_ID, type CapabilityCaller } from "./caller";
 import type { RunosCapability, RunosContract, RunosResult } from "../runos/client";
 
@@ -34,7 +35,7 @@ function deps(over: Partial<SkillsRelayDeps> = {}): SkillsRelayDeps {
           { ...skill("arda.invoice-query", "发票查询"), primitive_type: "connector" },
         ],
       }),
-    resolve: async () => ok({} as RunosContract),
+    resolve: async (_cfg, capabilityId) => ok({ capability_id: capabilityId, version: "1.2.0" } as RunosContract),
     invoke: async () =>
       ok(
         {
@@ -42,7 +43,6 @@ function deps(over: Partial<SkillsRelayDeps> = {}): SkillsRelayDeps {
             { type: "text", text: "---\nname: officecli-docx\n---\n# DOCX" },
             { type: "resource", uri: "skill://officecli.officecli-docx/1.2.0/references/REFERENCE.md", mimeType: "text/markdown", text: "ref" },
           ],
-          _meta_vxture: { result_kind: "distributed", content_digest: "sha256:abc" },
         },
         { version_resolved: "1.2.0", content_digest: "sha256:abc", result_kind: "distributed" },
       ),
@@ -85,7 +85,8 @@ test("list: asks Runos for Skills only, drops anything else, sorts by name", asy
 
 test("list: a Runos failure is reported as a reason, not thrown into the route", async () => {
   const r = await listDistributedSkills(caller, "t1", deps({ discover: async () => fail("CALLER_UNSUPPORTED_OPERATION") }));
-  assert.equal(r.status.configured, true);
+  assert.equal(r.status.configured, false);
+  assert.equal(r.status.complete, false);
   assert.match(r.status.reason ?? "", /runos_discover failed: CALLER_UNSUPPORTED_OPERATION/);
 });
 
@@ -115,7 +116,43 @@ test("fetch: when Runos sends no digest, bidproposal computes one and says it di
   if ("content" in r) {
     assert.match(r.contentDigest, /^sha256:[0-9a-f]{64}$/);
     assert.equal(r.digestSource, "computed");
+    assert.equal(r.deliveryIntegrity, "unverified");
   }
+});
+
+test("fetch verifies the complete MCP skill package with namespaced delivery metadata", async () => {
+  const content = "# Synthetic\r\n";
+  const resources = [{ mimeType: "text/markdown", path: "references/empty.md", text: "" },
+    { mimeType: "text/plain", path: "references/source.txt", text: "Evidence A\n" }];
+  const digest = createHash("sha256").update(JSON.stringify({ content, resources })).digest("hex");
+  const blocks = [{ type: "text", text: content }, ...resources.map(r => ({ type: "resource", uri: `skill://officecli.officecli-docx/1.2.0/${r.path}`, mimeType: r.mimeType, text: r.text }))];
+  const invoke: SkillsRelayDeps["invoke"] = async () => ({ ok: true, data: {}, content: blocks,
+    meta: { result_kind: "distributed", version_resolved: "1.2.0", content_digest: "registered-contract-digest", delivery_digest: digest, delivery_digest_format: "skill-package-v1" } });
+  const result = await fetchDistributedSkill(caller, "t1", "officecli-docx", deps({ invoke }));
+  assert.ok("content" in result); if (!("content" in result)) return;
+  assert.equal(result.content, content); assert.equal(result.resources[0].text, "");
+  assert.equal(result.contentDigest, "registered-contract-digest");
+  assert.equal(result.deliveryDigest, digest); assert.equal(result.deliveryIntegrity, "verified");
+});
+
+test("a tampered resource, cross-package URI, wrong format or missing digest refuses the skill", async () => {
+  const digest = createHash("sha256").update(JSON.stringify({ content: "# Skill", resources: [{ mimeType: "text/plain", path: "ref.txt", text: "original" }] })).digest("hex");
+  for (const patch of [ { text: "tampered" }, { uri: "skill://other/1.2.0/ref.txt" }, { format: "unknown" }, { missingDigest: true }, { uri: "skill://officecli.officecli-docx/1.2.0/../ref.txt" } ]) {
+    const result = await fetchDistributedSkill(caller, "t1", "officecli-docx", deps({ invoke: async () => ({ ok: true, data: {},
+      content: [{ type: "text", text: "# Skill" }, { type: "resource", uri: "uri" in patch ? patch.uri : "skill://officecli.officecli-docx/1.2.0/ref.txt", mimeType: "text/plain", text: "text" in patch ? patch.text : "original" }],
+      meta: { result_kind: "distributed", version_resolved: "1.2.0", delivery_digest: "missingDigest" in patch ? undefined : digest, delivery_digest_format: "format" in patch ? patch.format : "skill-package-v1" } }) }));
+    assert.ok(!("content" in result)); if ("content" in result) continue;
+    assert.match(result.status.reason ?? "", /integrity verification failed/);
+  }
+});
+
+test("a legacy unverified package digest changes when a resource changes", async () => {
+  const fetch = (text: string) => fetchDistributedSkill(caller, "t1", "officecli-docx", deps({ invoke: async () => ok({ content: [
+    { type: "text", text: "# Same content" }, { type: "resource", uri: "skill://officecli.officecli-docx/stable/ref.txt", text },
+  ] }) }));
+  const first = await fetch("one"), second = await fetch("two");
+  assert.ok("content" in first && "content" in second); if (!("content" in first && "content" in second)) return;
+  assert.notEqual(first.contentDigest, second.contentDigest); assert.equal(first.deliveryIntegrity, "unverified");
 });
 
 // --- enumeration, and what happens when it comes back short ------------------
@@ -177,4 +214,75 @@ test("truncationOf: the two cases, and the two that are not", () => {
   // A total below the returned count is nonsense, but it is not truncation:
   // do not invent a failure out of a number we cannot interpret.
   assert.equal(truncationOf(5, 3), undefined);
+});
+
+test("list: reads all 879 skills over opaque pages before publishing a catalog", async () => {
+  const all = Array.from({ length: 879 }, (_, i) => skill(`synthetic.skill-${i}`, "Synthetic skill"));
+  const cursors: Array<string | undefined> = [];
+  const result = await listDistributedSkills(caller, "task-pages", deps({ discover: async (_cfg, query, opts) => {
+    assert.equal(query, "*"); assert.equal(opts.taskId, "task-pages"); assert.equal(opts.identity, caller.mint);
+    cursors.push(opts.cursor);
+    return ok(opts.cursor ? { capabilities: all.slice(500), total: all.length } : { capabilities: all.slice(0, 500), total: all.length, next_cursor: "opaque-page-two" });
+  } }));
+  assert.equal(result.status.configured, true);
+  assert.equal(result.skills.length, 879);
+  assert.deepEqual(cursors, [undefined, "opaque-page-two"]);
+});
+
+test("list: a failed or inconsistent later page never exposes a partial catalog", async () => {
+  for (const fault of ["failure", "transport", "total", "duplicate-id", "duplicate-name", "cursor", "empty", "short", "invalid", "too-many"] as const) {
+    let count = 0;
+    const result = await listDistributedSkills(caller, "task-pages", deps({ discover: async () => {
+      if (++count === 1) return ok({ capabilities: [skill("a.first", "A")], total: 3, next_cursor: "again" });
+      if (fault === "failure") return fail("CALLER_INVALID_ARGUMENTS");
+      if (fault === "transport") throw new Error("Synthetic transport lost");
+      if (fault === "total") return ok({ capabilities: [skill("b.second", "B")], total: 4 });
+      if (fault === "duplicate-id") return ok({ capabilities: [skill("a.first", "A")], total: 3 });
+      if (fault === "duplicate-name") return ok({ capabilities: [skill("b.first", "B"), skill("b.third", "C")], total: 3 });
+      if (fault === "cursor") return ok({ capabilities: [skill("b.second", "B")], total: 3, next_cursor: "again" });
+      if (fault === "empty") return ok({ capabilities: [], total: 3, next_cursor: "different" });
+      if (fault === "invalid") return ok({ capabilities: [skill("b.second", "B")], total: -1 });
+      if (fault === "too-many") return ok({ capabilities: [skill("b.second", "B"), skill("b.third", "C"), skill("b.fourth", "D")], total: 3 });
+      return ok({ capabilities: [skill("b.second", "B")], total: 3 });
+    } }));
+    assert.equal(result.status.configured, false, fault);
+    assert.equal(result.status.complete, false, fault);
+    assert.deepEqual(result.skills, [], fault);
+    assert.equal(count, 2, fault);
+  }
+});
+
+test("list: bounded paging rejects malformed, ambiguous and endless catalogs", async () => {
+  for (const data of [null, { capabilities: null }, { capabilities: [], total: 20001 },
+      { capabilities: [skill("a.bad_name", "A")] }, { capabilities: [skill("a.first", "A"), skill("b.first", "B")] },
+      { capabilities: [skill("a.first", "A")], total: 2, next_cursor: "" }]) {
+    const result = await listDistributedSkills(caller, "t", deps({ discover: async () => ok(data as never) }));
+    assert.equal(result.status.complete, false); assert.deepEqual(result.skills, []);
+  }
+  let pages = 0;
+  const result = await listDistributedSkills(caller, "t", deps({ discover: async () => {
+    pages++;return ok({ capabilities: [skill(`a.item-${pages}`, "A")], total: 1000, next_cursor: `cursor-${pages}` });
+  } }));
+  assert.equal(pages, 200); assert.equal(result.status.complete, false); assert.deepEqual(result.skills, []);
+});
+
+test("product source bindings resolve ambiguity explicitly and refresh for new requests", async () => {
+  const before = process.env.RUNOS_SKILL_BINDINGS;
+  const capabilities = [skill("provider-a.docx", "A"), skill("provider-b.docx", "B")];
+  const config = () => ({ ...defaultSkillsRelayDeps(), cfg, discover: async () => ok({ capabilities, total: 2 }) });
+  try {
+    delete process.env.RUNOS_SKILL_BINDINGS;
+    assert.equal((await listDistributedSkills(caller, "t", config())).status.complete, false);
+    process.env.RUNOS_SKILL_BINDINGS = '{"docx":"provider-a.docx"}';
+    assert.equal((await listDistributedSkills(caller, "t", config())).skills[0]?.capabilityId, "provider-a.docx");
+    process.env.RUNOS_SKILL_BINDINGS = '{"docx":"provider-b.docx"}';
+    assert.equal((await listDistributedSkills(caller, "t", config())).skills[0]?.capabilityId, "provider-b.docx");
+    for (const invalid of ['null', '[]', '{"docx":7}', '{"docx":"provider.wrong"}', '{"docx":"other.docx"}', '{"absent":"provider.absent"}', 'invalid-json']) {
+      process.env.RUNOS_SKILL_BINDINGS = invalid;
+      const result = await listDistributedSkills(caller, "t", config());
+      assert.equal(result.status.complete, false, invalid); assert.deepEqual(result.skills, [], invalid);
+    }
+  } finally {
+    if (before === undefined) delete process.env.RUNOS_SKILL_BINDINGS; else process.env.RUNOS_SKILL_BINDINGS = before;
+  }
 });

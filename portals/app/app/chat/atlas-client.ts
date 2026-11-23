@@ -3,6 +3,7 @@ import { assertInternalTarget } from "../lib/internal-target";
 import { invalidateS2SToken, mintS2S, type MintOptions, type S2SToken } from "../lib/s2s-token";
 import { isRetryable, type PlatformErrorBody } from "../lib/platform-error";
 import type { ChatMessage } from "./types";
+import { isRecord, type AtlasMessage, type AtlasReasoning, type AtlasTool, type AtlasToolCall, type AtlasToolChoice } from "./atlas-types";
 
 // Atlas client - the model supply plane (L1). Contract verified against the
 // Atlas interface reference, section 04 "data plane" (POST /v1/chat) and
@@ -27,12 +28,13 @@ export const ATLAS_AUDIENCE = "atlas";
 
 export interface AtlasClientConfig {
   baseUrl: string;
+  endpointCode?: string;
 }
 
 export function getAtlasClientConfig(): AtlasClientConfig | null {
   const baseUrl = process.env.ATLAS_API_URL;
   if (!baseUrl) return null; // -> Mock resolver (refused on a deployed stage)
-  return { baseUrl };
+  return { baseUrl, ...(process.env.ATLAS_ENDPOINT_CODE ? { endpointCode: process.env.ATLAS_ENDPOINT_CODE } : {}) };
 }
 
 /**
@@ -142,7 +144,7 @@ const PROBE_TIMEOUT_MS = 10_000;
 interface ChatCompletionResponse {
   id: string;
   modelCode: string;
-  message: { role: "assistant"; content: string };
+  message: { role: "assistant"; content: string; toolCalls?: AtlasToolCall[]; reasoning?: AtlasReasoning };
   usage: { promptTokens: number; completionTokens: number; totalTokens: number };
   latencyMs: number;
   finishReason?: string;
@@ -150,7 +152,7 @@ interface ChatCompletionResponse {
 
 /** What Atlas actually did, as opposed to what was asked for. */
 export interface AtlasCompletion {
-  message: ChatMessage;
+  message: ChatMessage & { toolCalls?: AtlasToolCall[]; reasoning?: AtlasReasoning };
   /** The model that served the turn - endpoint fallback makes this differ from the request. */
   modelCode: string;
   /**
@@ -179,6 +181,7 @@ async function atlasFetch(
       ...init,
       headers: { ...(init.headers ?? {}), authorization: `Bearer ${minted.token}`, accept: "application/json" },
       cache: "no-store",
+      redirect: "error",
       signal: AbortSignal.timeout(timeoutMs),
     });
   };
@@ -202,15 +205,17 @@ export interface ChatCallOptions {
    */
   taskId: string;
   endpointCode?: string;
+  tools?: AtlasTool[];
+  toolChoice?: AtlasToolChoice;
 }
 
 export async function fetchChatCompletion(
   cfg: AtlasClientConfig,
   identity: MintOptions,
-  messages: ChatMessage[],
+  messages: AtlasMessage[],
   opts: ChatCallOptions,
 ): Promise<AtlasCompletion> {
-  const endpointCode = opts.endpointCode ?? DEFAULT_ENDPOINT_CODE;
+  const endpointCode = opts.endpointCode ?? cfg.endpointCode ?? DEFAULT_ENDPOINT_CODE;
   // Also Atlas's C3 idempotency key, and the only way to correlate this call in
   // its request log - so it is generated here rather than left to the server.
   const requestId = randomUUID();
@@ -242,6 +247,8 @@ export async function fetchChatCompletion(
         body: JSON.stringify({
           endpointCode,
           messages,
+          ...(opts.tools?.length ? { tools: opts.tools } : {}),
+          ...(opts.toolChoice ? { toolChoice: opts.toolChoice } : {}),
           ...(tenantId ? { tenantId } : {}),
           taskId: opts.taskId,
           requestId,
@@ -252,9 +259,31 @@ export async function fetchChatCompletion(
   );
   if (!res.ok) await throwAtlasError(res);
   const raw = (await res.json()) as ChatCompletionResponse;
+  if (!isRecord(raw) || !isRecord(raw.message) || raw.message.role !== "assistant" ||
+      typeof raw.message.content !== "string" ||
+      (raw.message.reasoning !== undefined && !isRecord(raw.message.reasoning)) ||
+      (raw.message.toolCalls !== undefined && (!Array.isArray(raw.message.toolCalls) ||
+        raw.message.toolCalls.some(call => !isRecord(call) || typeof call.id !== "string" || !call.id ||
+          typeof call.name !== "string" || !call.name || !isRecord(call.arguments))))) {
+    throw new AtlasError(502, { code: "INVALID_COMPLETION", message: "Atlas returned an unreadable assistant message", retryable: false });
+  }
+  if (raw.finishReason && raw.finishReason !== "stop" && raw.finishReason !== "tool_calls") {
+    throw new AtlasError(502, { code: "INCOMPLETE_COMPLETION", message: `Atlas completion ended with ${raw.finishReason}`, retryable: false });
+  }
+  if (raw.finishReason === "tool_calls" && !raw.message.toolCalls?.length) {
+    throw new AtlasError(502, { code: "INVALID_COMPLETION", message: "Atlas tool completion contains no calls", retryable: false });
+  }
+  if (!raw.message.toolCalls?.length && !raw.message.content.trim()) {
+    throw new AtlasError(502, { code: "EMPTY_COMPLETION", message: "Atlas returned no generated content or tool calls", retryable: false });
+  }
+  if (new Set(raw.message.toolCalls?.map(call => call.id)).size !== (raw.message.toolCalls?.length ?? 0)) {
+    throw new AtlasError(502, { code: "INVALID_COMPLETION", message: "Atlas returned duplicate tool-call IDs", retryable: false });
+  }
   const reported = raw.usage && raw.usage.totalTokens > 0 ? raw.usage : null;
   return {
-    message: { role: "assistant", content: raw.message?.content ?? "" },
+    message: { role: "assistant", content: raw.message.content,
+      ...(raw.message.toolCalls?.length ? { toolCalls: raw.message.toolCalls } : {}),
+      ...(raw.message.reasoning ? { reasoning: raw.message.reasoning } : {}) },
     modelCode: raw.modelCode,
     usage: reported,
     latencyMs: raw.latencyMs,

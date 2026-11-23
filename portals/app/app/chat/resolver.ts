@@ -96,14 +96,14 @@ export class AtlasChatResolver implements ChatResolver {
       // A skill that produced something feeds the model; one that did not is
       // reported honestly rather than silently dropped, so the user can tell
       // "the skill found nothing" from "the skill never ran".
-      if (skill.status === "ran" && skill.detail) {
+      if ((skill.status === "ran" || skill.status === "distributed") && skill.detail) {
         messages = [
           ...history.slice(0, -1),
           {
             role: "user",
             content:
               `${history[history.length - 1].content}\n\n` +
-              `[${findSkill(options.skillCode)?.label ?? options.skillCode} result]\n${skill.detail}`,
+              `[${findSkill(options.skillCode)?.label ?? options.skillCode}: ${skill.status === "distributed" ? "instructions distributed by Runos; not executed by Runos" : "execution result"}]\n${skill.detail}`,
           },
         ];
       }

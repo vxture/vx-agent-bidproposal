@@ -4,15 +4,27 @@
 
 `bidproposal` is the platform's product code for **标书方案智能体 / Proposal Writing
 Agent** ("基于企业知识库、产品资料和历史投标文件，辅助生成方案大纲、响应点和差异化亮点" -
-the platform product directory, seeded 2026-09-01, `release_stage=developing`).
-The product itself runs inside the RUYIN desktop runtime under its runtime
-contract (`portals/app/contract/ruyin.product.yaml`, mirrored from
-vxture-ruyin `products/bid/`). This repo is the product's **cloud capability
-surface** - see `30-capability-surface.md` - and is the first consumer of Runos
-(ADR-001).
+the platform product directory, seeded 2026-09-01).
 
-Status (2026-09-05): capability surface implemented and tested offline; not
-deployed; not registered on the platform (vxture-platform/vxture-platform#198).
+Bidproposal is one agent product with two delivery surfaces: a Web application
+and an independently installed RUYIN desktop package. The Web server and
+product APIs are built from `portals/app`; the desktop business UI and package
+are built from `portals/desktop`. The two surfaces can provide different
+workflows. The platform owns one set of subscriptions, entitlements, quota and
+usage for the same workspace and product code. Sharing these commercial facts
+does not imply that local projects are uploaded or synchronized.
+
+The desktop downloads a validated product package. The Web server and approved
+product cloud calls use Bid's own product identity. Atlas and Runos invocation
+stay with the agent; RUYIN is the host. Platform connection is configuration
+only through its existing product and commerce UI. No platform source or
+server environment changes are part of this integration.
+
+Release order: product API and Web service first, then commercial configuration
+and a real subscribed workspace, with the desktop package released separately.
+The catalog record already exists; deployment and cloud authorization remain
+subject to [platform #198](https://github.com/vxture-platform/vxture-platform/issues/198).
+See [the release batches](../70-workplan/160-dual-surface-release.md).
 
 ## Template sample (inherited, not the product)
 

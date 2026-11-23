@@ -41,6 +41,10 @@ export type AccessState =
    * that lands on a 503.
    */
   | { status: "unconfigured" }
+  /** Identity or entitlement infrastructure has not returned a decision. */
+  | { status: "unavailable" }
+  /** The workspace has coverage, but this member has no application assignment. */
+  | { status: "unassigned" }
   /**
    * Local development with no IdP. The gate stands aside; without this the
    * front door is a wall no developer can open. Never reachable on a deployed

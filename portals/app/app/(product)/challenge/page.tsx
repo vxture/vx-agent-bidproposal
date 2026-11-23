@@ -1,7 +1,10 @@
-import { redirect } from "next/navigation";
+import { notFound } from "next/navigation";
+import { isDeployedStage } from "../../lib/deploy-stage";
+import Challenge from "../deck/challenge";
 
-// The app is one screen (owner decision 2026-08-31): the deck lives at `/`.
-// This route survives only so old links and bookmarks keep landing somewhere.
-export default function ChallengeRedirect(): never {
-  redirect("/");
+export const dynamic = "force-dynamic";
+
+export default function ChallengePage() {
+  if (isDeployedStage()) notFound();
+  return <Challenge />;
 }

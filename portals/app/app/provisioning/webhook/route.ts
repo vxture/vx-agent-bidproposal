@@ -3,6 +3,8 @@ import { verifySignature, webhookSecrets } from "../lib/verify";
 import { handleProvisioning, type ProvisioningEvent } from "../lib/handler";
 import { getProvisioningStore } from "../lib/store";
 import { getEntitlementResolver } from "../../entitlement/resolver";
+import { isDeployedStage } from "../../lib/deploy-stage";
+import { prismaEnabled } from "../../lib/db";
 
 // POST /provisioning/webhook (product_200 section 4, 080-rp section 4). Verify
 // over RAW bytes first (401 on failure / stale timestamp), then hand to the
@@ -30,6 +32,8 @@ function productCode(): string {
  * more.
  */
 function evictEntitlement(workspaceId: string): void {
+  // The deployed product reads live C2 and assignment decisions on each use.
+  if (isDeployedStage()) return;
   try {
     getEntitlementResolver().invalidate(workspaceId);
   } catch (err) {
@@ -42,6 +46,9 @@ export async function POST(req: Request): Promise<Response> {
   const sig = req.headers.get("x-vxture-signature");
   if (!verifySignature(raw, sig, webhookSecrets())) {
     return new Response("invalid signature", { status: 401 });
+  }
+  if (isDeployedStage() && !prismaEnabled()) {
+    return new Response("provisioning store is unavailable", { status: 503 });
   }
 
   let payload: Record<string, unknown>;

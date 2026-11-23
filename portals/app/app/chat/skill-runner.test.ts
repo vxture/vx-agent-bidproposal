@@ -1,5 +1,6 @@
 import { test, beforeEach, afterEach } from "node:test";
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import { runSkill } from "./skill-runner";
 import { resetS2STokenCache } from "../lib/s2s-token";
 
@@ -51,6 +52,7 @@ function answer(tool: string | undefined, payload: Record<string, unknown>): Rec
   if (tool === "runos_resolve") {
     return {
       capability_id: "markitdown/convert",
+      version: "1.0.0",
       contract: {
         operations: [{ operation: "convert_to_markdown", inputSchema: { properties: { uri: { type: "string" } }, required: ["uri"] } }],
       },
@@ -111,6 +113,33 @@ test("a payload with no _meta at all is passed through untouched", async () => {
 
   assert.equal(outcome.status, "ran");
   assert.equal(outcome.detail, JSON.stringify({ markdown: "# Title", pages: 3 }));
+});
+
+test("unverified fetched skill instructions are refused, never reported as executed", async () => {
+  stub({ _meta: { vxture: { call_id: "skill-fetch", version_resolved: "1.0.0", result_kind: "distributed" } } });
+  const outcome = await runSkill("summarize", HISTORY, OPTS);
+  assert.equal(outcome.status, "unavailable"); assert.notEqual(outcome.status, "ran");
+});
+
+test("verified instruction delivery is identified as distribution instead of execution", async () => {
+  const originalFetch = globalThis.fetch;
+  stub({}); const stubFetch = globalThis.fetch;
+  const content = "# Synthetic skill\n";
+  const digest = createHash("sha256").update(JSON.stringify({ content, resources: [] })).digest("hex");
+  globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
+    const body = init?.body && String(input).endsWith("/v1/mcp") ? JSON.parse(String(init.body)) : null;
+    if (body?.params?.name === "runos_invoke") return new Response(JSON.stringify({ result: {
+      content: [{ type: "text", text: content }], structuredContent: { _meta: { vxture: {
+        call_id: "skill-fetch", version_resolved: "1.0.0", result_kind: "distributed",
+        delivery_digest: digest, delivery_digest_format: "skill-package-v1",
+      } } },
+    } }));
+    return stubFetch(input, init);
+  }) as typeof fetch;
+  try {
+    const outcome = await runSkill("summarize", HISTORY, OPTS);
+    assert.equal(outcome.status, "distributed"); assert.equal(outcome.detail, content); assert.equal(outcome.callId, "skill-fetch");
+  } finally { globalThis.fetch = originalFetch; }
 });
 
 test("a non-object _meta is left alone rather than destructured", async () => {

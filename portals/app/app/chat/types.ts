@@ -20,7 +20,7 @@ export interface SkillOutcome {
   code: string;
   /** The Runos capability that ran, once resolved from the skill's search terms. */
   capabilityId: string | null;
-  status: "ran" | "unavailable" | "failed" | "not-invoked";
+  status: "ran" | "distributed" | "unavailable" | "failed" | "not-invoked";
   detail: string;
   callId?: string;
 }
