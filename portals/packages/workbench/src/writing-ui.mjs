@@ -501,8 +501,8 @@ export async function mountWriting(bridge, workflow, { onDraftSaved = async () =
       status.textContent = '\u65e0\u6cd5\u7ee7\u7eed\uff1a' + (sourceError || actionError);
     else if (active?.runtimeState === 'waiting_human')
       status.textContent = active.waitingOn?.includes('verification_review')
-        ? '\u672c\u7ae0\u5df2\u751f\u6210\uff0c\u8bf7\u5728 RUYIN \u5f85\u529e\u4e2d\u67e5\u770b\u6a21\u578b\u6821\u9a8c\u7ed3\u679c\u5e76\u786e\u8ba4\u8349\u7a3f\u3002'
-        : '\u7b49\u5f85\u6388\u6743\uff1a\u8bf7\u5728 RUYIN \u5f85\u529e\u4e2d\u786e\u8ba4\u672c\u7ae0\u8d44\u6599\u7684\u6a21\u578b\u4f7f\u7528\u3002';
+        ? '\u672c\u7ae0\u5df2\u751f\u6210\uff0c\u8bf7\u5728\u5f85\u529e\u4e2d\u67e5\u770b\u6a21\u578b\u6821\u9a8c\u7ed3\u679c\u5e76\u786e\u8ba4\u8349\u7a3f\u3002'
+        : '\u7b49\u5f85\u6388\u6743\uff1a\u8bf7\u5728\u5f85\u529e\u4e2d\u786e\u8ba4\u672c\u7ae0\u8d44\u6599\u7684\u6a21\u578b\u4f7f\u7528\u3002';
     else if (active)
       status.textContent =
         (run.value.paused ? '\u5df2\u6682\u505c\u540e\u7eed\u8c03\u5ea6\uff1b' : '') +

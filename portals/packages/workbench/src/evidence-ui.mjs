@@ -33,7 +33,7 @@ const statuses = {
 };
 const jobStates = {
   running: '\u540e\u53f0\u6267\u884c\u4e2d',
-  waiting: '\u7b49\u5f85 RUYIN \u8d44\u6599\u6388\u6743',
+  waiting: '\u7b49\u5f85\u8d44\u6599\u6388\u6743',
   paused: '\u5df2\u6682\u505c',
   completed: '\u5df2\u5b8c\u6210',
   error: '\u4efb\u52a1\u5931\u8d25',

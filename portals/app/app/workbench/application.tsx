@@ -20,7 +20,7 @@ import {
   ProjectWorkflowNav,
   ProjectPanel,
   ProjectFilesSection,
-  LocaleProvider,
+  LocaleContext,
   PRODUCT_REVIEW_EVENT,
   productNavigation,
 } from "@vxture/ruyin-workbench-ui";
@@ -116,9 +116,9 @@ export function WorkbenchApplication() {
     );
   }
   return (
-    <LocaleProvider>
+    <LocaleContext.Provider value="zh-CN">
       <Workspace access={access} />
-    </LocaleProvider>
+    </LocaleContext.Provider>
   );
 }
 function Workspace({ access }: { access: AccessState }) {

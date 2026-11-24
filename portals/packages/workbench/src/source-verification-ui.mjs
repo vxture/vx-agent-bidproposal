@@ -534,7 +534,7 @@ export function mountSourceVerification(
           job.steps.length +
           ' \u6279\uff0c\u7ed3\u679c\u9010\u6279\u81ea\u52a8\u4fdd\u5b58\uff0c\u53ef\u79bb\u5f00\u672c\u9875\u3002' +
           (job.state === 'waiting'
-            ? '\u8bf7\u5728 RUYIN \u5f85\u529e\u4e2d\u6388\u6743\u672c\u6b21\u8d44\u6599\u3002'
+            ? '\u8bf7\u5728\u5f85\u529e\u4e2d\u6388\u6743\u672c\u6b21\u8d44\u6599\u3002'
             : ''),
       );
     else if (job?.state === 'error')

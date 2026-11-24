@@ -269,7 +269,7 @@ export async function mountPlanning(bridge, workflow) {
       say.textContent =
         '\u76ee\u5f55\u89c4\u5212\uff1a' +
         task.state +
-        ' \u00b7 \u8bf7\u5728 RUYIN \u5f85\u529e\u4e2d\u5904\u7406\u8d44\u6599\u548c\u6210\u679c\u5ba1\u6838';
+        ' \u00b7 \u8bf7\u5728\u5f85\u529e\u4e2d\u5904\u7406\u8d44\u6599\u548c\u6210\u679c\u5ba1\u6838';
       timer = setTimeout(poll, 2500);
     } catch (e) {
       if (bg.job && ['completed', 'error', 'cancelled'].includes(bg.job.state)) taskId = null;

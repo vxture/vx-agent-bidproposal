@@ -64,3 +64,8 @@
 .bid-workbench .proj:has(.bid-workbench-frame) {
   min-height: 100%;
 }
+/* Tailwind 4 uses individual translate properties. Keep the original side
+ * sheet anchored after CSS optimization combines the shared transform reset. */
+:root .project-actions-dialog {
+  translate: none !important;
+}
