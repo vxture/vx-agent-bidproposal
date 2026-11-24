@@ -69,7 +69,7 @@ function EntryBackdrop() {
   </svg>;
 }
 
-export function EntryShell({ children }: { children: ReactNode }) {
+export function EntryShell({ children }: Readonly<{ children: ReactNode }>) {
   const [locale, setLocale] = useState<EntryLocale>("zh-CN");
   const [mounted, setMounted] = useState(false);
   const { resolvedTheme, setTheme } = useTheme();
@@ -91,7 +91,7 @@ export function EntryShell({ children }: { children: ReactNode }) {
               <FileText size={24} weight="duotone" aria-hidden="true" /><span>{BRAND.displayName}</span>
             </a>
           </div>
-          <div className="bid-entry-tools" role="group" aria-label={zh ? "\u663e\u793a\u4e0e\u8bed\u8a00" : "Display and language"}>
+          <fieldset className="bid-entry-tools" aria-label={zh ? "\u663e\u793a\u4e0e\u8bed\u8a00" : "Display and language"}>
             <button type="button" disabled={!mounted} onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
               aria-label={zh ? "\u5207\u6362\u4e3b\u9898" : "Toggle theme"} title={zh ? "\u5207\u6362\u4e3b\u9898" : "Toggle theme"}>
               {mounted && resolvedTheme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
@@ -100,7 +100,7 @@ export function EntryShell({ children }: { children: ReactNode }) {
               <Globe size={16} />
             </button>
             <a href="https://vxture.com/" target="_blank" rel="noopener noreferrer" aria-label={zh ? "VXTURE \u4e3b\u7ad9\uff08\u65b0\u6807\u7b7e\u9875\uff09" : "VXTURE website (new tab)"} title={zh ? "VXTURE \u4e3b\u7ad9" : "VXTURE website"}><House size={16} /></a>
-          </div>
+          </fieldset>
         </div>
       </header>
       <main id="bid-entry-main" className="bid-entry-main">
@@ -116,12 +116,17 @@ export function EntryShell({ children }: { children: ReactNode }) {
       <footer className="bid-entry-footer">
         <div className="bid-entry-width">
           <span>{`\u00a9 ${new Date().getFullYear()} VXTURE \u00b7 RUYIN`}</span>
-          <nav aria-label={zh ? "\u6cd5\u5f8b\u4fe1\u606f" : "Legal information"}>
-            {[["terms", zh ? "\u670d\u52a1\u6761\u6b3e" : "Terms"], ["privacy", zh ? "\u9690\u79c1\u653f\u7b56" : "Privacy"], ["copyright", zh ? "\u7248\u6743\u58f0\u660e" : "Copyright"]].map(([slug, label]) =>
-              <a key={slug} href={`https://vxture.com/legal/${slug}`} target="_blank" rel="noopener noreferrer">{label}</a>)}
-          </nav>
+          <EntryLegalLinks />
         </div>
       </footer>
     </div>
   </LocaleContext.Provider>;
+}
+
+function EntryLegalLinks() {
+  const zh = useEntryLocale() === "zh-CN";
+  const links = [["terms", zh ? "\u670d\u52a1\u6761\u6b3e" : "Terms"], ["privacy", zh ? "\u9690\u79c1\u653f\u7b56" : "Privacy"], ["copyright", zh ? "\u7248\u6743\u58f0\u660e" : "Copyright"]];
+  return <nav aria-label={zh ? "\u6cd5\u5f8b\u4fe1\u606f" : "Legal information"}>
+    {links.map(([slug, label]) => <a key={slug} href={`https://vxture.com/legal/${slug}`} target="_blank" rel="noopener noreferrer">{label}</a>)}
+  </nav>;
 }

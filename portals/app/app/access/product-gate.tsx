@@ -18,7 +18,7 @@ import { isThrough, type AccessState } from "./types";
 type Phase = { kind: "checking" } | { kind: "resolved"; state: AccessState } | { kind: "failed" };
 
 /** One authority read for session, workspace, subscription and assignment. */
-export function ProductGate({ destination }: { destination: string }) {
+export function ProductGate({ destination }: Readonly<{ destination: string }>) {
   const [phase, setPhase] = useState<Phase>({ kind: "checking" });
   const generation = useRef(0);
   const redirected = useRef(false);
@@ -46,8 +46,9 @@ export function ProductGate({ destination }: { destination: string }) {
     return () => { ++generation.current; };
   }, [check]);
 
-  const kind: EntryKind = phase.kind === "checking" ? "checking" :
-    phase.kind === "failed" ? "access-unavailable" : entryKindFor(phase.state);
+  let kind: EntryKind = "checking";
+  if (phase.kind === "failed") kind = "access-unavailable";
+  if (phase.kind === "resolved") kind = entryKindFor(phase.state);
   const user = phase.kind === "resolved" && "user" in phase.state ? phase.state.user : undefined;
   return <EntryShell><EntryCard kind={kind} user={user}
     actionHref={kind === "signin" ? gateLoginUrl(target) : undefined}

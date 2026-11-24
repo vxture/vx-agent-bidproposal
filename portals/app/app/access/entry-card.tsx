@@ -16,9 +16,17 @@ import { useEntryLocale } from "./entry-shell";
 
 // --- Quiet, document-specific illustration ---------------------------------
 
-function DocumentMotif({ kind }: { kind: EntryKind }) {
-  const locked = ["subscription", "unassigned", "restricted", "inactive"].includes(kind);
-  const waiting = kind === "checking";
+function DocumentStatus({ kind }: Readonly<{ kind: EntryKind }>) {
+  if (["subscription", "unassigned", "restricted", "inactive"].includes(kind)) {
+    return <><rect x="185" y="107" width="13" height="11" rx="2" /><path d="M187 107v-4a4.5 4.5 0 0 1 9 0v4" /></>;
+  }
+  if (kind === "expired") return <><circle cx="191.5" cy="109.5" r="8" /><path d="M192 104v6l4 2" /></>;
+  if (kind === "checking") return <path d="M198 109a7 7 0 1 0-3 6m3-12v6h-6" />;
+  if (kind === "signin") return <path d="M184 110h14m-5-5 5 5-5 5" />;
+  return <><path d="M192 103v8" /><circle cx="192" cy="116" r=".5" /></>;
+}
+
+function DocumentMotif({ kind }: Readonly<{ kind: EntryKind }>) {
   return <svg className="bid-entry-art" viewBox="0 0 280 155" fill="none" aria-hidden="true">
     <g stroke="currentColor" strokeWidth="1" strokeLinejoin="round">
       <path opacity=".18" d="M40 120h200M55 131h170M70 142h140" />
@@ -29,11 +37,7 @@ function DocumentMotif({ kind }: { kind: EntryKind }) {
       <path opacity=".55" strokeLinecap="round" d="M122 49h35M122 63h58M122 77h58M122 91h37M122 105h28" />
       <rect x="173" y="91" width="37" height="37" rx="11" fill="var(--background)" />
       <g strokeWidth="1.7" strokeLinecap="round">
-        {locked ? <><rect x="185" y="107" width="13" height="11" rx="2" /><path d="M187 107v-4a4.5 4.5 0 0 1 9 0v4" /></> :
-          kind === "expired" ? <><circle cx="191.5" cy="109.5" r="8" /><path d="M192 104v6l4 2" /></> :
-          waiting ? <path d="M198 109a7 7 0 1 0-3 6m3-12v6h-6" /> :
-          kind === "signin" ? <path d="M184 110h14m-5-5 5 5-5 5" /> :
-          <><path d="M192 103v8" /><circle cx="192" cy="116" r=".5" /></>}
+        <DocumentStatus kind={kind} />
       </g>
     </g>
   </svg>;
@@ -41,21 +45,21 @@ function DocumentMotif({ kind }: { kind: EntryKind }) {
 
 // --- Identity and bottom-aligned actions ------------------------------------
 
-export function EntryCard({ kind, user, actionHref, onAction }: {
-  kind: EntryKind;
-  user?: AccessUser;
-  actionHref?: string;
-  onAction?: () => void;
-}) {
+export function EntryCard({ kind, user, actionHref, onAction }: Readonly<{
+  kind: EntryKind; user?: AccessUser; actionHref?: string; onAction?: () => void;
+}>) {
   const locale = useEntryLocale();
   const zh = locale === "zh-CN";
   const copy = ENTRY_COPY[locale][kind];
   const pending = kind === "checking";
-  const name = user ? displayNameFor(user, zh ? "\u5f53\u524d\u8d26\u53f7" : "Current account") : zh ? "\u5168\u5c40\u7edf\u4e00\u8d26\u53f7" : "One platform account";
+  const currentAccount = zh ? "\u5f53\u524d\u8d26\u53f7" : "Current account";
+  const unifiedAccount = zh ? "\u5168\u5c40\u7edf\u4e00\u8d26\u53f7" : "One platform account";
+  const name = user ? displayNameFor(user, currentAccount) : unifiedAccount;
   const org = typeof user?.activeOrgName === "string" ? user.activeOrgName.trim() : "";
   const workspace = typeof user?.activeWorkspaceName === "string" ? user.activeWorkspaceName.trim() : "";
-  const identityNote = user ? org || workspace || (zh ? "\u5df2\u767b\u5f55\u5e73\u53f0\u8d26\u53f7" : "Signed in to the platform") :
-    zh ? "\u8d26\u53f7\u3001\u5355\u4f4d\u4e0e\u5de5\u4f5c\u7a7a\u95f4\uff0c\u4e00\u5904\u8fde\u63a5" : "Your account, organization and workspace, connected";
+  const signedIn = zh ? "\u5df2\u767b\u5f55\u5e73\u53f0\u8d26\u53f7" : "Signed in to the platform";
+  const unifiedNote = zh ? "\u8d26\u53f7\u3001\u5355\u4f4d\u4e0e\u5de5\u4f5c\u7a7a\u95f4\uff0c\u4e00\u5904\u8fde\u63a5" : "Your account, organization and workspace, connected";
+  const identityNote = user ? org || workspace || signedIn : unifiedNote;
   return <section className="bid-entry-card" aria-labelledby="bid-entry-title" aria-busy={pending}>
     <header className="bid-entry-heading" aria-live="polite" aria-atomic="true">
       <p>WELCOME TO BIDPROPOSAL</p>

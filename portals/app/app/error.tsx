@@ -11,6 +11,6 @@ import { EntryCard } from "./access/entry-card";
 import { EntryShell } from "./access/entry-shell";
 
 /** Never expose server errors or request details in the public fallback. */
-export default function ErrorPage({ reset }: { error: Error & { digest?: string }; reset: () => void }) {
+export default function ErrorPage({ reset }: Readonly<{ reset: () => void }>) {
   return <EntryShell><EntryCard kind="error" onAction={reset} /></EntryShell>;
 }

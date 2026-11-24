@@ -32,7 +32,7 @@
 .bid-entry-shell .bid-entry-product { color: var(--foreground); }
 .bid-entry-product > svg { color: var(--primary-text); }
 .bid-entry-divider { width: 1px; height: 20px; background: var(--border); margin-inline: 16px; }
-.bid-entry-tools { display: flex; flex: none; gap: 4px; }
+.bid-entry-tools { display: flex; flex: none; gap: 4px; min-width: 0; margin: 0; padding: 0; border: 0; }
 .bid-entry-tools > button, .bid-entry-tools > a { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border: 0; border-radius: 8px; padding: 0; color: var(--muted-foreground); background: transparent; cursor: pointer; }
 .bid-entry-tools > :hover { background: var(--accent); color: var(--foreground); }
 .bid-entry-tools button:disabled { opacity: .5; cursor: default; }
