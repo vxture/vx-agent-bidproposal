@@ -15,7 +15,7 @@ const nextConfig = {
       "./document-engine/layout.py",
       "./contract/ruyin.product.yaml",
       "./document-engine/reader.py",
-      "./document-engine/reader-requirements.lock",
+      "./document-engine/requirements.lock",
     ],
     "/api/products/\\[product\\]/contract": ["./contract/ruyin.product.yaml"],
   },

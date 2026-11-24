@@ -11,6 +11,7 @@ import { execFileSync } from "node:child_process";
 import { readFileSync, readdirSync, existsSync } from "node:fs";
 import { join, resolve } from "node:path";
 import ts from "typescript";
+import { createRequire } from "node:module";
 
 test("generated browser application has a closed, browser-resolvable static module graph", () => {
   execFileSync(process.execPath, ["workbench/build.mjs"], {
@@ -49,4 +50,13 @@ test("generated browser application has a closed, browser-resolvable static modu
   const environment = readFileSync(join(root, "environment.mjs"), "utf8");
   assert.match(environment, /publish = items => window.parent.postMessage/);
   assert.doesNotMatch(environment, /@bidproposal\/workbench/);
+  const require = createRequire(resolve("package.json"));
+  for (const resource of ["document-reader.py", "requirements.lock"]) {
+    const installed = require.resolve("@vxture/ruyin-node-runtime/" + resource);
+    const output = join(
+      "document-engine",
+      resource === "document-reader.py" ? "reader.py" : resource,
+    );
+    assert.deepEqual(readFileSync(output), readFileSync(installed));
+  }
 });

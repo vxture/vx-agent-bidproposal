@@ -66,3 +66,4 @@ __pycache__/
 
 /portals/app/document-engine/reader.py
 /portals/app/document-engine/reader-requirements.lock
+/portals/app/document-engine/requirements.lock

@@ -27,7 +27,7 @@ for (const asset of collectAssets(environment))
 const require = createRequire(import.meta.url);
 for (const [specifier, file] of [
   ["document-reader.py", "reader.py"],
-  ["requirements.lock", "reader-requirements.lock"],
+  ["requirements.lock", "requirements.lock"],
 ])
   copyFileSync(
     require.resolve("@vxture/ruyin-node-runtime/" + specifier),
