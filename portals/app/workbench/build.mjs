@@ -15,7 +15,7 @@ const environment = readFileSync(
   new URL("./environment.mjs", import.meta.url),
   "utf8",
 )
-  .replace("'@bidproposal/workbench/runtime'", "'./runtime.mjs'")
+  .replace(/(["'])@bidproposal\/workbench\/runtime\1/, '"./runtime.mjs"')
   .replace(
     "  publish,",
     "  publish = items => window.parent.postMessage({ns: 'bid.workflow', items}, location.origin),",
