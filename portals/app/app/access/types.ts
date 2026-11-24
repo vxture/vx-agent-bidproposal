@@ -15,6 +15,9 @@ export interface AccessGates {
   cta: Cta;
 }
 
+/** Display-only name resolved from the existing RP profile, never a token. */
+export type AccessUser = AuthUser & { displayName?: string | null };
+
 export type AccessState =
   /** No session. Signing in is the move. */
   | { status: "anonymous" }
@@ -23,18 +26,18 @@ export type AccessState =
    * because the user is the same person either way - what differs is whether
    * the product lets them in or asks them to subscribe.
    */
-  | { status: "authenticated"; user: AuthUser; entitlement: Entitlement; gates: AccessGates }
+  | { status: "authenticated"; user: AccessUser; entitlement: Entitlement; gates: AccessGates }
   /**
    * Signed in, but the account is suspended or closed. Explicitly NOT
    * anonymous: offering "sign in" here loops the user through an IdP that will
    * hand back the same dead account.
    */
-  | { status: "inactive-account" }
+  | { status: "inactive-account"; user?: AccessUser }
   /**
    * Signed in with no active workspace. Re-authenticating cannot add one, so
    * the way out is the console, not the login page.
    */
-  | { status: "no-workspace"; user: AuthUser }
+  | { status: "no-workspace"; user: AccessUser }
   /**
    * Sign-in is not provisioned on this deployment. A dead end that is ours to
    * fix, not the visitor's - so the gate says so instead of offering a button
@@ -42,9 +45,9 @@ export type AccessState =
    */
   | { status: "unconfigured" }
   /** Identity or entitlement infrastructure has not returned a decision. */
-  | { status: "unavailable" }
+  | { status: "unavailable"; user?: AccessUser }
   /** The workspace has coverage, but this member has no application assignment. */
-  | { status: "unassigned" }
+  | { status: "unassigned"; user?: AccessUser }
   /**
    * Local development with no IdP. The gate stands aside; without this the
    * front door is a wall no developer can open. Never reachable on a deployed

@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { getOidcConfig } from "../../auth/lib/config";
 import { getAuthContext } from "../../auth/lib/session";
+import { resolveDisplayProfile } from "../../auth/lib/profile";
 import { checkProductAssignment, readProductEntitlement } from "../../capability/access";
 import { ctaFor, hasDataAccess, hasProductAccess } from "../../entitlement/types";
 import { isDeployedStage } from "../../lib/deploy-stage";
@@ -45,19 +46,24 @@ export async function GET(): Promise<Response> {
   let context;
   try { context = rpsid ? await getAuthContext(cfg, rpsid) : null; }
   catch { return accessResponse({ status: "unavailable" }, 503); }
-  if (!context) return accessResponse({ status: "anonymous" });
+  if (!context || !rpsid) return accessResponse({ status: "anonymous" });
   const { user, accessToken } = context;
 
   // A suspended or closed account is not a session (080-rp 2.6). Kept distinct
   // from anonymous: sending this user to sign in again would loop them.
   if (user.accountStatus && user.accountStatus !== "active") {
-    return accessResponse({ status: "inactive-account" });
+    return accessResponse({ status: "inactive-account", user });
   }
+
+  // Reuse this already-resolved session; a parallel /auth/session could race
+  // the rotating refresh token. Profile failures do not change authorization.
+  const profile = await resolveDisplayProfile(cfg, rpsid, context).catch(() => null);
+  const displayUser = { ...user, displayName: profile?.displayName ?? null };
 
   // Signed in, but the session carries no workspace to scope entitlement to.
   // Nothing to resolve, and re-authenticating will not add one.
   if (!user.activeWorkspace) {
-    return accessResponse({ status: "no-workspace", user });
+    return accessResponse({ status: "no-workspace", user: displayUser });
   }
 
   const caller = {
@@ -67,16 +73,16 @@ export async function GET(): Promise<Response> {
     mint: { subjectToken: accessToken },
   };
   const entitlement = await readProductEntitlement(caller);
-  if ("error" in entitlement) return accessResponse({ status: "unavailable" }, 503);
+  if ("error" in entitlement) return accessResponse({ status: "unavailable", user: displayUser }, 503);
   if (hasDataAccess(entitlement)) {
     const assignment = await checkProductAssignment(caller);
     if (assignment) return assignment.status === 403
-      ? accessResponse({ status: "unassigned" })
-      : accessResponse({ status: "unavailable" }, 503);
+      ? accessResponse({ status: "unassigned", user: displayUser })
+      : accessResponse({ status: "unavailable", user: displayUser }, 503);
   }
   return accessResponse({
     status: "authenticated",
-    user,
+    user: displayUser,
     entitlement,
     gates: {
       productAccess: hasProductAccess(entitlement),
