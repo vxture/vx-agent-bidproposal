@@ -9,7 +9,25 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  schemas  = ["vx_provision", "local_authz", "local_usage", "bidproposal_game"]
+  schemas  = ["vx_provision", "local_authz", "local_usage", "bidproposal_game", "bid_workspace"]
+}
+
+// Web business content; immutable workspace and creator references.
+model Proposal {
+  id          String    @id @db.Uuid
+  workspaceId String    @map("workspace_id") @db.Uuid
+  createdBy   String    @map("created_by") @db.VarChar(128)
+  title       String    @db.VarChar(120)
+  status      String    @default("active") @db.VarChar(32)
+  revision    Int       @default(1)
+  content     Json
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt   DateTime  @default(now()) @map("updated_at") @db.Timestamptz()
+  deletedAt   DateTime? @map("deleted_at") @db.Timestamptz()
+
+  @@index([workspaceId, updatedAt(sort: Desc), id], map: "idx_proposal_workspace_updated")
+  @@map("proposal")
+  @@schema("bid_workspace")
 }
 
 // ===== vx_provision =====

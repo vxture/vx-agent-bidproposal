@@ -68,6 +68,7 @@ async function probeDatabase(url: string): Promise<boolean> {
     await client.query("SELECT delivery_id, type, occurred_at, result FROM vx_provision.webhook_delivery LIMIT 0");
     await client.query("SELECT workspace_id, product_code, status FROM vx_provision.app_instance LIMIT 0");
     await client.query("SELECT workspace_id, product_code, last_seq FROM vx_provision.provision_seq LIMIT 0");
+    await client.query("SELECT id,workspace_id,title,status,revision,content,created_at,updated_at FROM bid_workspace.proposal LIMIT 0");
     return true;
   }, () => client.end());
 }

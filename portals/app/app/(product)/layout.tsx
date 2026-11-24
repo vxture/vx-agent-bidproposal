@@ -1,7 +1,5 @@
 import type { ReactNode } from "react";
-import { BRAND } from "@bidproposal/shared/brand";
-import { ShellBrand } from "../ds";
-import { SessionControl } from "../session-control";
+import { ProductHeader } from "../product-header";
 import { isDeployedStage } from "../lib/deploy-stage";
 
 /**
@@ -18,29 +16,12 @@ import { isDeployedStage } from "../lib/deploy-stage";
  * else?" at exactly the moment we are asking someone to trust the sign-in.
  */
 
-const NAV_LINKS = [
-  { href: "/challenge", label: "Template sample" },
-  { href: "/chat", label: "Chat" },
-  { href: "/status", label: "Status" },
-  { href: "/platform-check", label: "Platform check" },
-  { href: "/entitlement-matrix", label: "Entitlement matrix" },
-];
 export const dynamic = "force-dynamic";
 
 export default function ProductLayout({ children }: { children: ReactNode }) {
   return (
     <div className="shell">
-      <header className="topnav">
-        <ShellBrand href="/" label={BRAND.displayName} />
-        <nav>
-          {(!isDeployedStage() ? NAV_LINKS : []).map((l) => (
-            <a key={l.href} href={l.href}>
-              {l.label}
-            </a>
-          ))}
-          <SessionControl />
-        </nav>
-      </header>
+      <ProductHeader showTemplates={!isDeployedStage()} />
       {children}
     </div>
   );

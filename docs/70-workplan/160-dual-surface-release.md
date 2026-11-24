@@ -244,3 +244,50 @@ The candidate parser verified openai.pdf 1.0.1 against live Runos: 2,517 content
 characters, two resources, verified skill-package-v1 digest. Local validation:
 275 tests, type checking and the standalone build passed. No Runos/platform
 source or server configuration is changed for this correction.
+
+## B6 first Web business workspace, 2026-11-25
+
+Replace the Web placeholder with a workspace-scoped proposal library and chapter
+editor. This batch supports create, rename, archive/restore, tender/reference
+text and writing direction, chapters, explicit cloud save and a single-chapter
+writing assistant. It does not claim the desktop's complete six-stage workflow
+is available in Web. PDF/DOCX parsing, batched analysis, evidence verification,
+comparison, rich editing and final document export remain separate work.
+
+Add only the Bid domain schema bid_workspace.proposal through numbered
+0004_web_proposals.sql, mirrored by Prisma. The existing product db-init
+workflow is the only production DDL path. Runtime uses the existing
+bidproposal_svc identity with SELECT/INSERT and explicit writable columns;
+workspace/creator/id/time anchors are immutable and DELETE/DDL are absent.
+There is no platform schema, server-variable, route or worker01 change.
+
+All business reads/writes require the product's verified own-audience identity,
+live C2 coverage and existing member assignment. The workspace comes only from
+that identity. A transaction-scoped workspace advisory lock serializes create
+cap checks, including concurrent tabs. Configured proposal.max overrides the
+product defaults; Free defaults to one and paid coverage to unlimited. Archived
+records still count. Client UUIDs make create retries idempotent. Saved content
+is bounded and revision-checked; a stale save returns 409 without overwriting.
+No browser-only store is presented as cloud persistence.
+
+The assistant reads a saved revision and uses product-owned OBO to Atlas, which
+meters inference once. It refuses to silently truncate long tender text. The
+candidate is returned separately and only adopted with an explicit,
+revision-checked save. The user can inspect and reject it. Unsaved local edits
+have navigation/close warnings. Plain text is never executed as HTML. No sample
+usage, credentials or customer data are introduced by local acceptance.
+
+Local evidence includes unit tests, type/build checks and a disposable real
+PostgreSQL 16 acceptance on worker02 (separate tmpfs container, cleaned up).
+Verified concurrent cap checks, create retry, conflicting saves, workspace
+isolation, immutable references, no DDL/DELETE, signed-JWT own-audience checks,
+C2/member refusal, no provider call before authorization and separation of
+candidate from saved draft. Synthetic browser fixtures verified the library,
+editor, save/adopt controls and 390px no-overflow layout. These fixtures are
+outside the repository and never enter a product artifact.
+
+Release sequence: reviewed PR and green main, existing pinned db-init applies
+the additive domain table/grants, verify the product service role and existing
+health, then deploy the checked product release. Readiness checks the new table
+before the deployment is accepted. Preserve the previous app image for
+rollback; never drop the new table or user drafts during image rollback.
