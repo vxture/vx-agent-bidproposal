@@ -203,3 +203,44 @@ Coverage includes exact HTTP headers/body, workspace-specific token
 minting, duplicate/gated/retry semantics, missing job authorization and absent
 durable storage. Production enablement follows the existing reviewed release
 workflow, with no platform source or worker01 configuration change.
+
+## B5 live Starter pilot and MCP resource correction, 2026-11-24
+
+The owner approved the public beta setting and completed Starter monthly in
+Ruyin Studio/default workspace. Console shows active, one assigned seat,
+2026-11-24 through 2026-12-24, with automatic renewal disabled. Free remains a
+draft. The API/entry release is v0.1.3 (301c6b83); the full Web business
+workspace and signed desktop package are still separate deliverables.
+
+The product reads active Starter coverage and both product/data gates pass.
+The persistent receiver processed tenant.provisioned and subscription_changed.
+The worker02 deployment retained the database/Redis instances and existing
+credentials. Its authorized flush returned an empty durable queue; anonymous
+and wrong-credential requests returned 403. No sample counter usage was added.
+
+A real service-mode integration generation using synthetic public material
+returned 175 tokens under bidproposal. The platform raw token ledger contains
+request 10ffcb8c-1215-4cba-ba74-9c5abb88c1bb and 16,733 micro-credits. Opera's
+C3 check currently reads only metering.usage_events, so it does not recognize
+this sub-credit fact. The two legacy-auth observations came from Atlas's own
+platform reporter; Bid's current C2/C3 use its product S2S identity. Do not
+report the same model tokens again or claim this observation gate is green.
+
+The live skill catalog exposed four duplicate names. Bid's own worker02
+RUNOS_SKILL_BINDINGS now chooses anthropics.webapp-testing,
+github.generate-image, microsoft.microsoft-docs and lackeyjb.playwright-skill.
+A restricted backup preceded that one-key configuration update; only the Bid
+app was recreated. The complete current catalog returns 873 unique skill names
+from 877 records. This does not change platform grants.
+
+A real PDF skill fetch then exposed a Bid parser error: MCP embedded resource
+blocks have nested resource fields, while the inherited adapter expected flat
+fields. Update only the Runos content-block type, package reader and relay
+tests. Normalize nested resources into the desktop contract and verify the
+complete canonical package digest; keep rejecting tampering, cross-package
+paths, duplicate resources, malformed blocks and unknown formats. Even legacy
+packages without delivery metadata must not silently lose invalid resources.
+The candidate parser verified openai.pdf 1.0.1 against live Runos: 2,517 content
+characters, two resources, verified skill-package-v1 digest. Local validation:
+275 tests, type checking and the standalone build passed. No Runos/platform
+source or server configuration is changed for this correction.

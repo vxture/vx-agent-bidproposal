@@ -78,9 +78,7 @@ export interface RunosCallMeta {
 export interface RunosContentBlock {
   type: string;
   text?: string;
-  uri?: string;
-  mimeType?: string;
-  blob?: string;
+  resource?: { uri: string; mimeType?: string; text?: string; blob?: string };
 }
 
 export type RunosResult<T> =
