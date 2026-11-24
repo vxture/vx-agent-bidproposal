@@ -141,11 +141,11 @@ export async function mountBatchAnalysis(
       j.steps.some((s) => s.waitingOn?.includes('verification_review'))
     )
       say(
-        '\u7ed3\u679c\u68c0\u67e5\u9700\u8981\u4eba\u5de5\u786e\u8ba4\uff0c\u8bf7\u5904\u7406 RUYIN \u5f85\u529e\u3002',
+        '\u7ed3\u679c\u68c0\u67e5\u9700\u8981\u4eba\u5de5\u786e\u8ba4\uff0c\u8bf7\u5904\u7406\u5f85\u529e\u3002',
       );
     else if (j.state === 'waiting')
       say(
-        '\u7b49\u5f85 RUYIN \u6388\u6743\u672c\u6b21\u6279\u6b21\u8d44\u6599\u3002\u6388\u6743\u540e\u540e\u53f0\u81ea\u52a8\u7ee7\u7eed\u3002',
+        '\u7b49\u5f85\u6388\u6743\u672c\u6b21\u6279\u6b21\u8d44\u6599\u3002\u6388\u6743\u540e\u540e\u53f0\u81ea\u52a8\u7ee7\u7eed\u3002',
       );
     else if (j.state === 'completed')
       say(

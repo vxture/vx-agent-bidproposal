@@ -308,7 +308,7 @@ export async function mountRequirements(
         if (job.state === 'error') throw new Error(job.error);
         say(
           '\u89e3\u8bfb\u4efb\u52a1\u5df2\u4ea4\u7ed9\u540e\u53f0\uff0c\u53ef\u4ee5\u79bb\u5f00\u9875\u9762\u3002 ' +
-            (job.state === 'waiting' ? '\u8bf7\u5904\u7406 RUYIN \u5f85\u529e' : ''),
+            (job.state === 'waiting' ? '\u8bf7\u5904\u7406\u5f85\u529e' : ''),
         );
         timer = setTimeout(poll, 2500);
         return;
@@ -332,13 +332,13 @@ export async function mountRequirements(
       }
       if (['failed', 'cancelled', 'rejected'].includes(task.state))
         throw new Error(
-          '\u89e3\u8bfb\u4efb\u52a1\u672a\u5b8c\u6210\uff0c\u8bf7\u5728 RUYIN \u4efb\u52a1\u9875\u67e5\u770b\u539f\u56e0',
+          '\u89e3\u8bfb\u4efb\u52a1\u672a\u5b8c\u6210\uff0c\u8bf7\u5728\u4efb\u52a1\u9875\u67e5\u770b\u539f\u56e0',
         );
       say(
         '\u89e3\u8bfb\u4efb\u52a1\uff1a' +
           task.state +
           (task.waitingOn?.length
-            ? '\u3002\u8bf7\u5728 RUYIN \u5f85\u529e\u4e2d\u5b8c\u6210\u8d44\u6599\uff0f\u6210\u679c\u5ba1\u6838\u3002'
+            ? '\u3002\u8bf7\u5728\u5f85\u529e\u4e2d\u5b8c\u6210\u8d44\u6599\uff0f\u6210\u679c\u5ba1\u6838\u3002'
             : ''),
       );
       timer = setTimeout(poll, 2500);

@@ -286,7 +286,7 @@ export async function mountReading(bridge) {
   } catch (e) {
     say(
       e.status === 503
-        ? '\u5f53\u524d\u8fd0\u884c\u73af\u5883\u672a\u5b89\u88c5\u672c\u5730\u8bfb\u53d6\u80fd\u529b\uff0c\u8bf7\u66f4\u65b0 RUYIN\u3002'
+        ? '\u5f53\u524d\u8fd0\u884c\u73af\u5883\u672a\u5b89\u88c5\u672c\u5730\u8bfb\u53d6\u80fd\u529b\uff0c\u8bf7\u8054\u7cfb\u7ba1\u7406\u5458\u68c0\u67e5\u8fd0\u884c\u73af\u5883\u3002'
         : e.message,
     );
     $('reading-start').disabled = true;

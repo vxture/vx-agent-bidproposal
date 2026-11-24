@@ -39,10 +39,10 @@ baseline is [50-desktop-baseline.md](../40-implementation/50-desktop-baseline.md
 | --- | --- | --- |
 | B6.2 | Freeze the complete desktop baseline and remove rejected Web presentation | Source/feature/evidence inventory complete locally: 161 source hashes, eight historical evidence hashes, original sidebar screenshot and D01-D14 page/control inventory. Original development checkouts preserved. Remove horizontal navigation, its build entry and rejected editor refs/preview launchers. No new UI. |
 | B6.3 | Verify runtime differences and migration boundaries | Verification complete; integration gates remain open. Published schema 0.1.0 rejects Bid contract 0.2, core lacks projectDocuments; 26 identity tests pass. Isolated Linux reads MD/DOCX/PDF with matching hashes. LibreOffice conversion fails fidelity: six pages become four and TOC field codes leak. Storage/jobs/review boundaries and runtime-specific recovery recorded in the preflight. No adapter or production change. |
-| B6.4 | Reuse the complete product application presentation | B6.4.1 runtime dependencies reconciled and 0.2.0 packages published/consumed; Bid build now uses the public pinned CLI and real reproducibility checks. Complete UI extraction remains next: host UI has no published reusable package. Preserve desktop project/home/library/settings, six-step sidebar, state/times/duration/progress and human review. No replacement editor/navigation or private cross-repo app imports. |
-| B6.5 | Adapt Web identity, projects and data | Verified Bid identity and workspace checks on every operation, project lifecycle, revision conflicts, upload/version persistence and reload recovery. No new simplified proposal content model. Not started. |
-| B6.6 | Adapt reading and agent jobs | Same task definitions, input snapshots, verification, candidate adoption and recovery; actual Bid-owned provider calls, no RUYIN execution grant. Not started. |
-| B6.7 | Deliver preview and actual output files | Confirm server layout route first; then verify template, TOC, headers, pages and MD/DOCX/PDF downloads with retained versions. Not started. |
+| B6.4 | Reuse the complete product application presentation | B6.4.1 runtime dependencies reconciled and 0.2.0 packages published/consumed; Bid build now uses the public pinned CLI and real reproducibility checks. PR #314/#315 published the original UI and Node adapters as registry packages 0.2.2; Bid consumes both without private source imports. Preserve desktop project/home/library/settings, six-step sidebar, state/times/duration/progress and human review. No replacement editor/navigation or private cross-repo app imports. |
+| B6.5 | Adapt Web identity, projects and data | Verified Bid identity and workspace checks on every operation, project lifecycle, revision conflicts, upload/version persistence and reload recovery. PR #20 merged the durable encrypted Web host, revision and workspace gates. Synthetic browser/API acceptance passed; final live acceptance pending. |
+| B6.6 | Adapt reading and agent jobs | Same task definitions, input snapshots, verification, candidate adoption and recovery; actual Bid-owned provider calls, no RUYIN execution grant. PR #20 preserves the original task/job runtime and human checkpoints; live six-stage acceptance remains pending. |
+| B6.7 | Deliver preview and actual output files | Confirm server layout route first; then verify template, TOC, headers, pages and MD/DOCX/PDF downloads with retained versions. Six-page Linux layout, canonical reader, SQLCipher/non-root image and scoped ticket checks pass; live export acceptance remains pending. |
 | B6.8 | Verify product plan rules and feature gaps | Same product entitlement/usage for both surfaces; enforce configured limits/defaults. Track independent comparison, storage and proposal limits explicitly. Not started. |
 | B6.9 | Accept production desktop integration and package | Own-product identity, shared-source desktop regression, signing/trust, install/update and old-project protection using current artifacts. Not started. |
 | B6.10 | Accept and release each surface | Complete login/workspace/project/material/generation/review/export/logout/recovery chain per surface before its reviewed release. No automatic Store change. Not started. |
@@ -462,3 +462,23 @@ Linux container and live own-product acceptance, protected PR/main gates, a dura
 Bid-only worker02 volume and protected master key, then the existing release
 workflow. The platform, worker01, database/Redis contents and published plans are
 outside this source change. B6.8-B6.10 remain open until their separate acceptance.
+
+## B6.5 browser and container follow-up, 2026-11-25
+
+PR #20 merged as 2f6539e with all PR/main checks and Sonar passing. Browser
+acceptance found and corrected a bare environment import and the canonical
+reader lock filename before release. The actual Debian image passed non-root
+encrypted SQLite reopen, fixed offline Markdown reading and a six-page
+LibreOffice DOCX/PDF run in an isolated worker02 container with no production
+credentials, volumes or network. Real isolated Redis verified rotation CAS,
+stale-write rejection and refusal to resurrect logout; 24-way resolver tests
+verify single-flight refresh. Only an explicit continuation by the original
+member in the original organization/workspace may bind a new Bid session.
+
+The browser build also exposed Tailwind 4 individual translation on the original
+review side sheet. Keep its original right-edge layout with an explicit
+translation reset that survives CSS optimization. Use environment-neutral task
+wording and Chinese host labels matching the current shared Chinese business
+panels. This is a compatibility correction, not a second application design.
+The Web release still requires exact-current-source browser and production
+checks; no signed desktop or independent comparison/OCR completion is implied.
