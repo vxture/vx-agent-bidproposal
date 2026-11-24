@@ -4,6 +4,7 @@ import { createHash } from "node:crypto";
 import { defaultSkillsRelayDeps, fetchDistributedSkill, listDistributedSkills, skillNameOf, truncationOf, type SkillsRelayDeps } from "./skills";
 import { DEV_WORKSPACE_ID, type CapabilityCaller } from "./caller";
 import type { RunosCapability, RunosContract, RunosResult } from "../runos/client";
+import { readSkillDelivery } from "../runos/skill-delivery";
 
 // The skill relay hands Runos-distributed Skills to the Ruyin runtime
 // (vxture-ruyin ADR-020 section 3c). Runos is injected: these tests pin what bidproposal
@@ -41,7 +42,7 @@ function deps(over: Partial<SkillsRelayDeps> = {}): SkillsRelayDeps {
         {
           content: [
             { type: "text", text: "---\nname: officecli-docx\n---\n# DOCX" },
-            { type: "resource", uri: "skill://officecli.officecli-docx/1.2.0/references/REFERENCE.md", mimeType: "text/markdown", text: "ref" },
+            { type: "resource", resource: { uri: "skill://officecli.officecli-docx/1.2.0/references/REFERENCE.md", mimeType: "text/markdown", text: "ref" } },
           ],
         },
         { version_resolved: "1.2.0", content_digest: "sha256:abc", result_kind: "distributed" },
@@ -125,7 +126,7 @@ test("fetch verifies the complete MCP skill package with namespaced delivery met
   const resources = [{ mimeType: "text/markdown", path: "references/empty.md", text: "" },
     { mimeType: "text/plain", path: "references/source.txt", text: "Evidence A\n" }];
   const digest = createHash("sha256").update(JSON.stringify({ content, resources })).digest("hex");
-  const blocks = [{ type: "text", text: content }, ...resources.map(r => ({ type: "resource", uri: `skill://officecli.officecli-docx/1.2.0/${r.path}`, mimeType: r.mimeType, text: r.text }))];
+  const blocks = [{ type: "text", text: content }, ...resources.map(r => ({ type: "resource", resource: { text: r.text, uri: `skill://officecli.officecli-docx/1.2.0/${r.path}`, mimeType: r.mimeType } }))];
   const invoke: SkillsRelayDeps["invoke"] = async () => ({ ok: true, data: {}, content: blocks,
     meta: { result_kind: "distributed", version_resolved: "1.2.0", content_digest: "registered-contract-digest", delivery_digest: digest, delivery_digest_format: "skill-package-v1" } });
   const result = await fetchDistributedSkill(caller, "t1", "officecli-docx", deps({ invoke }));
@@ -139,7 +140,7 @@ test("a tampered resource, cross-package URI, wrong format or missing digest ref
   const digest = createHash("sha256").update(JSON.stringify({ content: "# Skill", resources: [{ mimeType: "text/plain", path: "ref.txt", text: "original" }] })).digest("hex");
   for (const patch of [ { text: "tampered" }, { uri: "skill://other/1.2.0/ref.txt" }, { format: "unknown" }, { missingDigest: true }, { uri: "skill://officecli.officecli-docx/1.2.0/../ref.txt" } ]) {
     const result = await fetchDistributedSkill(caller, "t1", "officecli-docx", deps({ invoke: async () => ({ ok: true, data: {},
-      content: [{ type: "text", text: "# Skill" }, { type: "resource", uri: "uri" in patch ? patch.uri : "skill://officecli.officecli-docx/1.2.0/ref.txt", mimeType: "text/plain", text: "text" in patch ? patch.text : "original" }],
+      content: [{ type: "text", text: "# Skill" }, { type: "resource", resource: { uri: typeof patch.uri === "string" ? patch.uri : "skill://officecli.officecli-docx/1.2.0/ref.txt", mimeType: "text/plain", text: typeof patch.text === "string" ? patch.text : "original" } }],
       meta: { result_kind: "distributed", version_resolved: "1.2.0", delivery_digest: "missingDigest" in patch ? undefined : digest, delivery_digest_format: "format" in patch ? patch.format : "skill-package-v1" } }) }));
     assert.ok(!("content" in result)); if ("content" in result) continue;
     assert.match(result.status.reason ?? "", /integrity verification failed/);
@@ -148,11 +149,25 @@ test("a tampered resource, cross-package URI, wrong format or missing digest ref
 
 test("a legacy unverified package digest changes when a resource changes", async () => {
   const fetch = (text: string) => fetchDistributedSkill(caller, "t1", "officecli-docx", deps({ invoke: async () => ok({ content: [
-    { type: "text", text: "# Same content" }, { type: "resource", uri: "skill://officecli.officecli-docx/stable/ref.txt", text },
+    { type: "text", text: "# Same content" }, { type: "resource", resource: { uri: "skill://officecli.officecli-docx/1.2.0/ref.txt", text } },
   ] }) }));
   const first = await fetch("one"), second = await fetch("two");
   assert.ok("content" in first && "content" in second); if (!("content" in first && "content" in second)) return;
   assert.notEqual(first.contentDigest, second.contentDigest); assert.equal(first.deliveryIntegrity, "unverified");
+});
+
+test("MCP skill packages reject malformed resources even without delivery metadata", () => {
+  const prefix = "skill://example.skill/1.0.0/";
+  for (const blocks of [
+    [{ type: "resource" }],
+    [{ type: "resource", uri: `${prefix}ref.txt`, text: "flattened" }],
+    [{ type: "resource", resource: { uri: `${prefix}ref.bin`, blob: "AA==" } }],
+    [{ type: "resource", resource: { uri: `${prefix}ref.txt`, text: "a" } },
+      { type: "resource", resource: { uri: `${prefix}ref.txt`, text: "b" } }],
+    [{ type: "resource", resource: { uri: `${prefix}../ref.txt`, text: "escape" } }],
+  ]) {
+    assert.throws(() => readSkillDelivery("example.skill", "1.0.0", [{ type: "text", text: "# Skill" }, ...blocks]), /integrity verification failed/);
+  }
 });
 
 // --- enumeration, and what happens when it comes back short ------------------
