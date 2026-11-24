@@ -234,8 +234,8 @@ def layout(root):
                 row = table.Rows.getByIndex(index)
                 if row.PropertySetInfo.hasPropertyByName("IsSplitAllowed"):
                     row.IsSplitAllowed = False
-            for name in table.CellNames:
-                cell = table.getCellByName(name)
+            for cell_name in table.CellNames:
+                cell = table.getCellByName(cell_name)
                 cursor = cell.createTextCursor()
                 cursor.gotoEnd(True)
                 cursor.CharHeight = 10.5

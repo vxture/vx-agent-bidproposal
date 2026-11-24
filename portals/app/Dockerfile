@@ -46,11 +46,14 @@ ENV NODE_ENV=production PORT=4070 HOSTNAME=0.0.0.0 \
     BUILD_TIME=${BUILD_TIME} \
     DEPLOY_STAGE=${DEPLOY_STAGE}
 RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-    python3 python3-venv python3-uno python3-lxml libreoffice-writer fonts-noto-cjk fonts-crosextra-carlito wget \
+    fonts-crosextra-carlito fonts-noto-cjk libreoffice-writer \
+    python3 python3-lxml python3-uno python3-venv wget \
     && rm -rf /var/lib/apt/lists/* \
     && groupadd --system --gid 1001 nodejs && useradd --system --uid 1001 --gid nodejs nextjs
 COPY --from=builder /repo/portals/app/node_modules/@vxture/ruyin-node-runtime/dist/requirements.lock /tmp/bid-reader-requirements.lock
-RUN python3 -m venv /opt/bid-reader && /opt/bid-reader/bin/pip install --no-cache-dir --require-hashes -r /tmp/bid-reader-requirements.lock
+RUN python3 -m venv /opt/bid-reader \
+    && /opt/bid-reader/bin/pip install --no-cache-dir --require-hashes \
+    -r /tmp/bid-reader-requirements.lock
 ENV BID_READER_PYTHON=/opt/bid-reader/bin/python
 COPY --from=builder /repo/portals/app/.next/standalone ./
 COPY --from=builder /repo/portals/app/.next/static ./portals/app/.next/static

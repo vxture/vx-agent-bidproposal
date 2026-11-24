@@ -78,7 +78,7 @@ export class BidRuntime {
     string,
     { pid: string; hashes: Map<string, number> }
   >();
-  private ready: Promise<void>;
+  private readonly ready: Promise<void>;
 
   constructor(options: Options) {
     this.namespace = namespaceFor(options.principal);
@@ -541,6 +541,53 @@ export class BidRuntime {
         0,
       );
     return this.jobs.create(id, "bidproposal", body);
+  }
+  /** Reauthorize only an explicit continuation by the original subject and scope. */
+  reauthorizeJob(id: string, jobId: string, principal: Principal) {
+    const key = internalAuth + "job_" + jobId;
+    const saved = this.documents.get(id, "bidproposal", key);
+    if (
+      !saved ||
+      !samePrincipal(JSON.parse(saved.markdown) as Principal, principal)
+    )
+      throw new WorkbenchError(
+        403,
+        "JOB_SCOPE_CHANGED",
+        "Only the original member can continue this job",
+      );
+    this.documents.put(
+      id,
+      "bidproposal",
+      key,
+      JSON.stringify(principal),
+      saved.revision,
+    );
+    const job = this.jobs.get(id, "bidproposal", jobId);
+    for (const step of job?.steps ?? []) {
+      if (!step.taskInstanceId) continue;
+      this.reauthorizeTask(id, step.taskInstanceId, principal);
+    }
+  }
+  /** Browser visits never silently replace a task's pinned product session. */
+  reauthorizeTask(id: string, taskId: string, principal: Principal) {
+    const key = internalAuth + "task_" + taskId;
+    const saved = this.documents.get(id, "bidproposal", key);
+    if (
+      !saved ||
+      !samePrincipal(JSON.parse(saved.markdown) as Principal, principal)
+    )
+      throw new WorkbenchError(
+        403,
+        "TASK_SCOPE_CHANGED",
+        "Only the original member can continue this task",
+      );
+    this.documents.put(
+      id,
+      "bidproposal",
+      key,
+      JSON.stringify(principal),
+      saved.revision,
+    );
   }
   scope() {
     return this.library.scope(this.workspaceId, "bidproposal");

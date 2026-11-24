@@ -647,6 +647,12 @@ async function jobsRequest(context: ProjectRequest): Promise<Response> {
     }
     if (method === "POST" && rest[1]) {
       const body = await jsonBody(request);
+      if (
+        rest[2] === "context-approval" ||
+        (rest[2] === "control" &&
+          ["retry", "resume"].includes(String(body.action)))
+      )
+        service.reauthorizeJob(pid, rest[1], access.principal);
       return json(
         rest[2] === "context-approval"
           ? await service.jobs.approveContext(
@@ -670,7 +676,7 @@ async function jobsRequest(context: ProjectRequest): Promise<Response> {
 }
 
 async function tasksRequest(context: ProjectRequest): Promise<Response> {
-  const { service, pid, rest, request, method, host } = context;
+  const { service, access, pid, rest, request, method, host } = context;
   if (rest[0] === "tasks") {
     if (method === "GET") {
       const tasks = await service.runtime.listTaskInstances(pid);
@@ -749,6 +755,7 @@ async function tasksRequest(context: ProjectRequest): Promise<Response> {
             "CHECKPOINT_CHANGED",
             "The confirmation is no longer pending",
           );
+        service.reauthorizeTask(pid, task.id, access.principal);
         const decided = await harness.decideCheckpoint(
           task.id,
           bool(body, "approve"),

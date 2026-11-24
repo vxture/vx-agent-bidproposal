@@ -7,10 +7,10 @@
  * into its files, only through the specifiers it publishes - see ADR-004, and
  * `design-system.test.ts` for the rules that keep it honest.
  */
-@config "../tailwind.config.mjs";
 @import "@vxture/design-system/styles/globals.css";
 @import "@vxture/design-system/styles/brands/vxture.css";
 @import "@vxture/ruyin-workbench-ui/styles.css";
+@config "../tailwind.config.mjs";
 
 /* --- bidproposal's own surface -------------------------------------------------
  * Everything below is bidproposal's, loaded after the DS so it wins on the classes

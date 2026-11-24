@@ -318,6 +318,24 @@ test("runtime retains real consent, human verification and durable original task
       call(service, ["projects", pid, "tasks", started.id, "result"]),
       /Review the task/,
     );
+    assert.throws(
+      () =>
+        service.reauthorizeTask(pid, started.id, {
+          ...principal,
+          sub: "other-member",
+        }),
+      /original member/,
+    );
+    const freshSession = { ...principal, sessionId: "new-own-product-session" };
+    service.reauthorizeTask(pid, started.id, freshSession);
+    assert.match(
+      service.documents.get(
+        pid,
+        "bidproposal",
+        "runtime_auth_task_" + started.id,
+      )!.markdown,
+      /new-own-product-session/,
+    );
     await call(
       service,
       ["host", "projects", pid, "tasks", started.id, "decision"],
@@ -355,6 +373,13 @@ test("runtime retains real consent, human verification and durable original task
     assert.doesNotMatch(
       JSON.stringify(result),
       /opaque-own-product-session|server-token/,
+    );
+    const exported = await (
+      await call(service, ["host", "projects", pid, "export"])
+    ).text();
+    assert.doesNotMatch(
+      exported,
+      /opaque-own-product-session|new-own-product-session|runtime_auth_/,
     );
   } finally {
     service.close();
