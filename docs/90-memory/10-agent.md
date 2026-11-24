@@ -8,11 +8,14 @@ This is `bidproposal`, the platform product code of 标书方案智能体 (Propo
 Writing Agent). The repo is that product's **cloud capability surface** for the
 RUYIN desktop runtime (ADR-001 of this repo; vxture-ruyin ADR-009 / ADR-020):
 four endpoints under `portals/app/app/api/products/[product]/`. It was copied
-from the `vx-agent-vxtpl` template on 2026-09-05 and renamed; it is **not
-deployed and not platform-registered yet** (vxture-platform/vxture-platform#198,
-`docs/50-deployment/10-platform-registration-checklist.md`). Template text that
-says "deployed at https://bidproposal.vxture.com" describes the template's own
-product, not this one.
+from the `vx-agent-vxtpl` template on 2026-09-05 and renamed. Initial API
+release `v0.1.0` is deployed on worker02, with Bid's own product client and
+signing configuration. Public routing and real-user acceptance remain pending;
+the Web workspace and signed desktop release are not complete. Read
+`docs/70-workplan/160-dual-surface-release.md` for the current checkpoint.
+Template text about `bidproposal.vxture.com` is historical, not a live endpoint.
+The owner forbids platform source and worker01 configuration changes. Product
+operations may use Bid's own worker02 configuration only.
 
 
 Three things follow that will save you a wrong assumption:

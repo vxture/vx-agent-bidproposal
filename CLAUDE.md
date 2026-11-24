@@ -11,13 +11,13 @@ Agent; `product.products` row seeded by the platform on 2026-09-01,
 `release_stage=developing`). This repo is its **cloud capability surface**: the
 confidential service that the RUYIN desktop runtime (a zero-secret public
 client) calls for model turns and for Runos-distributed skills (vxture-ruyin
-ADR-009 / ADR-020; this repo's ADR-001). It is **not deployed yet** and it is
-**not registered on the platform yet** - both are tracked in
-vxture-platform/vxture-platform#198 and in
-`docs/50-deployment/10-platform-registration-checklist.md`. Anything below that
-reads as "runs in production" is the template's story, inherited from
-`vx-agent-vxtpl@fabef44` (copied 2026-09-05 and renamed), and does not describe
-this product until the checklist says so.
+ADR-009 / ADR-020; this repo's ADR-001). Its initial API release `v0.1.0` is
+deployed on worker02 and its product login/signing configuration is registered.
+Public routing, real-user integration and full Web/desktop delivery remain
+unaccepted. Current evidence and boundaries are in
+`docs/70-workplan/160-dual-surface-release.md`; older template production claims
+below are not proof of Bid business readiness. Do not modify platform code or
+worker01 configuration to integrate this product.
 
 The template's three platform channels (C1 login, C2 entitlement, C3
 provisioning), the guardrails, CI and release chain are kept as-is; the

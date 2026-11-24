@@ -5,7 +5,7 @@
 #
 #   bash deploy.sh all       # directories -> start -> verify -> prune
 #   bash deploy.sh start     # pull image (GHCR primary, ACR fallback) + up -d
-#   bash deploy.sh verify    # health check
+#   bash deploy.sh verify    # liveness and product readiness
 #   bash deploy.sh prune     # drop release images except the running one
 #
 # The image tag + registries come from the environment CI sets:
@@ -101,14 +101,15 @@ cmd_start() {
 cmd_verify() {
   local tries=0
   until [ "$tries" -ge 20 ]; do
-    if docker exec "${PROJECT_NAME}-app" wget -qO- "http://127.0.0.1:${APP_CONTAINER_PORT}/api/health" >/dev/null 2>&1; then
-      log "verify OK (health 200 on container :${APP_CONTAINER_PORT}, published :${APP_PUBLISHED_PORT})"
+    if docker exec "${PROJECT_NAME}-app" wget -qO- "http://127.0.0.1:${APP_CONTAINER_PORT}/api/health" >/dev/null 2>&1 &&
+       docker exec "${PROJECT_NAME}-app" wget -qO- "http://127.0.0.1:${APP_CONTAINER_PORT}/api/ready" >/dev/null 2>&1; then
+      log "verify OK (health and readiness 200 on container :${APP_CONTAINER_PORT}, published :${APP_PUBLISHED_PORT})"
       return 0
     fi
     tries=$((tries + 1))
     sleep 3
   done
-  log "verify FAILED: /api/health not healthy on container :${APP_CONTAINER_PORT} (published :${APP_PUBLISHED_PORT})"
+  log "verify FAILED: health or readiness unavailable on container :${APP_CONTAINER_PORT} (published :${APP_PUBLISHED_PORT})"
   compose ps
   exit 1
 }

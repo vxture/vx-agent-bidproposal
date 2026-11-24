@@ -97,6 +97,9 @@ jobs:
       - name: Whitespace and conflict-marker check
         run: git diff --check
 
+      - name: Product deployment readiness gate
+        run: bash deploy/verify.test.sh
+
       - name: Docs numbering guardrail (strict)
         run: node scripts/guardrails/check-docs-numbering.mjs --strict
 

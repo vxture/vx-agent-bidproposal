@@ -54,6 +54,13 @@ try {
   const health = await (await request("/api/health")).json();
   assert.equal(health.product, "bidproposal");
   assert.equal(health.service, "bidproposal-app");
+  const readiness = await request("/api/ready");
+  assert.equal(readiness.status, 503);
+  assert.equal(readiness.headers.get("cache-control"), "no-store");
+  const readinessBody = await readiness.json();
+  assert.equal(readinessBody.status, "fail");
+  assert.equal(readinessBody.product, "bidproposal");
+  assert.deepEqual(readinessBody.checks, { configuration: "fail", db: "fail", redis: "fail" });
   const home = await request("/");
   assert.equal(home.status, 200);
   const html = await home.text();
