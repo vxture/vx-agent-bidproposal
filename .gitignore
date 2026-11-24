@@ -40,6 +40,7 @@ node_modules/
 out/
 build/
 dist/
+portals/app/public/workbench/
 *.tsbuildinfo
 next-env.d.ts
 

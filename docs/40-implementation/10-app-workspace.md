@@ -2,13 +2,16 @@
 
 ## Layout
 
-A pnpm workspace with two packages under `portals/`, per the governance
+A pnpm workspace under `portals/`, per the governance
 source-directory slots:
 
 ```
 portals/
   app/                  @bidproposal/app     - the Next.js 15 application (App Router)
+    workbench/                              - browser runtime adapter and UI build
+  desktop/              @bidproposal/desktop - RUYIN transport and package build
   packages/shared/      @bidproposal/shared  - product identity constants
+  packages/workbench/   @bidproposal/workbench - shared business pages and task definitions
 ```
 
 `@bidproposal/shared` exists to hold exactly one thing well: `BRAND`, the single source
@@ -22,6 +25,66 @@ entitlement lookups, the C3 webhook's wrong-product check - reads
 from GitHub Packages. It owns the health-identity helper and the subscription
 value domains. Import from it rather than re-implementing - a local copy of
 `TIERS` is what TD-001 was about.
+
+## Shared application direction
+
+The owner confirmed Web-first delivery on 2026-11-25. The existing desktop
+candidate supplied the six-stage business UI and models. Their single source
+now lives in `portals/packages/workbench/src`. Desktop transport is confined
+to `portals/desktop/src`, and Web transport to `portals/app/workbench`. No
+business panel reads the host origin or receives RUYIN messages directly.
+
+Keep the business modules independent of DOM-host transport and expose runtime
+facilities through adapters. The existing desktop bridge request/response,
+revision checks, candidate adoption, evidence snapshots and task recovery
+behavior are migration inputs to preserve. Host navigation, file access,
+download locations and job execution are runtime concerns. The Web adapter
+must enforce the verified product session and workspace on its server;
+client-supplied workspace identifiers cannot establish authority.
+
+Build Web assets and the RUYIN package from the same page/module source. Test
+business behavior once and exercise each environment adapter separately. Do
+not introduce a new proposal content shape that discards the existing saved
+document contract. Keep the original dirty desktop checkout intact while
+bringing its implementation into the reviewed product branch.
+
+Cloud synchronization is outside this release. Reserve compatibility through
+the common data format and adapter boundary only; add no synchronization UI,
+API, replication store or background process. Cloud storage for Web documents
+does not imply that desktop-local projects are uploaded or synchronized.
+
+The shared asset collector includes the existing Markdown sanitizer, parser,
+PDF viewer and their licenses. Both outputs use the same normalized page and
+module bytes. Only environment bootstrap, transport and browser navigation
+chrome differ. Shared `contract.mjs` owns the existing task/prompt assembly;
+desktop packaging adds version, minimum runtime and UI digest afterwards.
+The current public capability contract remains unchanged pending Web runtime
+acceptance. Do not switch public APIs to the expanded contract independently.
+
+Example module imports:
+
+```js
+import { mountWorkbench, mountLibrary } from '@bidproposal/workbench';
+import { businessContract } from '@bidproposal/workbench/contract';
+```
+
+`pnpm --filter @bidproposal/app build:ui` builds the browser assets into
+`portals/app/workbench/dist`; the normal app build runs this too. These assets
+are not copied to `public` or linked from the live product entry yet. The
+same-origin transport preserves the request/reply and document revision shape,
+but its `/api/workbench/projects/:id/*` server facilities are the next batch.
+They must authorize every operation. Transport and local fixture acceptance
+do not establish production storage, task execution or export readiness.
+
+Desktop packaging currently uses the existing local RUYIN CLI build:
+
+```bash
+node portals/desktop/build.mjs /absolute/path/to/vxture-ruyin [OUTPUT]
+```
+
+It produces an explicitly unsigned candidate, not a released installation.
+`pnpm --filter @bidproposal/app test` includes the shared business suite and
+both transport suites so the existing required CI test job covers them.
 
 ## Local development
 

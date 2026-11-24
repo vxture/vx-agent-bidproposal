@@ -5,16 +5,18 @@
   "scripts": {
     "dev": "next dev -p 4070",
     "prisma:generate": "prisma generate",
-    "build": "prisma generate && next build",
+    "build": "prisma generate && node workbench/build.mjs && next build",
+    "build:ui": "node workbench/build.mjs",
     "start": "next start",
     "type-check": "prisma generate && tsc --noEmit",
-    "test": "node --import tsx --test --experimental-test-coverage \"app/**/*.test.ts\""
+    "test": "node --import tsx --test --experimental-test-coverage \"app/**/*.test.ts\" && pnpm --filter @bidproposal/workbench test && pnpm --filter @bidproposal/desktop test"
   },
   "dependencies": {
     "@phosphor-icons/react": "^2.1.10",
     "@prisma/adapter-pg": "^7.8.0",
     "@prisma/client": "^7.8.0",
     "@bidproposal/shared": "workspace:*",
+    "@bidproposal/workbench": "workspace:*",
     "@vxture/design-system": "^5.0.0",
     "@vxture/shared": "^1.6.0",
     "ioredis": "^5.4.0",
