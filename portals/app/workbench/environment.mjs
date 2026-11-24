@@ -42,7 +42,7 @@ export function createRuntime({
   );
   const navigation = new StageNavigation();
   navigation.select("analysis");
-  const downloads = new Set();
+  const downloads = new Map();
   const controller = new AbortController();
   const receive = (event) => {
     if (
@@ -75,14 +75,23 @@ export function createRuntime({
           body === undefined ? {} : { "content-type": "application/json" },
         ...(body === undefined ? {} : { body: JSON.stringify(body) }),
       });
-      const value = await response.json();
+      let value = await response.json();
       if (
         response.ok &&
         method === "POST" &&
         /^\/renders\/[A-Za-z0-9_-]+\/downloads\/(pdf|docx|md)$/.test(path) &&
         /^\/(?:api\/workbench\/)?downloads\/[a-f0-9]{64}$/.test(value.path)
-      )
-        downloads.add(value.path);
+      ) {
+        // Keep the shared UI's host-relative ticket contract. Only this Web
+        // adapter knows the product API prefix used by its issued URL.
+        const issuedPath = value.path;
+        const path = issuedPath.replace(
+          /^\/api\/workbench(?=\/downloads\/)/,
+          "",
+        );
+        downloads.set(path, issuedPath);
+        value = { ...value, path };
+      }
       return response.ok
         ? { ok: true, status: response.status, body: value }
         : {
@@ -100,8 +109,9 @@ export function createRuntime({
     replayNavigation: () => navigation.replay(),
     publishNavigation: publish,
     downloadUrl(path) {
-      if (!downloads.has(path)) throw new Error("Unissued download");
-      return new URL(path, page.origin).href;
+      const issuedPath = downloads.get(path);
+      if (!issuedPath) throw new Error("Unissued download");
+      return new URL(issuedPath, page.origin).href;
     },
     close() {
       controller.abort();

@@ -1,9 +1,21 @@
 # vx-agent-bidproposal
 
-**bidproposal**（标书方案智能体）是 Ruyin 的首个业务产品。本仓是它的**云端能力面**：Ruyin（桌面
-本地运行环境）是零秘密的 public client，替用户换票、调 Atlas 与 Runos 的是这里
-（vxture-ruyin ADR-009 / ADR-020）。它同时是 **Runos 的第一个消费者**（本仓 ADR-001，
-vxture-foundation/vxture-runos#14）。
+Bidproposal is the Proposal Writing Agent, delivered as a Web application and
+a separate RUYIN desktop package. Both consume the original six-stage business
+application and shared project/workflow UI. Runtime adapters supply identity,
+files, persistence, background jobs, review and document layout.
+
+Live Web application: https://bidproposal.ruyin.work/ (v0.2.1). It uses the
+product's own verified session and workspace entitlement, with encrypted durable
+projects and versioned materials on Bid's worker02 volume. RUYIN is a zero-secret
+host; its session must never substitute for Bid product identity. Current signed
+desktop authentication/install acceptance remains open. Web persistence does not
+provide cross-environment project synchronization.
+
+Current acceptance and remaining feature gates:
+[Web/desktop release tracker](docs/70-workplan/160-dual-surface-release.md).
+Historical ADRs and inherited template sections below are not proof of current
+desktop delivery or commercial feature completion.
 
 能力面的四个端点（规格：`docs/20-specs/30-capability-surface.md`，实现：
 `portals/app/app/capability/`、`portals/app/app/api/products/[product]/`）：
@@ -33,12 +45,11 @@ reintroduce npm workspaces.
 
 | Surface | What it demonstrates |
 |---------|----------------------|
-| `/` | THE app - a fullscreen command deck: seeded runs (daily quota spent server-side at start, scores recorded within server bounds), the tier-windowed record with pro's 30-day trend, and the anonymous global board, all as collapsible side-rail modules around the arena |
+| `/` | Complete project catalog and workbench: six-stage sidebar, settings/files, library, task authorization/review, shared Bid business panels and original progress/timing |
 | `/gate` | The product front door: verifies access on entry, redirects a signed-in visitor straight through, and otherwise shows the one action that helps |
-| `/chat` | Debug/reference: a tier-gated chat turn that mints a short-lived S2S token, calls Atlas, optionally invokes a Runos capability, and meters its own usage |
-| `/status` | Debug/reference: every integration channel's live configuration state, with no secret ever leaving the server |
-| `/platform-check` | Debug/reference: read-only connectivity probes against Atlas and Runos |
-| `/entitlement-matrix` | Debug/reference: every tier x status combination and the gate/CTA outcome it produces, fully offline |
+| `/api/workbench/**` | Cookie-only, scope-checked adapter to the original persistent project/task/file runtime; no provider token in the browser |
+| `/api/health`, `/api/ready` | Public build/liveness and redacted dependency readiness |
+| `/chat`, `/status`, `/platform-check`, `/entitlement-matrix` | Inherited local template diagnostics, unavailable on deployed stages |
 
 Under those surfaces sit the parts a product repo is actually judged on: the OIDC
 relying-party flow (PKCE, single-use state, back-channel logout), the entitlement
