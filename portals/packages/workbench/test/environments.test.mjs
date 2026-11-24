@@ -66,6 +66,7 @@ test('Web downloads accept only issued same-origin tickets and do not fall back 
   const path = '/downloads/' + 'a'.repeat(64);
   const runtime = createRuntime({
     href,
+    publish: () => {},
     fetcher: async () => ({
       ok: true,
       status: 200,
@@ -81,6 +82,7 @@ test('Web downloads accept only issued same-origin tickets and do not fall back 
   assert.throws(() => createRuntime({ href: 'https://bidproposal.example/workbench/' }));
   const failed = createRuntime({
     href,
+    publish: () => {},
     fetcher: async () => {
       throw new Error('Network unavailable');
     },
@@ -90,4 +92,27 @@ test('Web downloads accept only issued same-origin tickets and do not fall back 
     /Network unavailable/,
   );
   failed.close();
+});
+
+test('Web transport requires explicit presentation and preserves full workflow metadata', () => {
+  assert.throws(() => createRuntime({ href }), /Workflow presentation is not attached/);
+  let received;
+  const runtime = createRuntime({
+    href,
+    publish: (items) => {
+      received = items;
+    },
+  });
+  const items = [
+    {
+      id: 'analysis',
+      label: 'Analyze',
+      state: 'complete',
+      startedAt: '2026-11-20T01:45:00Z',
+      completedAt: '2026-11-20T01:57:00Z',
+    },
+  ];
+  runtime.publishNavigation(items);
+  assert.deepEqual(received, items);
+  runtime.close();
 });

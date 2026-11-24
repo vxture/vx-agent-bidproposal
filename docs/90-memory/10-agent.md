@@ -17,6 +17,13 @@ Template text about `bidproposal.vxture.com` is historical, not a live endpoint.
 The owner forbids platform source and worker01 configuration changes. Product
 operations may use Bid's own worker02 configuration only.
 
+Current direction (2026-11-25): reverse-migrate the complete existing desktop
+application, including RUYIN-provided project/workflow/timing/review chrome.
+Read `docs/40-implementation/50-desktop-baseline.md` before Web work. The
+independently designed editor and horizontal navigation preview were rejected
+and removed. Do not treat the shared product iframe pages as the entire app.
+Cloud synchronization is reserved, with no implementation or public UI now.
+
 
 Three things follow that will save you a wrong assumption:
 

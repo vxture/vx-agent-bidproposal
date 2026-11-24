@@ -8,7 +8,7 @@ source-directory slots:
 ```
 portals/
   app/                  @bidproposal/app     - the Next.js 15 application (App Router)
-    workbench/                              - browser runtime adapter and UI build
+    workbench/                              - draft browser transport, no page renderer
   desktop/              @bidproposal/desktop - RUYIN transport and package build
   packages/shared/      @bidproposal/shared  - product identity constants
   packages/workbench/   @bidproposal/workbench - shared business pages and task definitions
@@ -68,13 +68,18 @@ import { mountWorkbench, mountLibrary } from '@bidproposal/workbench';
 import { businessContract } from '@bidproposal/workbench/contract';
 ```
 
-`pnpm --filter @bidproposal/app build:ui` builds the browser assets into
-`portals/app/workbench/dist`; the normal app build runs this too. These assets
-are not copied to `public` or linked from the live product entry yet. The
-same-origin transport preserves the request/reply and document revision shape,
-but its `/api/workbench/projects/:id/*` server facilities are the next batch.
-They must authorize every operation. Transport and local fixture acceptance
-do not establish production storage, task execution or export readiness.
+The independently invented Web editor and the later horizontal workflow
+preview were rejected. Their build/render entry is removed. The draft browser
+transport requires an explicitly attached presentation callback and forwards
+the complete workflow metadata; it cannot silently substitute navigation.
+Its draft paths and project ID assumptions are not a published server contract.
+The product entry remains unchanged pending full application migration.
+
+The complete baseline is [50-desktop-baseline.md](50-desktop-baseline.md):
+RUYIN host chrome, project catalog, settings/files, sidebar workflow/timing,
+library, task/review controls and Bid's six business panels. Do not equate the
+product iframe contents with the whole application. Review the baseline before
+attaching a Web renderer or implementing workspace/file/job services.
 
 Desktop packaging currently uses the existing local RUYIN CLI build:
 

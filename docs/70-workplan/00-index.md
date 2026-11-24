@@ -1,5 +1,10 @@
 # 70-workplan - Build plan and batch tracker
 
+Current Bid work follows [160-dual-surface-release.md](160-dual-surface-release.md)
+and the [complete desktop baseline](../40-implementation/50-desktop-baseline.md).
+B6.2 freezes the original host plus product application before Web migration.
+Do not reuse the rejected independent editor or horizontal navigation preview.
+
 vxtpl is built incrementally. Each batch is one PR with machine-checked
 acceptance (self-rectify runbook batches A-G). Authority for the plan: platform
 repo `docs/30-design/product_240_repo-template.md` section 7.

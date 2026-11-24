@@ -20,44 +20,12 @@ export function createRuntime({
   const projectId = page.searchParams.get('project');
   if (!/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(projectId || ''))
     throw new Error('Invalid project');
+  if (typeof publish !== 'function') throw new Error('Workflow presentation is not attached');
   const base = new URL('/api/workbench/projects/' + projectId + '/', page.origin);
   const navigation = new StageNavigation();
   navigation.select('analysis');
   const downloads = new Set();
   const controller = new AbortController();
-  let nav;
-  const buttons = new Map();
-  const renderNavigation = (items) => {
-    if (!nav) {
-      nav = document.createElement('nav');
-      nav.className = 'web-stage-navigation';
-      nav.setAttribute('aria-label', '\u7f16\u6807\u6d41\u7a0b');
-      document.querySelector('main').before(nav);
-    }
-    for (const item of items) {
-      let button = buttons.get(item.id);
-      if (!button) {
-        button = document.createElement('button');
-        button.type = 'button';
-        button.className = 'step';
-        button.onclick = () => navigation.select(item.id);
-        buttons.set(item.id, button);
-        nav.append(button);
-      }
-      button.textContent = item.label;
-      button.dataset.state = item.state;
-      button.classList.toggle('active', navigation.current === item.id);
-      if (navigation.current === item.id) button.setAttribute('aria-current', 'step');
-      else button.removeAttribute('aria-current');
-    }
-  };
-  navigation.subscribe((section) => {
-    for (const [id, button] of buttons) {
-      button.classList.toggle('active', id === section);
-      if (id === section) button.setAttribute('aria-current', 'step');
-      else button.removeAttribute('aria-current');
-    }
-  });
   return {
     async request(method, path, body) {
       if (
@@ -95,7 +63,7 @@ export function createRuntime({
     onStage: (listener) => navigation.subscribe(listener),
     navigate: (section) => navigation.select(section),
     replayNavigation: () => navigation.replay(),
-    publishNavigation: publish || renderNavigation,
+    publishNavigation: publish,
     downloadUrl(path) {
       if (!downloads.has(path)) throw new Error('Unissued download');
       return new URL(path, page.origin).href;
@@ -104,7 +72,6 @@ export function createRuntime({
       controller.abort();
       navigation.close();
       downloads.clear();
-      nav?.remove();
     },
   };
 }
