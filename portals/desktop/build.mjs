@@ -6,23 +6,17 @@
  * @date 2026-11-25
  */
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
-import { resolve, join, dirname } from 'node:path';
-import { fileURLToPath, pathToFileURL } from 'node:url';
+import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
+import { writeZip, packProduct } from '@vxture/ruyin-cli';
 import { collectAssets } from '@bidproposal/workbench/assets';
 import { businessContract } from '@bidproposal/workbench/contract';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const version = JSON.parse(readFileSync(join(here, 'package.json'), 'utf8')).version;
-const runtimeRoot = process.argv[2];
-if (!runtimeRoot) throw new Error('Usage: node build.mjs RUYIN_CHECKOUT');
+if (process.argv.length > 2) throw new Error('Usage: pnpm --filter @bidproposal/desktop build');
 const output = join(here, 'dist');
-const { writeZip } = await import(
-  pathToFileURL(resolve(runtimeRoot, 'packages/cli/dist/zip.js')).href
-);
-const { packProduct } = await import(
-  pathToFileURL(resolve(runtimeRoot, 'packages/cli/dist/pack.js')).href
-);
 const readText = (path) => readFileSync(path, 'utf8').replaceAll('\r\n', '\n');
 const environment = readText(join(here, 'src/environment.mjs')).replace(
   "'@bidproposal/workbench/runtime'",

@@ -81,13 +81,18 @@ library, task/review controls and Bid's six business panels. Do not equate the
 product iframe contents with the whole application. Review the baseline before
 attaching a Web renderer or implementing workspace/file/job services.
 
-Desktop packaging currently uses the existing local RUYIN CLI build:
+Desktop packaging pins the published `@vxture/ruyin-cli` 0.2.0 build API:
 
 ```bash
-node portals/desktop/build.mjs /absolute/path/to/vxture-ruyin
+pnpm --filter @bidproposal/desktop build
+pnpm --filter @bidproposal/desktop verify
 ```
 
 It produces an explicitly unsigned candidate, not a released installation.
+No RUYIN checkout path is required. Verification runs two real builds and checks
+the actual package/UI hashes and byte equality; the existing CI build job runs
+it before the Web artifact. Production signing and trusted installation remain
+separate acceptance steps.
 `pnpm --filter @bidproposal/app test` includes the shared business suite and
 both transport suites so the existing required CI test job covers them.
 

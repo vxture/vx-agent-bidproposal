@@ -4,10 +4,15 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "build": "node build.mjs",
+    "verify": "node verify.mjs",
     "test": "node --test src/*.test.mjs",
-    "type-check": "node --check build.mjs && node --check src/bridge.mjs && node --check src/environment.mjs"
+    "type-check": "node --check build.mjs && node --check verify.mjs && node --check src/bridge.mjs && node --check src/environment.mjs"
   },
   "dependencies": {
     "@bidproposal/workbench": "workspace:*"
+  },
+  "devDependencies": {
+    "@vxture/ruyin-cli": "0.2.0"
   }
 }

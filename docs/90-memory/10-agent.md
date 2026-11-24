@@ -37,6 +37,15 @@ Remote RUYIN main also has 0.2.0 manifests but lacks projectDocuments,
 project_document and the original workflow sidebar. Do not publish that main
 as a solution without reconciling the fixed original delivery baseline first.
 
+B6.4.1 follow-up resolves the package/build dependency: RUYIN PR #312/#313
+reconciled the required ports and public CLI entry, exact main checks passed,
+and packages-v0.2.0 published all four packages. Bid now pins the registry CLI
+and builds without a RUYIN source checkout. Real package bytes match the
+original 1.17.2 baseline; CI verifies double-build reproducibility. The full
+host UI public boundary and actual Web runtime/desktop identity/layout remain
+unfinished. See section 8 of the runtime preflight for current status; earlier
+0.1.0-only observations are historical evidence, not the current registry.
+
 
 Three things follow that will save you a wrong assumption:
 

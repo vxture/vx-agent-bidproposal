@@ -109,6 +109,10 @@ importers:
       '@bidproposal/workbench':
         specifier: workspace:*
         version: link:../packages/workbench
+    devDependencies:
+      '@vxture/ruyin-cli':
+        specifier: 0.2.0
+        version: 0.2.0
 
   portals/packages/shared:
     dependencies:
@@ -1529,6 +1533,15 @@ packages:
       react: ^19.0.0
       react-dom: ^19.0.0
 
+  '@vxture/ruyin-cli@0.2.0':
+    resolution: {integrity: sha512-VOzPcQQWQ44+445tN5tTi0cS9JPxMu6YptFnA8Uv+AkRDcRFfnYMizIvb+CTJOsNnmcFYxfyhIxnurxGwmo7SA==, tarball: https://npm.pkg.github.com/download/@vxture/ruyin-cli/0.2.0/7e67cb0a6aa69d1a30719848e9a83fd142515439}
+    engines: {node: '>=22'}
+    hasBin: true
+
+  '@vxture/ruyin-contract-schema@0.2.0':
+    resolution: {integrity: sha512-EbgxHQ4+gRBBwGFr92nXrMtJQAhmxBhPBEabemoG9MhL0vfSCfCCJ9/0/iZI44ECdOTvCfGSuBrribLZ4HlwbQ==, tarball: https://npm.pkg.github.com/download/@vxture/ruyin-contract-schema/0.2.0/0262730fa8f501029f5f25286f85674cb5ba2f29}
+    engines: {node: '>=22'}
+
   '@vxture/shared@1.6.0':
     resolution: {integrity: sha512-kmpOoDzvfOHRqnf8FvM2QwqTKu/fpru/MX6Atzm6wmEJm6xWjhPU1342+HEUNKfGC08ymCpkGjnEJ3mv1Wkhxw==, tarball: https://npm.pkg.github.com/download/@vxture/shared/1.6.0/c95f38e365a3c4bfaa1d7b9f376077a1709cf502}
     engines: {node: '>=22.0.0'}
@@ -2236,6 +2249,11 @@ packages:
   xtend@4.0.2:
     resolution: {integrity: sha512-LKYU1iAXJXUgAXn9URjiu+MWhyUXHsvfp7mcuYm9dSUKK0/CjtrUwFAxD82/mCWbtLsGjFIad0wIsod4zrTAEQ==}
     engines: {node: '>=0.4'}
+
+  yaml@2.9.1:
+    resolution: {integrity: sha512-3NxN8+78OdzbT7C/WjGsyfPAtJaN3FNDsWxv7Y7mcDsT/oOmgW8BpyQQFFBnvZE3j9Y2Sdz1ULFLezL7Eb2yFw==}
+    engines: {node: '>= 14.6'}
+    hasBin: true
 
   zeptomatch@2.1.0:
     resolution: {integrity: sha512-KiGErG2J0G82LSpniV0CtIzjlJ10E04j02VOudJsPyPwNZgGnRKQy7I1R7GMyg/QswnE4l7ohSGrQbQbjXPPDA==}
@@ -3503,6 +3521,15 @@ snapshots:
       - '@types/react-dom'
       - tailwindcss
 
+  '@vxture/ruyin-cli@0.2.0':
+    dependencies:
+      '@vxture/ruyin-contract-schema': 0.2.0
+
+  '@vxture/ruyin-contract-schema@0.2.0':
+    dependencies:
+      ajv: 8.20.0
+      yaml: 2.9.1
+
   '@vxture/shared@1.6.0': {}
 
   ajv@8.20.0:
@@ -4140,6 +4167,8 @@ snapshots:
       isexe: 2.0.0
 
   xtend@4.0.2: {}
+
+  yaml@2.9.1: {}
 
   zeptomatch@2.1.0:
     dependencies:
