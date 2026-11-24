@@ -39,7 +39,7 @@ baseline is [50-desktop-baseline.md](../40-implementation/50-desktop-baseline.md
 | --- | --- | --- |
 | B6.2 | Freeze the complete desktop baseline and remove rejected Web presentation | Source/feature/evidence inventory complete locally: 161 source hashes, eight historical evidence hashes, original sidebar screenshot and D01-D14 page/control inventory. Original development checkouts preserved. Remove horizontal navigation, its build entry and rejected editor refs/preview launchers. No new UI. |
 | B6.3 | Verify runtime differences and migration boundaries | Verification complete; integration gates remain open. Published schema 0.1.0 rejects Bid contract 0.2, core lacks projectDocuments; 26 identity tests pass. Isolated Linux reads MD/DOCX/PDF with matching hashes. LibreOffice conversion fails fidelity: six pages become four and TOC field codes leak. Storage/jobs/review boundaries and runtime-specific recovery recorded in the preflight. No adapter or production change. |
-| B6.4 | Reuse the complete product application presentation | Dependency/scoping analysis started; implementation not started. RUYIN host UI has no published reusable package. Establish a supported shared-component boundary first, then preserve desktop project/home/library/settings, six-step sidebar, state/times/duration/progress and human review. No replacement editor/navigation or private cross-repo app imports. |
+| B6.4 | Reuse the complete product application presentation | B6.4.1 runtime dependencies reconciled and 0.2.0 packages published/consumed; Bid build now uses the public pinned CLI and real reproducibility checks. Complete UI extraction remains next: host UI has no published reusable package. Preserve desktop project/home/library/settings, six-step sidebar, state/times/duration/progress and human review. No replacement editor/navigation or private cross-repo app imports. |
 | B6.5 | Adapt Web identity, projects and data | Verified Bid identity and workspace checks on every operation, project lifecycle, revision conflicts, upload/version persistence and reload recovery. No new simplified proposal content model. Not started. |
 | B6.6 | Adapt reading and agent jobs | Same task definitions, input snapshots, verification, candidate adoption and recovery; actual Bid-owned provider calls, no RUYIN execution grant. Not started. |
 | B6.7 | Deliver preview and actual output files | Confirm server layout route first; then verify template, TOC, headers, pages and MD/DOCX/PDF downloads with retained versions. Not started. |
@@ -73,6 +73,31 @@ Product-native desktop identity and the
 server layout engine remain explicit later acceptance gates. Preserve the
 complete original UI; do not substitute a second product app while those
 dependencies are unresolved.
+
+### B6.4.1 supported build dependency scope
+
+Reconcile the existing runtime dependencies in the independent RUYIN repository,
+then consume their reviewed 0.2.0 publication through the existing package
+pipeline. In Bid, change only `portals/desktop/build.mjs`, its `package.json`,
+the necessary lockfile, a new `portals/desktop/verify.mjs` artifact check and
+the existing CI build step. Replace the private RUYIN-checkout imports with
+the public CLI build entry and require two actual builds to produce identical
+package/UI hashes. Update this tracker and the existing app/runtime guides.
+The source/runtime/identity/layout evidence remains in its original record.
+
+This stage removes an unsupported cross-repository build dependency; it does
+not implement the full host UI, Web runtime adapters, signing, installation,
+cloud synchronization or a production release. Preserve the original desktop
+checkout and the existing six-stage business payload.
+
+RUYIN PR #312/#313 and exact main checks passed; the existing package workflow
+published all four 0.2.0 packages. An isolated registry consumer accepted the
+actual Bid contract and exercised consent/revision/recovery from public exports.
+Bid's actual package SHA-256 remains
+`b7df93f20dca173b4c911c54e15aa987d71b459ab27fe4c7083a8c3377128c03`;
+two builds are byte-identical. Workspace type-check and all 381 product/shared/
+transport tests pass. Required Bid PR/main CI will independently install and
+verify the registry-backed build. No Bid release tag or production change.
 
 ### Rejected presentation cleanup and B6.2 local result
 

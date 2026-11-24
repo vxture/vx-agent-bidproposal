@@ -168,6 +168,9 @@ jobs:
       - name: Type-check (shared)
         run: pnpm type-check:all
 
+      - name: Build and verify the independent unsigned desktop artifact
+        run: pnpm --filter @bidproposal/desktop verify
+
       - name: Build app (Next.js standalone)
         run: pnpm build
         env:
