@@ -71,7 +71,7 @@ try {
     assert.equal((await request(path)).status, 404, path);
   }
   assert.equal((await request("/api/game/run", { method: "POST" })).status, 404);
-  assert.equal((await request("/api/usage/flush", { method: "POST" })).status, 404);
+  assert.equal((await request("/api/usage/flush", { method: "POST" })).status, 403);
   const contractUrl = "/api/products/bidproposal/contract";
   const contract = await request(contractUrl);
   assert.equal(contract.status, 200);

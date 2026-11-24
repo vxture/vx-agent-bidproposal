@@ -120,7 +120,7 @@ ports, secrets or environment settings. Bidproposal is an agent product.
   coverage, missing member assignment, C2/assignment outage, shared platform
   quota values, and no provider invocation before access checks. Product
   app tests: 254 passed. No live provider calls or production credentials.
-- The template usage flush is unavailable on deployed stages. A production
+- The B1 template usage flush is unavailable on deployed stages. A production
   webhook cannot acknowledge an in-memory delivery when persistence is absent.
   A separate real product-owned usage producer is deferred until a metric and
   actual operation exist; Atlas inference is not counted twice.
@@ -176,3 +176,30 @@ the receipt, and the same signed delivery could be retried successfully.
 - The regular RUYIN checkout's packer rejected the project-document contract.
   The rebuild used the delivery-readiness packer. Verify the released host
   accepts the contract before signing and advertising desktop availability.
+
+## B4 product integration readiness, 2026-11-24
+
+The product API and entry/status pages are deployed as v0.1.2. Public routing,
+Accounts login, product-scoped OBO C2 reads and unentitled refusal passed. The
+product remains developing in the catalog; this is not full Web business or
+signed desktop release acceptance. Opera's implementation checks for S2S,
+entitlement gating and the persistent signed webhook receiver were confirmed
+from code and recorded tests. Actual subscription/assignment/provider usage
+and logout propagation remain separate acceptance steps.
+
+The remaining C3 sender still used the inherited shared internal password.
+Replace only that outbound transport with the product's own service-mode S2S
+ticket for each queued workspace. Preserve the usage envelope, idempotency key,
+end-user attribution, HTTP-200 gated/replay handling and persistent retry queue.
+Enable the existing job endpoint behind its existing internal job credential,
+requiring a persistent database in deployed stages. No new metric or simulated
+production usage is emitted. Atlas remains the sole reporter of model usage;
+product events must come from real completed Bid business operations. The
+template game/chat cannot produce usage in deployed stages.
+
+Local verification passed 274 product tests, type checking, six guardrails, the standalone build and product release smoke. A compiled standalone run against a disposable PostgreSQL-compatible database with the real driver and product service-role grants verified workspace-bound S2S, durable retry after 503, gated-200 acceptance and idempotent replay after a local commit failure. No production credentials or usage were used. The worker02 read-only preflight found the existing job credential configured and zero pending rows.
+
+Coverage includes exact HTTP headers/body, workspace-specific token
+minting, duplicate/gated/retry semantics, missing job authorization and absent
+durable storage. Production enablement follows the existing reviewed release
+workflow, with no platform source or worker01 configuration change.
