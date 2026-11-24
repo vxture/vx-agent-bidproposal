@@ -21,6 +21,13 @@
       "0.1.0"
     ]
   },
+  "ruyinRemoteMainCompatibility": {
+    "manifestVersion": "0.2.0",
+    "projectDocuments": false,
+    "project_document": false,
+    "originalWorkflowSidebarPresent": false,
+    "publishMainAsFixAccepted": false
+  },
   "packageCompatibility": {
     "date": "2026-11-25",
     "bidCandidate": "1.17.2",
@@ -314,7 +321,7 @@
     "productionFidelityAccepted": false
   },
   "openGates": [
-    "Reviewed and published compatible RUYIN 0.2 packages",
+    "Reconciled original delivery source and reviewed/published compatible RUYIN packages",
     "Supported single-source host UI component distribution",
     "Own-product desktop identity handoff and task scope renewal",
     "Web project/file persistence, workspace authorization and real recovery",

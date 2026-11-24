@@ -66,7 +66,10 @@ acceptance. No production service, environment, database, credential, platform
 source or worker01 configuration was changed.
 
 B6.4 must first resolve the missing public host-UI reuse boundary and the
-unpublished 0.2.0 package dependency. Product-native desktop identity and the
+unpublished compatible package dependency. Remote RUYIN main also says 0.2.0
+but lacks projectDocuments, project_document and the original workflow sidebar;
+reconcile the original delivery-branch changes before publishing any dependency.
+Product-native desktop identity and the
 server layout engine remain explicit later acceptance gates. Preserve the
 complete original UI; do not substitute a second product app while those
 dependencies are unresolved.

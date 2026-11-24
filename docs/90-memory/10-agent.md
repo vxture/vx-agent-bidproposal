@@ -33,6 +33,9 @@ failed fidelity (six Word pages became four, with visible TOC field code).
 Own-product identity tests pass, but Workbench credentials are not Bid identity
 and the desktop handoff remains unfinished. Verification is complete; these
 integration dependencies remain open. Production is still API/entry v0.1.4.
+Remote RUYIN main also has 0.2.0 manifests but lacks projectDocuments,
+project_document and the original workflow sidebar. Do not publish that main
+as a solution without reconciling the fixed original delivery baseline first.
 
 
 Three things follow that will save you a wrong assumption:
