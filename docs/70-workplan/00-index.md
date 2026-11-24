@@ -4,6 +4,10 @@ Current Bid work follows [160-dual-surface-release.md](160-dual-surface-release.
 and the [complete desktop baseline](../40-implementation/50-desktop-baseline.md).
 B6.2 freezes the original host plus product application before Web migration.
 Do not reuse the rejected independent editor or horizontal navigation preview.
+B6.3 runtime verification is recorded in
+[60-runtime-adaptation-preflight.md](../40-implementation/60-runtime-adaptation-preflight.md).
+Published-package, shared-host-UI, desktop-identity and layout-fidelity gates
+remain open before their respective implementation batches.
 
 vxtpl is built incrementally. Each batch is one PR with machine-checked
 acceptance (self-rectify runbook batches A-G). Authority for the plan: platform

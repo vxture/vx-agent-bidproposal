@@ -24,6 +24,16 @@ independently designed editor and horizontal navigation preview were rejected
 and removed. Do not treat the shared product iframe pages as the entire app.
 Cloud synchronization is reserved, with no implementation or public UI now.
 
+B6.3 runtime checks are in `docs/40-implementation/60-runtime-adaptation-preflight.md`.
+The published 0.1.0 schema rejects Bid's current 0.2 contract; the published core
+lacks projectDocuments. RUYIN host UI is not a public package. Do not import its
+private apps across repositories or implement another replacement UI. Linux
+offline reading passed with the same locked parser; plain LibreOffice conversion
+failed fidelity (six Word pages became four, with visible TOC field code).
+Own-product identity tests pass, but Workbench credentials are not Bid identity
+and the desktop handoff remains unfinished. Verification is complete; these
+integration dependencies remain open. Production is still API/entry v0.1.4.
+
 
 Three things follow that will save you a wrong assumption:
 

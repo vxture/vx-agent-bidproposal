@@ -1,0 +1,337 @@
+{
+  "schema": "bidproposal-runtime-preflight/1",
+  "date": "2026-11-25",
+  "timezone": "Asia/Shanghai",
+  "batch": "B6.3",
+  "status": "verification-complete-integration-gates-open",
+  "bidSource": "49a478bbc20c37424198ae9603580febd3d16e7a",
+  "ruyinBaseline": "8fb4cfcabb2cacc1e3842de54491d7bb9286cca6",
+  "ruyinMainObserved": "3d3df8169b25957c56f322a5e8438ada42b1d40e",
+  "publishedPackageVersions": {
+    "@vxture/ruyin-core": [
+      "0.1.0"
+    ],
+    "@vxture/ruyin-document": [
+      "0.1.0"
+    ],
+    "@vxture/ruyin-contract-schema": [
+      "0.1.0"
+    ],
+    "@vxture/ruyin-cli": [
+      "0.1.0"
+    ]
+  },
+  "packageCompatibility": {
+    "date": "2026-11-25",
+    "bidCandidate": "1.17.2",
+    "contractVersion": "0.2",
+    "publishedSchema": {
+      "version": "0.1.0",
+      "supported": [
+        "0.1"
+      ],
+      "accepted": false,
+      "errors": [
+        {
+          "rule": "L1",
+          "path": "product",
+          "message": "must NOT have additional properties (unexpected key: ui)"
+        },
+        {
+          "rule": "L1",
+          "path": "product.id",
+          "message": "must match pattern \"^[a-z][a-z0-9-]*(\\.[a-z][a-z0-9-]*)+$\""
+        },
+        {
+          "rule": "L1",
+          "path": "context.types[0]",
+          "message": "must NOT have additional properties (unexpected key: project_document)"
+        },
+        {
+          "rule": "L1",
+          "path": "context.types[1]",
+          "message": "must NOT have additional properties (unexpected key: project_document)"
+        },
+        {
+          "rule": "L1",
+          "path": "context.types[2]",
+          "message": "must NOT have additional properties (unexpected key: project_document)"
+        },
+        {
+          "rule": "L1",
+          "path": "context.types[3]",
+          "message": "must NOT have additional properties (unexpected key: project_document)"
+        },
+        {
+          "rule": "L1",
+          "path": "context.types[4]",
+          "message": "must NOT have additional properties (unexpected key: project_document)"
+        },
+        {
+          "rule": "L1",
+          "path": "context.types[5]",
+          "message": "must NOT have additional properties (unexpected key: project_document)"
+        },
+        {
+          "rule": "L1",
+          "path": "context.types[6]",
+          "message": "must NOT have additional properties (unexpected key: project_document)"
+        },
+        {
+          "rule": "L1",
+          "path": "context.types[7]",
+          "message": "must NOT have additional properties (unexpected key: project_document)"
+        },
+        {
+          "rule": "L1",
+          "path": "tasks[0]",
+          "message": "must NOT have additional properties (unexpected key: name)"
+        },
+        {
+          "rule": "L1",
+          "path": "tasks[0]",
+          "message": "must NOT have additional properties (unexpected key: skills)"
+        },
+        {
+          "rule": "L1",
+          "path": "tasks[1]",
+          "message": "must NOT have additional properties (unexpected key: name)"
+        },
+        {
+          "rule": "L1",
+          "path": "tasks[1]",
+          "message": "must NOT have additional properties (unexpected key: skills)"
+        },
+        {
+          "rule": "L1",
+          "path": "tasks[2]",
+          "message": "must NOT have additional properties (unexpected key: name)"
+        },
+        {
+          "rule": "L1",
+          "path": "tasks[2]",
+          "message": "must NOT have additional properties (unexpected key: skills)"
+        },
+        {
+          "rule": "L1",
+          "path": "tasks[3]",
+          "message": "must NOT have additional properties (unexpected key: name)"
+        },
+        {
+          "rule": "L1",
+          "path": "tasks[3]",
+          "message": "must NOT have additional properties (unexpected key: skills)"
+        },
+        {
+          "rule": "L1",
+          "path": "tasks[4]",
+          "message": "must NOT have additional properties (unexpected key: name)"
+        },
+        {
+          "rule": "L1",
+          "path": "tasks[4]",
+          "message": "must NOT have additional properties (unexpected key: skills)"
+        },
+        {
+          "rule": "L1",
+          "path": "tasks[5]",
+          "message": "must NOT have additional properties (unexpected key: name)"
+        },
+        {
+          "rule": "L1",
+          "path": "tasks[5]",
+          "message": "must NOT have additional properties (unexpected key: skills)"
+        },
+        {
+          "rule": "L1",
+          "path": "tasks[6]",
+          "message": "must NOT have additional properties (unexpected key: name)"
+        },
+        {
+          "rule": "L1",
+          "path": "tasks[6]",
+          "message": "must NOT have additional properties (unexpected key: skills)"
+        },
+        {
+          "rule": "L1",
+          "path": "tasks[7]",
+          "message": "must NOT have additional properties (unexpected key: name)"
+        },
+        {
+          "rule": "L1",
+          "path": "tasks[7]",
+          "message": "must NOT have additional properties (unexpected key: skills)"
+        },
+        {
+          "rule": "L1",
+          "path": "tasks[8]",
+          "message": "must NOT have additional properties (unexpected key: name)"
+        },
+        {
+          "rule": "L1",
+          "path": "tasks[8]",
+          "message": "must NOT have additional properties (unexpected key: skills)"
+        },
+        {
+          "rule": "L1",
+          "path": "tasks[9]",
+          "message": "must NOT have additional properties (unexpected key: name)"
+        },
+        {
+          "rule": "L1",
+          "path": "tasks[9]",
+          "message": "must NOT have additional properties (unexpected key: skills)"
+        },
+        {
+          "rule": "L1",
+          "path": "tasks[11]",
+          "message": "must NOT have additional properties (unexpected key: skills)"
+        }
+      ]
+    },
+    "sourceSchema": {
+      "version": "0.2.0",
+      "supported": [
+        "0.1",
+        "0.2"
+      ],
+      "accepted": true
+    },
+    "publishedCore": {
+      "version": "0.1.0",
+      "projectDocuments": false
+    },
+    "sourceCore": {
+      "version": "0.2.0",
+      "projectDocuments": true
+    },
+    "scope": "local isolated package inspection; no package publication or production changes"
+  },
+  "packageArchiveSha256": {
+    "ruyin-contract-schema-0.1.0.tgz": "5e99f449ef9f83b84d066a2b281693f5db16624f2d60ca45f5e852da2e6d78ee",
+    "ruyin-core-0.1.0.tgz": "c25e3f088af4e2e6ce639e952588453e33e5a89dd484a8b4abce0ba34ed9a16e",
+    "ruyin-document-0.1.0.tgz": "d09ca20c9a61d0b2e6d922d74358c296108104a0703c241ef19683ead7926667"
+  },
+  "identity": {
+    "tests": 26,
+    "passed": 26,
+    "failed": 0,
+    "networkProviderCalls": 0,
+    "desktopHandoffAccepted": false,
+    "workbenchBearerIsProductIdentity": false
+  },
+  "productionObserved": {
+    "version": "0.1.4",
+    "source": "7aa548b90746823896342945f13d1b2ca8491937",
+    "node": "22.23.5",
+    "os": "Linux Alpine",
+    "pythonAvailable": false,
+    "officeLayoutEngineAvailable": false
+  },
+  "reader": {
+    "syntheticOnly": true,
+    "offline": true,
+    "results": {
+      "md": {
+        "sha256": "fdef46964272b62ab4c15717ba87b931829079727181e13e06006c69acd78d3d",
+        "units": 1,
+        "tables": 0,
+        "flags": [],
+        "engine": {
+          "adapter": "1.0.1",
+          "pdfplumber": "0.11.9",
+          "python-docx": "1.2.0",
+          "script-sha256": "4ccfac13006fe79c69d73058ddef911b911493e2ff12c2fe94deb58586fb636d",
+          "requirements-sha256": "b651eb0a0a5e234e34e4b5d793e2165c047983fac9c74feaf6b54ab870dc28fc"
+        }
+      },
+      "docx": {
+        "sha256": "dcfe929ce93bbe90bf6a0437515599147620a52210b3b6a9d5c2ed2c4c71ce21",
+        "units": 47,
+        "tables": 2,
+        "flags": [
+          "word-pagination-unavailable",
+          "automatic-numbering-not-rendered",
+          "fields-not-evaluated"
+        ],
+        "engine": {
+          "adapter": "1.0.1",
+          "pdfplumber": "0.11.9",
+          "python-docx": "1.2.0",
+          "script-sha256": "4ccfac13006fe79c69d73058ddef911b911493e2ff12c2fe94deb58586fb636d",
+          "requirements-sha256": "b651eb0a0a5e234e34e4b5d793e2165c047983fac9c74feaf6b54ab870dc28fc"
+        }
+      },
+      "pdf": {
+        "sha256": "ece37b8ef88ad385377633b85c221bcbacf4fe97180d4cd24b4ef74b36b01998",
+        "units": 6,
+        "tables": 2,
+        "flags": [],
+        "engine": {
+          "adapter": "1.0.1",
+          "pdfplumber": "0.11.9",
+          "python-docx": "1.2.0",
+          "script-sha256": "4ccfac13006fe79c69d73058ddef911b911493e2ff12c2fe94deb58586fb636d",
+          "requirements-sha256": "b651eb0a0a5e234e34e4b5d793e2165c047983fac9c74feaf6b54ab870dc28fc"
+        }
+      }
+    },
+    "testImage": "sha256:5e93106a48b6385236b823dcd0e8f826ecfc24bf67fca589b485dd910907406c"
+  },
+  "layout": {
+    "input": "synthetic DOCX already laid out by Microsoft Word; not the Markdown/template pipeline",
+    "inputSha256": "dcfe929ce93bbe90bf6a0437515599147620a52210b3b6a9d5c2ed2c4c71ce21",
+    "reference": {
+      "sha256": "ece37b8ef88ad385377633b85c221bcbacf4fe97180d4cd24b4ef74b36b01998",
+      "pages": 6,
+      "fonts": [
+        "BCDEEE+Calibri",
+        "BCDFEE+MicrosoftYaHei",
+        "BCDGEE+MicrosoftYaHei-Bold",
+        "BCDHEE+Calibri",
+        "BCDIEE+ArialMT"
+      ]
+    },
+    "candidate": {
+      "sha256": "a09bfbeafd1da8c6802d95dfce50a4c2ecbd9e7280f80303373b595110343dc7",
+      "pages": 4,
+      "fonts": [
+        "BAAAAA+DejaVuSans",
+        "CAAAAA+NotoSansCJKjp-Regular-VKana",
+        "DAAAAA+NotoSansCJKjp-Bold-VKana",
+        "EAAAAA+NotoSansCJKjp-Regular-VKana"
+      ]
+    },
+    "candidateImage": "sha256:07ec130434ba5fe79fb201669c32b2e1d2aa0d840f29561bce5873abf51b6ff9",
+    "conversionSucceeded": true,
+    "allPagesRenderedAndInspected": true,
+    "visibleFieldCodes": [
+      "TOC",
+      "HYPERLINK",
+      "PAGEREF"
+    ],
+    "fontSubstitutionObserved": true,
+    "productionFidelityAccepted": false
+  },
+  "openGates": [
+    "Reviewed and published compatible RUYIN 0.2 packages",
+    "Supported single-source host UI component distribution",
+    "Own-product desktop identity handoff and task scope renewal",
+    "Web project/file persistence, workspace authorization and real recovery",
+    "Server job/checkpoint adapters using the same business kernel",
+    "Template/TOC/header/page parity and a selected licensed layout route",
+    "Current signed desktop package install/update/data-protection acceptance"
+  ],
+  "changesExcluded": [
+    "platform-source",
+    "worker01-config",
+    "production-runtime",
+    "production-env",
+    "database",
+    "credentials",
+    "permissions",
+    "public-package-release",
+    "cloud-sync"
+  ],
+  "scope": "Package execution, offline identity tests, source boundary inspection and synthetic isolated worker02 feasibility only; no new product runtime implementation"
+}

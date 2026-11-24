@@ -38,8 +38,8 @@ baseline is [50-desktop-baseline.md](../40-implementation/50-desktop-baseline.md
 | Batch | Scope | Acceptance / current state |
 | --- | --- | --- |
 | B6.2 | Freeze the complete desktop baseline and remove rejected Web presentation | Source/feature/evidence inventory complete locally: 161 source hashes, eight historical evidence hashes, original sidebar screenshot and D01-D14 page/control inventory. Original development checkouts preserved. Remove horizontal navigation, its build entry and rejected editor refs/preview launchers. No new UI. |
-| B6.3 | Verify runtime differences and migration boundaries | In analysis: registry preflight found only public 0.1.0 versions of four RUYIN packages versus 0.2.0 in source. Also verify product identity, project scope, storage, reader, jobs/review and Windows Word dependency. Resolve concrete gaps before implementing adapters. |
-| B6.4 | Reuse the complete product application presentation | Preserve the desktop project/home/library/settings and six-step structure, sidebar state/times/duration/progress and human review controls. Match the original complete desktop reference; global RUYIN settings remain host-owned. Not started. |
+| B6.3 | Verify runtime differences and migration boundaries | Verification complete; integration gates remain open. Published schema 0.1.0 rejects Bid contract 0.2, core lacks projectDocuments; 26 identity tests pass. Isolated Linux reads MD/DOCX/PDF with matching hashes. LibreOffice conversion fails fidelity: six pages become four and TOC field codes leak. Storage/jobs/review boundaries and runtime-specific recovery recorded in the preflight. No adapter or production change. |
+| B6.4 | Reuse the complete product application presentation | Dependency/scoping analysis started; implementation not started. RUYIN host UI has no published reusable package. Establish a supported shared-component boundary first, then preserve desktop project/home/library/settings, six-step sidebar, state/times/duration/progress and human review. No replacement editor/navigation or private cross-repo app imports. |
 | B6.5 | Adapt Web identity, projects and data | Verified Bid identity and workspace checks on every operation, project lifecycle, revision conflicts, upload/version persistence and reload recovery. No new simplified proposal content model. Not started. |
 | B6.6 | Adapt reading and agent jobs | Same task definitions, input snapshots, verification, candidate adoption and recovery; actual Bid-owned provider calls, no RUYIN execution grant. Not started. |
 | B6.7 | Deliver preview and actual output files | Confirm server layout route first; then verify template, TOC, headers, pages and MD/DOCX/PDF downloads with retained versions. Not started. |
@@ -49,6 +49,27 @@ baseline is [50-desktop-baseline.md](../40-implementation/50-desktop-baseline.md
 
 Batch completion is scoped. B6.1 is source extraction, not complete Web
 migration; historical local acceptance is not current production acceptance.
+
+### B6.3 verification result - 2026-11-25
+
+See [runtime adaptation preflight](../40-implementation/60-runtime-adaptation-preflight.md)
+and its machine-readable evidence. Package compatibility was executed against
+the actual published artifacts, not inferred from manifest versions. Own-product
+identity tests passed. The same locked source reader processed one Markdown
+block, 47 DOCX blocks/two tables and six PDF pages/two tables in an offline,
+non-root, read-only, resource-limited Linux test container on worker02.
+
+An independent synthetic Word DOCX conversion produced a four-page PDF versus
+the six-page Word reference; font substitution and visible TOC/HYPERLINK/PAGEREF
+field code make this unsuitable for release. It is not full template-pipeline
+acceptance. No production service, environment, database, credential, platform
+source or worker01 configuration was changed.
+
+B6.4 must first resolve the missing public host-UI reuse boundary and the
+unpublished 0.2.0 package dependency. Product-native desktop identity and the
+server layout engine remain explicit later acceptance gates. Preserve the
+complete original UI; do not substitute a second product app while those
+dependencies are unresolved.
 
 ### Rejected presentation cleanup and B6.2 local result
 
