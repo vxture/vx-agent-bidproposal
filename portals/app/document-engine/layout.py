@@ -42,7 +42,7 @@ def read_package(path):
                 raise ValueError("Invalid document part")
             if (entry.external_attr >> 16) & 0o170000 == 0o120000:
                 raise ValueError("Symbolic links are not supported")
-            if re.search(r"vbaProject|activeX|embeddings/|\.bin$", name, re.I):
+            if name.lower().endswith(".bin") or re.search(r"vbaProject|activeX|embeddings/", name, re.I):
                 raise ValueError("Active document content is not supported")
             data = archive.read(entry)
             if name.endswith((".xml", ".rels")):
