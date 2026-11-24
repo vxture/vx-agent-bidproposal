@@ -6,7 +6,83 @@ product onboarding and commerce pages. Do not change platform source code
 or worker01 configuration. Bid's own worker02 runtime configuration is allowed.
 Preserve the current platform contract.
 
+## Current application direction - 2026-11-25
+
+The owner confirmed one business/capability kernel and one main UI, with Web
+as the primary application and a desktop package adapted for the RUYIN runtime.
+Reuse the existing desktop implementation for this reverse migration; future
+development proceeds from shared Web application to desktop packaging. The
+product definition records the continuing boundary in
+`../20-specs/10-product-definition.md`.
+
+The independently designed Web editor in PR #15 was rejected and the PR is
+closed, unmerged. Its branch preserves the work for reference. It was not
+released, its domain DDL was not applied, and it must not be used as the next
+deployment plan. The production baseline remains v0.1.4 / 7aa548b. Start the
+corrected implementation from that merged baseline, preserving the existing
+dirty desktop candidate checkout.
+
+Cross-environment cloud synchronization is reserved, not implemented in this
+release, and must not appear in any public UI or copy. Browser/server project
+persistence and desktop-local persistence do not synchronize with each other.
+Do not create sync routes, tables, background jobs or disabled entry points.
+
+The corrected B6 work is sequenced as follows:
+
+1. Extract the existing six-stage UI, business models, task definitions and
+   document formats into one shared source; preserve desktop behavior. The
+   original desktop candidate baseline passes all 99 tests.
+2. Adapt the Web runtime beneath those same modules: verified product identity,
+   workspace-bound persistence, upload/reading, jobs, review and download.
+   Preserve optimistic revisions, evidence integrity and candidate adoption.
+   Do not expose a partially wired editor as a complete product workspace.
+3. Verify both build outputs against the same UI source, review through the
+   existing product pipeline, and release only accepted deliverables. Desktop
+   own-product authentication and package signing remain explicit acceptance
+   items. Keep beta maturity and the current platform/worker01 boundary.
+
 ## Current checkpoint - 2026-11-24
+
+### B6.1 shared-source local acceptance - 2026-11-25
+
+The six existing business panels and their models now reside in the shared
+workbench package. Desktop code contains only the existing postMessage bridge,
+origin-checked environment adapter and package assembly. Web supplies a
+same-origin cookie transport and six-stage navigation using the same panels.
+Task definitions/prompts were lifted from the candidate build into one shared
+builder without rewriting their content. The expanded public contract and
+live entry are not enabled by this extraction.
+
+Local tests cover the original business behavior, buffered navigation,
+parent/origin checks, revision-conflict responses, abort on disposal, bounded
+same-origin paths and issued download tickets. A byte comparison of the old
+and new packaged YAML found only the expected UI digest difference. Shared
+application assets match across output collectors; no test fixture is packaged.
+
+Browser acceptance with a separate synthetic server opened all six pages,
+saved and confirmed an evidence-backed manual requirement, then reloaded and
+restored that same requirement. No provider was called. The new Web server
+facilities, production project persistence and actual background execution
+remain the next batch. Cross-environment syncing is absent. The existing
+dirty desktop candidate checkout, platform source and production were not
+changed. The build currently emits an unsigned desktop package only.
+
+Validation: 275 existing product tests plus 102 shared/application-adapter
+tests and three desktop transport tests passed (380 total). Workspace type
+checks, product guardrails, both UI builds, the unsigned package build and
+the production-shaped Next standalone build/start smoke passed. The standard
+pnpm-linked Windows checkout cannot create the standalone trace symlinks;
+the same locked source passed in an isolated hoisted-dependency directory.
+No dependency or configuration change was made to bypass that host limitation.
+
+The first remote quality analysis exposed inherited minified-source warnings.
+Normalize module formatting and Error construction, retain sequential dependent
+operations, replace trailing-fence backtracking with bounded suffix matching,
+and parse chapter headers without scanning the full body in a regular expression.
+Build outputs are fixed to each package's dist directory, not CLI-supplied write
+targets. Modern Chromium beforeunload uses preventDefault without deprecated
+returnValue. Clarification reads freshly verified rows instead of overwriting
+an unused caller argument. Review/CI acceptance is still required after fixes.
 
 This checkpoint supersedes the historical prerequisites recorded below.
 

@@ -1,0 +1,19 @@
+/**
+ * @package @bidproposal/app
+ * @layer Presentation
+ * @category RuntimeChrome
+ * @author AI-Generated
+ * @date 2026-11-25
+ */
+.web-stage-navigation {
+  display: flex;
+  gap: 12px;
+  max-width: 1552px;
+  margin: 12px auto 0;
+  padding-inline: 24px;
+  overflow-x: auto;
+}
+.web-stage-navigation .step { flex: 1; white-space: nowrap; }
+@media (max-width: 600px) {
+  .web-stage-navigation { padding-inline: 14px; gap: 8px; }
+}

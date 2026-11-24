@@ -8,9 +8,10 @@ the platform product directory, seeded 2026-09-01).
 
 Bidproposal is one agent product with two delivery surfaces: a Web application
 and an independently installed RUYIN desktop package. The Web server and
-product APIs are built from `portals/app`; the desktop business UI and package
-are built from `portals/desktop`. The two surfaces can provide different
-workflows. The platform owns one set of subscriptions, entitlements, quota and
+product APIs are built from `portals/app`. Both surfaces use the shared
+business application; `portals/desktop` is the RUYIN packaging adapter. Runtime
+facilities may differ while the main pages and business rules remain shared.
+The platform owns one set of subscriptions, entitlements, quota and
 usage for the same workspace and product code. Sharing these commercial facts
 does not imply that local projects are uploaded or synchronized.
 
@@ -25,6 +26,38 @@ and a real subscribed workspace, with the desktop package released separately.
 The catalog record already exists; deployment and cloud authorization remain
 subject to [platform #198](https://github.com/vxture-platform/vxture-platform/issues/198).
 See [the release batches](../70-workplan/160-dual-surface-release.md).
+
+## Shared product and runtime environments
+
+Owner decision, 2026-11-25: Web is the primary application surface. The desktop
+deliverable packages the same application for the RUYIN runtime. This product
+started with its desktop implementation; reuse that implementation to establish
+the shared application instead of designing a second Web workspace. Future
+features follow the forward path: shared Web application, runtime adaptation,
+then desktop packaging and acceptance.
+
+The six business stages stay the same: tender analysis, requirement
+confirmation, writing planning, chapter writing, review/revision, and export.
+Both deliverables consume one source for business rules, document formats,
+task definitions/prompts, result validation, and the main page components.
+Navigation chrome may adapt to its container without duplicating business UI.
+Runtime adapters provide identity, files, persistence, task execution, preview,
+and downloads. Desktop may use host-local facilities; Web uses the product's
+browser/server facilities. Shared rules do not require identical execution
+locations or access to native APIs from a browser.
+
+Subscriptions, entitlements, quota and usage belong to the one existing
+workspace/product scope, never to separate Web and desktop products. Provider
+credentials stay in the confidential Bid backend. Authorization and metering
+remain server-enforced even when business validation is shared with the UI.
+
+Cross-environment project synchronization is reserved for a later release.
+Do not implement synchronization, background replication, project merging,
+conflict resolution, or a synchronization API in this release. Do not expose
+sync buttons, settings, badges, empty states, or promotional copy. The common
+document format and runtime interfaces leave room for future work; no sync
+service or disabled UI is needed now. Web project persistence and desktop
+local persistence are separate environment facilities, not cross-end syncing.
 
 ## Template sample (inherited, not the product)
 

@@ -1,0 +1,88 @@
+/**
+ * @package @bidproposal/workbench
+ * @layer Presentation
+ * @category Tests
+ * @author AI-Generated
+ * @date 2026-11-25
+ */
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { Requirements, parseCandidates } from './requirements.mjs';
+test('evidence, confirmation invalidation, Markdown roundtrip and conflict preservation', async () => {
+  let data;
+  const bridge = {
+    request: async (method, path, body) => {
+      assert.equal(path, '/documents/bid_requirements');
+      if (method === 'GET') return data ? { ok: true, body: data } : { ok: false, status: 404 };
+      if (body.revision !== (data?.revision || 0)) return { ok: false, status: 409 };
+      data = { markdown: body.markdown, revision: (data?.revision || 0) + 1 };
+      return { ok: true, body: data };
+    },
+  };
+  const a = new Requirements(bridge);
+  await a.load();
+  assert.equal(a.dirty, false);
+  a.add({ text: 'A | B\nC & D', quote: 'source', location: '1' });
+  assert.equal(a.rows[0].confirmed, false);
+  a.confirm();
+  await a.save();
+  const b = new Requirements(bridge);
+  await b.load();
+  assert.deepEqual(b.rows, a.rows);
+  a.edit(a.rows[0].id, { text: 'new' });
+  assert.equal(a.rows[0].confirmed, false);
+  await a.save();
+  b.edit(b.rows[0].id, { text: 'stale' });
+  await assert.rejects(b.save(), (e) => e.status === 409);
+  assert.equal(b.rows[0].text, 'stale');
+  a.add({ text: 'no basis' });
+  assert.throws(() => a.confirm());
+});
+test('model candidates require evidence and never confirm themselves', () => {
+  assert.throws(() => parseCandidates('{"requirements":[{"category":"technical","text":"x"}]}'));
+  const c = parseCandidates(
+    '```json\n{"requirements":[{"category":"technical","text":"x","quote":"x","location":"1"}]}\n```',
+  );
+  const m = new Requirements({});
+  m.adopt(c);
+  m.confirm();
+  assert.equal(m.adopt(c), 0);
+  assert.equal(m.rows[0].confirmed, true);
+  assert.equal(c[0].confirmed, false);
+});
+test('600 rows persist without the former row cap; byte overflow is atomic and invalid matrices preserve local state', async () => {
+  const m = new Requirements({
+    request: async () => ({ ok: true, body: { markdown: '# Broken', revision: 9 } }),
+  });
+  m.add({ text: 'keep', quote: 'q', location: '1' });
+  m.confirm();
+  const rows = Array.from({ length: 600 }, (_, i) => ({
+    id: String(i),
+    category: 'technical',
+    text: String(i),
+    quote: 'q',
+    location: '1',
+    origin: 'ai',
+    confirmed: false,
+  }));
+  assert.equal(m.adopt(rows), 600);
+  assert.equal(m.rows[0].confirmed, true);
+  const before = JSON.stringify(m.rows);
+  assert.throws(() =>
+    m.adopt(
+      Array.from({ length: 400 }, (_, i) => ({
+        id: 'big' + i,
+        category: 'technical',
+        text: 'x'.repeat(3900) + i,
+        quote: 'q'.repeat(3900),
+        location: '1',
+        origin: 'ai',
+        confirmed: false,
+      })),
+    ),
+  );
+  assert.equal(JSON.stringify(m.rows), before);
+  await assert.rejects(m.load());
+  assert.equal(JSON.stringify(m.rows), before);
+  assert.equal(m.revision, 0);
+});

@@ -1,0 +1,13 @@
+{
+  "name": "@bidproposal/desktop",
+  "version": "1.17.2",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test src/*.test.mjs",
+    "type-check": "node --check build.mjs && node --check src/bridge.mjs && node --check src/environment.mjs"
+  },
+  "dependencies": {
+    "@bidproposal/workbench": "workspace:*"
+  }
+}

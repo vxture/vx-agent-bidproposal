@@ -1,0 +1,25 @@
+{
+  "name": "@bidproposal/workbench",
+  "version": "1.17.2",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.mjs",
+    "./runtime": "./src/runtime.mjs",
+    "./contract": {
+      "types": "./contract.d.mts",
+      "default": "./contract.mjs"
+    },
+    "./assets": "./assets.mjs",
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "test": "node --test src/*.test.mjs test/*.test.mjs",
+    "type-check": "node check.mjs"
+  },
+  "dependencies": {
+    "dompurify": "3.4.18",
+    "marked": "18.2.1",
+    "pdfjs-dist": "5.4.624"
+  }
+}
