@@ -3,7 +3,7 @@
 # Build context = repo root (so the workspace and lockfile are visible).
 # Produces the single owned image bidproposal-app.
 
-FROM node:22-alpine AS base
+FROM node:22-bookworm-slim AS base
 ENV PNPM_HOME=/pnpm PATH=/pnpm:$PATH
 RUN corepack enable
 
@@ -45,10 +45,20 @@ ENV NODE_ENV=production PORT=4070 HOSTNAME=0.0.0.0 \
     GIT_SHA=${GIT_SHA} \
     BUILD_TIME=${BUILD_TIME} \
     DEPLOY_STAGE=${DEPLOY_STAGE}
-RUN addgroup -S nodejs && adduser -S nextjs -G nodejs
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+    fonts-crosextra-carlito fonts-noto-cjk libreoffice-writer \
+    python3 python3-lxml python3-uno python3-venv wget \
+    && rm -rf /var/lib/apt/lists/* \
+    && groupadd --system --gid 1001 nodejs && useradd --system --uid 1001 --gid nodejs nextjs
+COPY --from=builder /repo/portals/app/node_modules/@vxture/ruyin-node-runtime/dist/requirements.lock /tmp/bid-reader-requirements.lock
+RUN python3 -m venv /opt/bid-reader \
+    && /opt/bid-reader/bin/pip install --no-cache-dir --require-hashes \
+    -r /tmp/bid-reader-requirements.lock
+ENV BID_READER_PYTHON=/opt/bid-reader/bin/python
 COPY --from=builder /repo/portals/app/.next/standalone ./
 COPY --from=builder /repo/portals/app/.next/static ./portals/app/.next/static
 COPY --from=builder /repo/portals/app/public ./portals/app/public
+COPY --from=builder /repo/portals/app/document-engine ./portals/app/document-engine
 USER nextjs
 EXPOSE 4070
 CMD ["node", "portals/app/server.js"]

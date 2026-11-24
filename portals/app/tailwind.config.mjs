@@ -41,13 +41,17 @@ function toGlob(dir) {
 }
 
 const designSystem = entryDir("@vxture/design-system");
-const designUi = designSystem ? entryDir("@vxture/design-ui", require.resolve("@vxture/design-system")) : null;
+const designUi = designSystem
+  ? entryDir("@vxture/design-ui", require.resolve("@vxture/design-system"))
+  : null;
 
 export default {
   content: [
     "./app/**/*.{ts,tsx}",
     // Both are needed: the umbrella's own shell and auth components live in its
     // bundle, every primitive they compose lives in design-ui's.
-    ...[designSystem, designUi].filter(Boolean).map((dir) => `${toGlob(dir)}/**/*.{mjs,cjs,js}`),
+    ...[designSystem, designUi, entryDir("@vxture/ruyin-workbench-ui")]
+      .filter(Boolean)
+      .map((dir) => `${toGlob(dir)}/**/*.{mjs,cjs,js}`),
   ],
 };

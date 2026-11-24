@@ -5,3 +5,7 @@
 packages:
   - "portals/*"
   - "portals/packages/*"
+
+# The shared server adapter uses a real encrypted SQLite native binding.
+allowBuilds:
+  better-sqlite3-multiple-ciphers: true

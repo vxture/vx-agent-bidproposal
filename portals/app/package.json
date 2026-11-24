@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev -p 4070",
     "prisma:generate": "prisma generate",
-    "build": "prisma generate && next build",
+    "build": "node workbench/build.mjs && prisma generate && next build",
     "start": "next start",
     "type-check": "prisma generate && tsc --noEmit",
     "test": "node --import tsx --test --experimental-test-coverage \"app/**/*.test.ts\" && pnpm --filter @bidproposal/workbench test && pnpm --filter @bidproposal/desktop test"
@@ -16,7 +16,7 @@
     "@prisma/client": "^7.8.0",
     "@bidproposal/shared": "workspace:*",
     "@bidproposal/workbench": "workspace:*",
-    "@vxture/design-system": "^5.0.0",
+    "@vxture/design-system": "12.10.3",
     "@vxture/shared": "^1.6.0",
     "ioredis": "^5.4.0",
     "jose": "^5.9.0",
@@ -24,7 +24,13 @@
     "next-themes": "^0.4.6",
     "pg": "^8.22.0",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "@vxture/ruyin-core": "0.2.2",
+    "@vxture/ruyin-contract-schema": "0.2.2",
+    "@vxture/ruyin-document": "0.2.2",
+    "@vxture/ruyin-node-runtime": "0.2.2",
+    "@vxture/ruyin-workbench-ui": "0.2.2",
+    "yaml": "^2.8.0"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.3.3",

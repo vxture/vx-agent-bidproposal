@@ -60,3 +60,10 @@ coverage/
 # Python bytecode (local compileall artifacts)
 __pycache__/
 *.pyc
+
+# Shared workbench assets are generated from the single product source.
+/portals/app/public/workbench/
+
+/portals/app/document-engine/reader.py
+/portals/app/document-engine/reader-requirements.lock
+/portals/app/document-engine/requirements.lock

@@ -205,3 +205,27 @@ product code instead of a UUID, a `usage` block of zeros that means "unreported"
 each of those either works until it suddenly does not, or reports the wrong thing
 forever without erroring. Those tests are the only place that knowledge is
 checkable without a live platform.
+
+## Product-owned Web runtime
+
+The original project UI and durable Node adapters are consumed from published
+`@vxture/ruyin-workbench-ui` and `@vxture/ruyin-node-runtime` 0.2.2. The cookie-only
+`/api/workbench/**` adapter determines organization/workspace from the verified
+Bid session, uses its C2 coverage and member assignment, and pins background
+execution to its original Bid subject/scope/session. Runtime auth records are
+excluded from business document reads; platform/provider tokens stay server-side.
+
+Server projects use the same encrypted document/task/file formats in a dedicated
+namespace under `BID_RUNTIME_DATA_DIR`, backed by the product's own persistent
+worker02 volume. `BID_RUNTIME_MASTER_KEY` is a protected 32-byte hex server key;
+absence or malformed configuration fails closed. Back up that key with its data.
+This host has one app process and exclusive volume ownership. It does not provide
+multi-instance writer coordination, cross-region storage or desktop synchronization.
+The existing PostgreSQL contract/authz/usage store remains separate and unchanged.
+
+`portals/app/document-engine/layout.py` merges the selected OOXML template,
+refreshes TOC/page fields and produces DOCX/PDF through headless LibreOffice.
+Macro/external-resource updates are disabled and active content is rejected.
+The canonical fixed reader and hash-locked dependencies are copied from the
+published runtime at build time. The production image installs their dependencies,
+Noto CJK/Carlito and the layout engine; it never installs customer-supplied code.
