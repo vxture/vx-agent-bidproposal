@@ -220,7 +220,9 @@ export class AtlasTurnResolver implements TurnResolver {
     const reply = await fetchChatCompletion(this.cfg, caller.mint, messages, {
       taskId: req.taskId,
       tools,
-      ...(verification ? { toolChoice: "required" as const } : {}),
+      // Reasoning models may accept auto tool selection but reject required.
+      // Only a typed tool result below becomes a verdict; prose stays unverified.
+      ...(verification ? { toolChoice: "auto" as const } : {}),
     });
     const calls = reply.message.toolCalls;
     if (verification && calls?.length) {

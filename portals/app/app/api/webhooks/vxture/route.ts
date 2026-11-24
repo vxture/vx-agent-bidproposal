@@ -6,6 +6,7 @@ import { PrismaProvisioningStore } from "../../../provisioning/lib/prisma-store"
 import { getEntitlementResolver } from "../../../entitlement/resolver";
 import { isDeployedStage } from "../../../lib/deploy-stage";
 import { getPrismaClient, prismaEnabled } from "../../../lib/db";
+import { workbenchCoverage } from "../../../workbench-server/coverage-cache";
 
 // POST /api/webhooks/vxture (Product Integration Rules, C3). Verify
 // over RAW bytes first (401 on failure / stale timestamp), then hand to the
@@ -58,7 +59,8 @@ function productCode(): string {
  * more.
  */
 function evictEntitlement(workspaceId: string): void {
-  // The deployed product reads live C2 and assignment decisions on each use.
+  workbenchCoverage.invalidate(workspaceId);
+  // Model execution always reads live C2 and assignment decisions.
   if (isDeployedStage()) return;
   try {
     getEntitlementResolver().invalidate(workspaceId);
