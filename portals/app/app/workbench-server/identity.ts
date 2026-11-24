@@ -18,6 +18,7 @@ import {
   checkProductAssignment,
 } from "../capability/access";
 import { hasDataAccess, type Entitlement } from "../entitlement/types";
+import { workbenchCoverage } from "./coverage-cache";
 
 export class WorkbenchError extends Error {
   constructor(
@@ -129,7 +130,11 @@ export async function authorizeWorkbench(
     orgId: caller.orgId,
     workspaceId: caller.workspaceId,
   };
-  return { principal, caller, entitlement: await coverage(caller) };
+  return {
+    principal,
+    caller,
+    entitlement: await workbenchCoverage.read(caller, () => coverage(caller)),
+  };
 }
 /** Refresh only the task's original RP session; never substitute a later visitor. */
 export async function authorizeExecution(

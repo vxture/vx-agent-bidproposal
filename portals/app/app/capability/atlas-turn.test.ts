@@ -79,13 +79,15 @@ test("verification is independent evidence review and requires a structured bool
   respond = () => response({ role: "assistant", content: "", toolCalls: [{ id: "verdict-1", name: "report_verdict", arguments: { passed: false, reason: "Missing requirement A" } }] }, "tool_calls");
   const resolver = new AtlasTurnResolver({ baseUrl: base });
   assert.deepEqual(await resolver.turn(req, "verify:coverage", caller), { kind: "verdict", passed: false, reason: "Missing requirement A" });
-  assert.equal(seen[0].toolChoice, "required");
+  assert.equal(seen[0].toolChoice, "auto");
   assert.deepEqual((seen[0].tools as Array<{ name: string }>).map(t => t.name), ["report_verdict"]);
   assert.doesNotMatch(JSON.stringify(seen[0].messages), /opaque-signature/);
   respond = () => response({ role: "assistant", content: "It looks fine" });
   assert.deepEqual(await resolver.turn(req, "verify:coverage", caller), { kind: "content", content: "It looks fine" }, "prose must escalate in the Harness, never imply passed");
   respond = () => response({ role: "assistant", content: "", toolCalls: [{ id: "v", name: "report_verdict", arguments: { passed: "true" } }] }, "tool_calls");
   await assert.rejects(resolver.turn(req, "verify:coverage", caller), /invalid structured verdict/);
+  respond = () => response({ role: "assistant", content: '{"passed":true}' }, "stop");
+  assert.deepEqual(await resolver.turn(req, "verify:coverage", caller), { kind: "content", content: '{"passed":true}' });
 });
 
 test("new calls read the configured stable endpoint without a host reinstall", async () => {

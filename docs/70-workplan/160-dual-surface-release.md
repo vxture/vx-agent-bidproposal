@@ -482,3 +482,26 @@ wording and Chinese host labels matching the current shared Chinese business
 panels. This is a compatibility correction, not a second application design.
 The Web release still requires exact-current-source browser and production
 checks; no signed desktop or independent comparison/OCR completion is implied.
+
+## B6.10 first Web production release, 2026-11-25
+
+v0.2.0 / fc124cbb is deployed through the existing protected workflow (run
+45497182181). Public health/readiness and the current subscribed account passed;
+a synthetic project, tender upload, original source snapshot and versioned
+enterprise library import persisted on the Bid-owned encrypted volume. The
+original database and Redis container identities remained unchanged. Production
+image digest and restricted backup locations are in the release evidence.
+
+Live generation reached the configured reasoning model, then independent
+verification failed because that provider rejects forced tool selection. Use
+auto tool selection while retaining strict typed verdict parsing and the
+existing unverified-prose escalation; never infer a passed verdict from prose.
+Short UI bursts also need bounded, scope/token-isolated coverage coalescing
+with C3 eviction and no expired fallback. Actual model execution continues to
+recheck the original session, C2 coverage and member assignment directly.
+
+Keep the original business iframe mounted invisibly on project settings tabs
+so its shared workflow projection restores saved times/progress after returning
+from the library or directly loading settings. No replacement state calculation
+is added to the Web shell. Full live generation/review/export and signed desktop
+acceptance are still pending until the follow-up passes.

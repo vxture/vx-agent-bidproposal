@@ -41,6 +41,7 @@ import { serverKeys } from "./keys";
 import { getTurnResolver, validateTurnRequest } from "../capability/turn";
 import { getBidPlanPolicy } from "../entitlement/bid-plan-policy";
 import type { Entitlement } from "../entitlement/types";
+import { runtimeFailure } from "./runtime-errors";
 
 // --- Durable host composition --------------------------------------------
 interface Options {
@@ -153,14 +154,18 @@ export class BidRuntime {
             "TASK_SCOPE_REQUIRED",
             "Task identity is unavailable",
           );
-        const caller = await authorizeExecution(
-          JSON.parse(saved.markdown) as Principal,
-        );
-        return getTurnResolver().turn(
-          validateTurnRequest({ ...request, projectId: request.workspace }),
-          request.capability,
-          caller,
-        );
+        try {
+          const caller = await authorizeExecution(
+            JSON.parse(saved.markdown) as Principal,
+          );
+          return await getTurnResolver().turn(
+            validateTurnRequest({ ...request, projectId: request.workspace }),
+            request.capability,
+            caller,
+          );
+        } catch (error) {
+          throw runtimeFailure(error);
+        }
       },
     };
     this.documents = {

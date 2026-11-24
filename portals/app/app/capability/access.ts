@@ -19,7 +19,7 @@ export async function readProductEntitlement(caller: CapabilityCaller): Promise<
       headers: { authorization: `Bearer ${await mintS2SToken(PLATFORM_AUDIENCE, caller.mint)}`, accept: "application/json" },
       cache: "no-store", redirect: "error", signal: AbortSignal.timeout(10_000),
     });
-    if (!response.ok) return { status: 503, error: "product entitlement service refused the read", code: "ENTITLEMENT_UNAVAILABLE", retryable: response.status === 429 || response.status >= 500 };
+    if (!response.ok) return { status: 503, error: "product entitlement service refused the read (HTTP " + response.status + ")", code: "ENTITLEMENT_UNAVAILABLE", retryable: response.status === 429 || response.status >= 500 };
     const body = await response.json() as Record<string, unknown> | null;
     if (!body || body.workspace_id !== caller.workspaceId || body.product !== BRAND.productCode ||
         (body.tier !== null && !TIERS.some((tier) => tier === body.tier)) ||
@@ -43,7 +43,7 @@ export async function checkProductAssignment(caller: CapabilityCaller): Promise<
       cache: "no-store", redirect: "error", signal: AbortSignal.timeout(10_000),
     });
     if (!response.ok) {
-      return { status: 503, error: "product assignment service refused the read", code: "ASSIGNMENT_UNAVAILABLE", retryable: response.status === 429 || response.status >= 500 };
+      return { status: 503, error: "product assignment service refused the read (HTTP " + response.status + ")", code: "ASSIGNMENT_UNAVAILABLE", retryable: response.status === 429 || response.status >= 500 };
     }
     const body = await response.json() as Record<string, unknown> | null;
     if (!body || body.product !== BRAND.productCode || body.subject !== caller.sub ||

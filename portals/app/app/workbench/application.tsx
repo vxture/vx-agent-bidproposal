@@ -369,6 +369,7 @@ function Workspace({ access }: { access: AccessState }) {
               onRefresh={reload}
             />
           )}
+          {projectId && tab !== "product" && <div hidden>{iframe}</div>}
         </ShellPageContainer>
       </ShellViewport>
     </div>
