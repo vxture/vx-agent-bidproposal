@@ -5,8 +5,7 @@
   "scripts": {
     "dev": "next dev -p 4070",
     "prisma:generate": "prisma generate",
-    "build": "prisma generate && node workbench/build.mjs && next build",
-    "build:ui": "node workbench/build.mjs",
+    "build": "prisma generate && next build",
     "start": "next start",
     "type-check": "prisma generate && tsc --noEmit",
     "test": "node --import tsx --test --experimental-test-coverage \"app/**/*.test.ts\" && pnpm --filter @bidproposal/workbench test && pnpm --filter @bidproposal/desktop test"

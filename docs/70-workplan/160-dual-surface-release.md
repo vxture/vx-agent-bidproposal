@@ -16,7 +16,9 @@ product definition records the continuing boundary in
 `../20-specs/10-product-definition.md`.
 
 The independently designed Web editor in PR #15 was rejected and the PR is
-closed, unmerged. Its branch preserves the work for reference. It was not
+closed, unmerged. The owner authorized removing the rejected pages on
+2026-11-25; its local/remote branch and preview launchers have been removed.
+It was not
 released, its domain DDL was not applied, and it must not be used as the next
 deployment plan. The production baseline remains v0.1.4 / 7aa548b. Start the
 corrected implementation from that merged baseline, preserving the existing
@@ -27,19 +29,46 @@ release, and must not appear in any public UI or copy. Browser/server project
 persistence and desktop-local persistence do not synchronize with each other.
 Do not create sync routes, tables, background jobs or disabled entry points.
 
-The corrected B6 work is sequenced as follows:
+## Corrected batches - 2026-11-25
 
-1. Extract the existing six-stage UI, business models, task definitions and
-   document formats into one shared source; preserve desktop behavior. The
-   original desktop candidate baseline passes all 99 tests.
-2. Adapt the Web runtime beneath those same modules: verified product identity,
-   workspace-bound persistence, upload/reading, jobs, review and download.
-   Preserve optimistic revisions, evidence integrity and candidate adoption.
-   Do not expose a partially wired editor as a complete product workspace.
-3. Verify both build outputs against the same UI source, review through the
-   existing product pipeline, and release only accepted deliverables. Desktop
-   own-product authentication and package signing remain explicit acceptance
-   items. Keep beta maturity and the current platform/worker01 boundary.
+The owner identified the missing desktop host chrome in the B6.1 Web preview.
+Do not replace it with another invented navigation or editor. The complete
+baseline is [50-desktop-baseline.md](../40-implementation/50-desktop-baseline.md).
+
+| Batch | Scope | Acceptance / current state |
+| --- | --- | --- |
+| B6.2 | Freeze the complete desktop baseline and remove rejected Web presentation | Source/feature/evidence inventory complete locally: 161 source hashes, eight historical evidence hashes, original sidebar screenshot and D01-D14 page/control inventory. Original development checkouts preserved. Remove horizontal navigation, its build entry and rejected editor refs/preview launchers. No new UI. |
+| B6.3 | Verify runtime differences and migration boundaries | In analysis: registry preflight found only public 0.1.0 versions of four RUYIN packages versus 0.2.0 in source. Also verify product identity, project scope, storage, reader, jobs/review and Windows Word dependency. Resolve concrete gaps before implementing adapters. |
+| B6.4 | Reuse the complete product application presentation | Preserve the desktop project/home/library/settings and six-step structure, sidebar state/times/duration/progress and human review controls. Match the original complete desktop reference; global RUYIN settings remain host-owned. Not started. |
+| B6.5 | Adapt Web identity, projects and data | Verified Bid identity and workspace checks on every operation, project lifecycle, revision conflicts, upload/version persistence and reload recovery. No new simplified proposal content model. Not started. |
+| B6.6 | Adapt reading and agent jobs | Same task definitions, input snapshots, verification, candidate adoption and recovery; actual Bid-owned provider calls, no RUYIN execution grant. Not started. |
+| B6.7 | Deliver preview and actual output files | Confirm server layout route first; then verify template, TOC, headers, pages and MD/DOCX/PDF downloads with retained versions. Not started. |
+| B6.8 | Verify product plan rules and feature gaps | Same product entitlement/usage for both surfaces; enforce configured limits/defaults. Track independent comparison, storage and proposal limits explicitly. Not started. |
+| B6.9 | Accept production desktop integration and package | Own-product identity, shared-source desktop regression, signing/trust, install/update and old-project protection using current artifacts. Not started. |
+| B6.10 | Accept and release each surface | Complete login/workspace/project/material/generation/review/export/logout/recovery chain per surface before its reviewed release. No automatic Store change. Not started. |
+
+Batch completion is scoped. B6.1 is source extraction, not complete Web
+migration; historical local acceptance is not current production acceptance.
+
+### Rejected presentation cleanup and B6.2 local result
+
+The horizontal navigation renderer and Web preview builder/CSS were removed.
+The retained draft transport requires an explicit presentation callback and
+forwards state/start/end data unchanged. It does not invent a replacement UI.
+The shared business pages, task definitions and desktop adapter remain.
+
+The rejected PR #15 was never merged or released. Its dedicated branches and
+both preview launch scripts are gone, the preview process/tab is closed, and
+the generated page entries in the active source checkout were removed.
+Recursive deletion of old generated directories was rejected by automatic
+approval with only "blocked by policy"; inactive dependency/build caches remain.
+No bypass, production change, platform change or original project deletion
+was performed.
+
+The baseline distinguishes actual local implementation, recorded synthetic
+acceptance and incomplete production delivery. Original P9 full-flow evidence
+belongs to 1.16.3; current 1.17.2 has unit/transport/package checks and still
+requires current full desktop/installation acceptance.
 
 ## Current checkpoint - 2026-11-24
 
