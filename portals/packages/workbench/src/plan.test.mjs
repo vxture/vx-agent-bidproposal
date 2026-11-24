@@ -5,23 +5,239 @@
  * @author AI-Generated
  * @date 2026-11-25
  */
-import test from 'node:test';import assert from 'node:assert/strict';import {PlanSession} from './plan.mjs';
-test('bounded chapter tasks, approval invalidation, metrics exclusion and revision preservation',async()=>{let data;const bridge={request:async(method,path,body)=>{assert.equal(path,'/documents/bid_plan');if(method==='GET')return data?{ok:true,body:data}:{ok:false,status:404};if(body.revision!==(data?.revision||0))return{ok:false,status:409};data={markdown:body.markdown,revision:(data?.revision||0)+1};return{ok:true,body:data};}};const a=new PlanSession(bridge);await a.load();const m={dirty:false,revision:2,rows:Array.from({length:19},(_,i)=>({id:String(i),confirmed:true,category:'technical'}))};a.build(m);assert.deepEqual(a.tasks().map(t=>t.requirementIds.length),[8,8,3]);a.approve(m);await a.save();const b=new PlanSession(bridge);await b.load();assert.equal(b.value.approved,true);a.change('pages',90);assert.equal(a.value.approved,false);a.change('mode','providers');a.change('providers','secret-provider');a.change('mode','metrics');assert.equal(a.encode().includes('secret-provider'),false);await a.save();b.change('pages',100);await assert.rejects(b.save(),e=>e.status===409);assert.equal(b.value.pages,100);assert.throws(()=>b.approve({...m,revision:3}));assert.throws(()=>a.build({...m,dirty:true}));});
-
-test('chapter edits preserve identity, require complete assignment and invalidate approval',()=>{const p=new PlanSession({});const m={dirty:false,revision:1,rows:[{id:'a',category:'technical',confirmed:true},{id:'b',category:'technical',confirmed:true}]};p.build(m);const original=p.value.outline[0].id;p.add();const second=p.value.outline[1].id;assert.throws(()=>p.approve(m));p.assign(original,'b',false);p.assign(second,'b',true);p.approve(m);p.move(second,-1);assert.equal(p.value.outline[0].id,second);assert.equal(p.value.approved,false);p.remove(original);assert.throws(()=>p.approve(m));p.assign(second,'a',true);p.approve(m);p.value.outline[0].title='';assert.equal(p.dirty,true);assert.throws(()=>p.encode());});
-
-test('model outline adoption is atomic, complete and revision-bound; metrics context excludes providers',()=>{const p=new PlanSession({});const m={dirty:false,revision:4,rows:[{id:'r1',category:'technical',text:'backup',quote:'backup',location:'1',confirmed:true},{id:'r2',category:'technical',text:'test',quote:'test',location:'2',confirmed:true}]};p.value.providers='must-not-send';assert.equal(JSON.stringify(p.context(m)).includes('must-not-send'),false);p.adopt(JSON.stringify({requirementsRevision:4,chapters:[{title:'Delivery',requirementIds:['r1','r2']}]}),m);const before=JSON.stringify(p.value);for(const result of [{requirementsRevision:3,chapters:[]},{requirementsRevision:4,chapters:[{title:'Wrong',requirementIds:['other']}]},{requirementsRevision:4,chapters:[{title:'Missing',requirementIds:['r1']}]}]){assert.throws(()=>p.adopt(JSON.stringify(result),m));assert.equal(JSON.stringify(p.value),before);}assert.equal(p.value.approved,false);});
-
-test('long requirement evidence splits chapter context before count ceiling',()=>{const p=new PlanSession({});const m={dirty:false,revision:1,rows:Array.from({length:5},(_,i)=>({id:String(i),text:'x'.repeat(3900),quote:'y'.repeat(3900),location:'1',category:'technical',confirmed:true}))};p.build(m);assert.equal(p.tasks().length,5);assert.deepEqual(p.tasks().flatMap(t=>t.requirementIds),['0','1','2','3','4']);});
-
-test('writing handoff requires saved approval and pins isolated chapter source snapshots',async()=>{
- let saved;const bridge={request:async(method,path,body)=>{if(method==='GET')return saved?{ok:true,body:saved}:{ok:false,status:404};saved={markdown:body.markdown,revision:(saved?.revision||0)+1};return{ok:true,body:saved};}};
- const p=new PlanSession(bridge);await p.load();const matrix={dirty:false,revision:3,rows:[{id:'a',category:'technical',text:'Daily backup',quote:'Backup daily',location:'1',confirmed:true}]};p.build(matrix);assert.throws(()=>p.writingTasks(matrix),/confirm/);p.approve(matrix);assert.throws(()=>p.writingTasks(matrix),/confirm/);await p.save();
- const tasks=p.writingTasks(matrix);assert.equal(tasks[0].planRevision,p.revision);assert.equal(tasks[0].requirementsRevision,3);assert.equal(tasks[0].requirements[0].quote,'Backup daily');assert.equal('providers' in tasks[0].configuration,false);tasks[0].requirements[0].text='changed';tasks[0].configuration.pages=1;assert.equal(matrix.rows[0].text,'Daily backup');assert.equal(p.value.pages,80);
- assert.throws(()=>p.writingTasks({...matrix,revision:4}),/changed/);assert.throws(()=>p.writingTasks({...matrix,dirty:true}),/changed/);p.change('pages',100);assert.throws(()=>p.writingTasks(matrix),/confirm/);
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { PlanSession } from './plan.mjs';
+test('bounded chapter tasks, approval invalidation, metrics exclusion and revision preservation', async () => {
+  let data;
+  const bridge = {
+    request: async (method, path, body) => {
+      assert.equal(path, '/documents/bid_plan');
+      if (method === 'GET') return data ? { ok: true, body: data } : { ok: false, status: 404 };
+      if (body.revision !== (data?.revision || 0)) return { ok: false, status: 409 };
+      data = { markdown: body.markdown, revision: (data?.revision || 0) + 1 };
+      return { ok: true, body: data };
+    },
+  };
+  const a = new PlanSession(bridge);
+  await a.load();
+  const m = {
+    dirty: false,
+    revision: 2,
+    rows: Array.from({ length: 19 }, (_, i) => ({
+      id: String(i),
+      confirmed: true,
+      category: 'technical',
+    })),
+  };
+  a.build(m);
+  assert.deepEqual(
+    a.tasks().map((t) => t.requirementIds.length),
+    [8, 8, 3],
+  );
+  a.approve(m);
+  await a.save();
+  const b = new PlanSession(bridge);
+  await b.load();
+  assert.equal(b.value.approved, true);
+  a.change('pages', 90);
+  assert.equal(a.value.approved, false);
+  a.change('mode', 'providers');
+  a.change('providers', 'secret-provider');
+  a.change('mode', 'metrics');
+  assert.equal(a.encode().includes('secret-provider'), false);
+  await a.save();
+  b.change('pages', 100);
+  await assert.rejects(b.save(), (e) => e.status === 409);
+  assert.equal(b.value.pages, 100);
+  assert.throws(() => b.approve({ ...m, revision: 3 }));
+  assert.throws(() => a.build({ ...m, dirty: true }));
 });
 
-test('planning intent and model explanation survive adoption without changing quality',()=>{
- const p=new PlanSession({});p.change('quality','very-high');p.change('brief','Emphasize implementation and measurable acceptance');const matrix={dirty:false,revision:1,rows:[{id:'a',category:'technical',text:'backup',quote:'daily',location:'1',confirmed:true}]};
- assert.equal(p.context(matrix).configuration.brief,p.value.brief);p.adopt(JSON.stringify({requirementsRevision:1,summary:'Cover continuity through operational controls',chapters:[{title:'Operational continuity',purpose:'Explain daily backup and recovery validation',requirementIds:['a']}]}),matrix);assert.equal(p.value.quality,'very-high');assert.equal(p.value.summary,'Cover continuity through operational controls');assert.equal(p.value.outline[0].purpose,'Explain daily backup and recovery validation');const before=p.encode();assert.throws(()=>p.adopt(JSON.stringify({requirementsRevision:1,summary:'x'.repeat(2001),chapters:[]}),matrix));assert.equal(p.encode(),before);
+test('chapter edits preserve identity, require complete assignment and invalidate approval', () => {
+  const p = new PlanSession({});
+  const m = {
+    dirty: false,
+    revision: 1,
+    rows: [
+      { id: 'a', category: 'technical', confirmed: true },
+      { id: 'b', category: 'technical', confirmed: true },
+    ],
+  };
+  p.build(m);
+  const original = p.value.outline[0].id;
+  p.add();
+  const second = p.value.outline[1].id;
+  assert.throws(() => p.approve(m));
+  p.assign(original, 'b', false);
+  p.assign(second, 'b', true);
+  p.approve(m);
+  p.move(second, -1);
+  assert.equal(p.value.outline[0].id, second);
+  assert.equal(p.value.approved, false);
+  p.remove(original);
+  assert.throws(() => p.approve(m));
+  p.assign(second, 'a', true);
+  p.approve(m);
+  p.value.outline[0].title = '';
+  assert.equal(p.dirty, true);
+  assert.throws(() => p.encode());
+});
+
+test('model outline adoption is atomic, complete and revision-bound; metrics context excludes providers', () => {
+  const p = new PlanSession({});
+  const m = {
+    dirty: false,
+    revision: 4,
+    rows: [
+      {
+        id: 'r1',
+        category: 'technical',
+        text: 'backup',
+        quote: 'backup',
+        location: '1',
+        confirmed: true,
+      },
+      {
+        id: 'r2',
+        category: 'technical',
+        text: 'test',
+        quote: 'test',
+        location: '2',
+        confirmed: true,
+      },
+    ],
+  };
+  p.value.providers = 'must-not-send';
+  assert.equal(JSON.stringify(p.context(m)).includes('must-not-send'), false);
+  p.adopt(
+    JSON.stringify({
+      requirementsRevision: 4,
+      chapters: [{ title: 'Delivery', requirementIds: ['r1', 'r2'] }],
+    }),
+    m,
+  );
+  const before = JSON.stringify(p.value);
+  for (const result of [
+    { requirementsRevision: 3, chapters: [] },
+    { requirementsRevision: 4, chapters: [{ title: 'Wrong', requirementIds: ['other'] }] },
+    { requirementsRevision: 4, chapters: [{ title: 'Missing', requirementIds: ['r1'] }] },
+  ]) {
+    assert.throws(() => p.adopt(JSON.stringify(result), m));
+    assert.equal(JSON.stringify(p.value), before);
+  }
+  assert.equal(p.value.approved, false);
+});
+
+test('long requirement evidence splits chapter context before count ceiling', () => {
+  const p = new PlanSession({});
+  const m = {
+    dirty: false,
+    revision: 1,
+    rows: Array.from({ length: 5 }, (_, i) => ({
+      id: String(i),
+      text: 'x'.repeat(3900),
+      quote: 'y'.repeat(3900),
+      location: '1',
+      category: 'technical',
+      confirmed: true,
+    })),
+  };
+  p.build(m);
+  assert.equal(p.tasks().length, 5);
+  assert.deepEqual(
+    p.tasks().flatMap((t) => t.requirementIds),
+    ['0', '1', '2', '3', '4'],
+  );
+});
+
+test('writing handoff requires saved approval and pins isolated chapter source snapshots', async () => {
+  let saved;
+  const bridge = {
+    request: async (method, path, body) => {
+      if (method === 'GET') return saved ? { ok: true, body: saved } : { ok: false, status: 404 };
+      saved = { markdown: body.markdown, revision: (saved?.revision || 0) + 1 };
+      return { ok: true, body: saved };
+    },
+  };
+  const p = new PlanSession(bridge);
+  await p.load();
+  const matrix = {
+    dirty: false,
+    revision: 3,
+    rows: [
+      {
+        id: 'a',
+        category: 'technical',
+        text: 'Daily backup',
+        quote: 'Backup daily',
+        location: '1',
+        confirmed: true,
+      },
+    ],
+  };
+  p.build(matrix);
+  assert.throws(() => p.writingTasks(matrix), /confirm/);
+  p.approve(matrix);
+  assert.throws(() => p.writingTasks(matrix), /confirm/);
+  await p.save();
+  const tasks = p.writingTasks(matrix);
+  assert.equal(tasks[0].planRevision, p.revision);
+  assert.equal(tasks[0].requirementsRevision, 3);
+  assert.equal(tasks[0].requirements[0].quote, 'Backup daily');
+  assert.equal('providers' in tasks[0].configuration, false);
+  tasks[0].requirements[0].text = 'changed';
+  tasks[0].configuration.pages = 1;
+  assert.equal(matrix.rows[0].text, 'Daily backup');
+  assert.equal(p.value.pages, 80);
+  assert.throws(() => p.writingTasks({ ...matrix, revision: 4 }), /changed/);
+  assert.throws(() => p.writingTasks({ ...matrix, dirty: true }), /changed/);
+  p.change('pages', 100);
+  assert.throws(() => p.writingTasks(matrix), /confirm/);
+});
+
+test('planning intent and model explanation survive adoption without changing quality', () => {
+  const p = new PlanSession({});
+  p.change('quality', 'very-high');
+  p.change('brief', 'Emphasize implementation and measurable acceptance');
+  const matrix = {
+    dirty: false,
+    revision: 1,
+    rows: [
+      {
+        id: 'a',
+        category: 'technical',
+        text: 'backup',
+        quote: 'daily',
+        location: '1',
+        confirmed: true,
+      },
+    ],
+  };
+  assert.equal(p.context(matrix).configuration.brief, p.value.brief);
+  p.adopt(
+    JSON.stringify({
+      requirementsRevision: 1,
+      summary: 'Cover continuity through operational controls',
+      chapters: [
+        {
+          title: 'Operational continuity',
+          purpose: 'Explain daily backup and recovery validation',
+          requirementIds: ['a'],
+        },
+      ],
+    }),
+    matrix,
+  );
+  assert.equal(p.value.quality, 'very-high');
+  assert.equal(p.value.summary, 'Cover continuity through operational controls');
+  assert.equal(p.value.outline[0].purpose, 'Explain daily backup and recovery validation');
+  const before = p.encode();
+  assert.throws(() =>
+    p.adopt(
+      JSON.stringify({ requirementsRevision: 1, summary: 'x'.repeat(2001), chapters: [] }),
+      matrix,
+    ),
+  );
+  assert.equal(p.encode(), before);
 });

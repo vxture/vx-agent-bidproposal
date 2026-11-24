@@ -25,11 +25,16 @@ const vendor = [
 
 /** Both deliverables consume these exact normalized application bytes. */
 export function applicationAssets() {
-  return readdirSync(source).filter(name => !name.endsWith('.test.mjs')).sort().map(name => {
-    const bytes = readFileSync(join(source, name));
-    const data = textAssets.has(extname(name)) ? Buffer.from(bytes.toString('utf8').replace(/\r\n/g, '\n')) : bytes;
-    return { name, data };
-  });
+  return readdirSync(source)
+    .filter((name) => !name.endsWith('.test.mjs'))
+    .sort()
+    .map((name) => {
+      const bytes = readFileSync(join(source, name));
+      const data = textAssets.has(extname(name))
+        ? Buffer.from(bytes.toString('utf8').replaceAll('\r\n', '\n'))
+        : bytes;
+      return { name, data };
+    });
 }
 
 /** Resolve declared packages locally; do not fetch anything during packaging. */
@@ -42,8 +47,16 @@ export function vendorAssets() {
 
 /** Only the environment entry and its transport differ between outputs. */
 export function collectAssets(environment, extra = []) {
-  const entries = [...applicationAssets(), ...vendorAssets(), ...extra,
-    { name: 'environment.mjs', data: Buffer.isBuffer(environment) ? environment : Buffer.from(environment) }];
-  if (new Set(entries.map(entry => entry.name)).size !== entries.length) throw Error('Duplicate application asset');
+  const entries = [
+    ...applicationAssets(),
+    ...vendorAssets(),
+    ...extra,
+    {
+      name: 'environment.mjs',
+      data: Buffer.isBuffer(environment) ? environment : Buffer.from(environment),
+    },
+  ];
+  if (new Set(entries.map((entry) => entry.name)).size !== entries.length)
+    throw new Error('Duplicate application asset');
   return entries;
 }

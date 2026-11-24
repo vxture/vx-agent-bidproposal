@@ -75,6 +75,15 @@ pnpm-linked Windows checkout cannot create the standalone trace symlinks;
 the same locked source passed in an isolated hoisted-dependency directory.
 No dependency or configuration change was made to bypass that host limitation.
 
+The first remote quality analysis exposed inherited minified-source warnings.
+Normalize module formatting and Error construction, retain sequential dependent
+operations, replace trailing-fence backtracking with bounded suffix matching,
+and parse chapter headers without scanning the full body in a regular expression.
+Build outputs are fixed to each package's dist directory, not CLI-supplied write
+targets. Modern Chromium beforeunload uses preventDefault without deprecated
+returnValue. Clarification reads freshly verified rows instead of overwriting
+an unused caller argument. Review/CI acceptance is still required after fixes.
+
 This checkpoint supersedes the historical prerequisites recorded below.
 
 - Product API `v0.1.0`, commit `cdafcc002e1de9be9f9555d03e0396612ddc94f9`,

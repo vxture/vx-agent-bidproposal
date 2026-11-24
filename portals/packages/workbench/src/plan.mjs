@@ -6,30 +6,342 @@
  * @date 2026-11-25
  */
 import { DocumentError } from './errors.mjs';
-const requirementContext=r=>({id:r.id,category:r.category,text:r.text,quote:r.quote,location:r.location,...(r.evidence?.manualReview?.note?{clarification:{disposition:r.evidence.manualReview.disposition||'resolved',note:r.evidence.manualReview.note}}:{})});
-function requireResolvedSources(matrix){if(matrix.unresolvedSources?.length)throw Error('\u4ecd\u6709 '+matrix.unresolvedSources.length+' \u9879\u6765\u6e90\u5f85\u5904\u7406\uff0c\u8bf7\u5728\u62db\u6807\u89e3\u8bfb\u4e2d\u8bb0\u5f55\u5904\u7406\u9009\u62e9\u6216\u8865\u5145\u8bf4\u660e');}
-const prefix='# Bid writing plan\n\n```json\n';
+const requirementContext = (r) => ({
+  id: r.id,
+  category: r.category,
+  text: r.text,
+  quote: r.quote,
+  location: r.location,
+  ...(r.evidence?.manualReview?.note
+    ? {
+        clarification: {
+          disposition: r.evidence.manualReview.disposition || 'resolved',
+          note: r.evidence.manualReview.note,
+        },
+      }
+    : {}),
+});
+function requireResolvedSources(matrix) {
+  if (matrix.unresolvedSources?.length)
+    throw new Error(
+      '\u4ecd\u6709 ' +
+        matrix.unresolvedSources.length +
+        ' \u9879\u6765\u6e90\u5f85\u5904\u7406\uff0c\u8bf7\u5728\u62db\u6807\u89e3\u8bfb\u4e2d\u8bb0\u5f55\u5904\u7406\u9009\u62e9\u6216\u8865\u5145\u8bf4\u660e',
+    );
+}
+const prefix = '# Bid writing plan\n\n```json\n';
 export class PlanSession {
- constructor(bridge){this.bridge=bridge;this.revision=0;this.saved='';this.value={pages:80,figures:'selective',mode:'metrics',providers:'',quality:'high',volume:'combined',outline:[],approved:false,requirementsRevision:0,template:null};}
- validate(){const v=this.value;if(v.summary!=null&&(typeof v.summary!=='string'||v.summary.length>2000))throw Error('Invalid plan summary');if(v.brief!=null&&(typeof v.brief!=='string'||v.brief.length>4000))throw Error('Planning brief must be at most 4000 characters');if(v.template!=null&&(!v.template.id||typeof v.template.name!=='string'||v.template.name.length>255||!/^.{1,250}\.docx$/i.test(v.template.name)||!/^[a-f0-9]{64}$/.test(v.template.hash)))throw Error('Invalid template reference');if(!Number.isInteger(v.pages)||v.pages<1||v.pages>3000)throw Error('Target pages must be 1-3000');for(const [key,choices]of Object.entries({figures:['none','selective','rich'],mode:['metrics','providers'],quality:['very-high','high','normal'],volume:['technical','commercial','combined']}))if(!choices.includes(v[key]))throw Error('Invalid plan option');if(typeof v.providers!=='string'||v.providers.length>4000||!Array.isArray(v.outline)||v.outline.length>80)throw Error('Invalid outline');const ids=new Set();for(const c of v.outline){if(c.purpose!=null&&(typeof c.purpose!=='string'||c.purpose.length>1000))throw Error('Invalid chapter purpose');if(!c.id||ids.has(c.id)||typeof c.title!=='string'||!c.title.trim()||c.title.length>100||!Array.isArray(c.requirementIds)||c.requirementIds.length>8||c.requirementIds.some(id=>typeof id!=='string'))throw Error('Invalid chapter');ids.add(c.id);}if(v.approved&&!v.outline.length)throw Error('Outline required');}
- encode(){this.validate();return prefix+JSON.stringify(this.value,null,2)+'\n```\n';}
- get dirty(){try{return this.encode()!==this.saved;}catch{return true;}}
- change(key,value){this.value[key]=value;if(key==='mode'&&value==='metrics')this.value.providers='';this.value.approved=false;}
- build(matrix){requireResolvedSources(matrix);if(matrix.dirty||!matrix.rows.length||matrix.rows.some(r=>!r.confirmed))throw Error('Save and confirm all requirements first');const rows=matrix.rows.filter(r=>this.value.volume==='combined'||r.category===this.value.volume);if(!rows.length)throw Error('No requirements in selected volume');const outline=[];for(const category of ['commercial','technical']){const group=rows.filter(r=>r.category===category);let ids=[],characters=0,part=1;const flush=()=>{if(!ids.length)return;outline.push({id:crypto.randomUUID(),title:(category==='commercial'?'\u5546\u52a1\u54cd\u5e94':'\u6280\u672f\u54cd\u5e94')+' '+part++,requirementIds:ids});ids=[];characters=0;};for(const r of group){const size=[r.text,r.quote,r.location,r.evidence?.manualReview?.note||''].join('\n').length;if(ids.length&&(ids.length>=8||characters+size>12000))flush();ids.push(r.id);characters+=size;}flush();}if(outline.length>80)throw Error('Source material needs more than 80 chapters; narrow the volume or requirements');this.value.outline=outline;this.value.requirementsRevision=matrix.revision;this.value.approved=false;}
- add(){if(this.value.outline.length>=80)throw Error('Chapter limit is 80');this.value.outline.push({id:crypto.randomUUID(),title:'\u65b0\u7ae0\u8282',requirementIds:[]});this.value.approved=false;}
- move(id,delta){const rows=this.value.outline;const index=rows.findIndex(c=>c.id===id),target=index+delta;if(index<0||target<0||target>=rows.length)return;[rows[index],rows[target]]=[rows[target],rows[index]];this.value.approved=false;}
- remove(id){this.value.outline=this.value.outline.filter(c=>c.id!==id);this.value.approved=false;}
- assign(id,requirementId,selected){const c=this.value.outline.find(c=>c.id===id);if(!c)throw Error('Missing chapter');const ids=new Set(c.requirementIds);if(selected)ids.add(requirementId);else ids.delete(requirementId);if(ids.size>8)throw Error('Maximum eight requirements per chapter; split the chapter');c.requirementIds=[...ids];this.value.approved=false;}
- approve(matrix){requireResolvedSources(matrix);this.validate();if(matrix.dirty||matrix.revision!==this.value.requirementsRevision||matrix.rows.some(r=>!r.confirmed)||!this.value.outline.length)throw Error('Requirements changed; rebuild outline');const scope=matrix.rows.filter(r=>this.value.volume==='combined'||r.category===this.value.volume);const covered=new Set(this.value.outline.flatMap(c=>c.requirementIds));if(scope.some(r=>!covered.has(r.id))||[...covered].some(id=>!scope.some(r=>r.id===id)))throw Error('Outline requirement coverage mismatch');if(this.value.outline.some(c=>!c.requirementIds.length))throw Error('Assign requirements to each chapter');this.value.approved=true;}
- context(matrix){requireResolvedSources(matrix);if(matrix.dirty||!matrix.rows.length||matrix.rows.some(r=>!r.confirmed))throw Error('Save and confirm all requirements first');this.validate();const {pages,figures,mode,providers,quality,volume}=this.value;return {requirementsRevision:matrix.revision,configuration:{brief:this.value.brief||'',pages,figures,mode,...(mode==='providers'?{providers}:{}),quality,volume},requirements:matrix.rows.filter(r=>volume==='combined'||r.category===volume).map(requirementContext)};}
- adopt(text,matrix){const context=this.context(matrix);if(typeof text!=='string'||text.length>200000)throw Error('Invalid outline result');const raw=text.trim().replace(/^```(?:json)?\s*/,'').replace(/\s*```$/,'');const parsed=JSON.parse(raw);if(parsed.requirementsRevision!==matrix.revision||!Array.isArray(parsed.chapters)||!parsed.chapters.length||parsed.chapters.length>80)throw Error('Invalid outline revision or chapter count');if(parsed.summary!=null&&(typeof parsed.summary!=='string'||parsed.summary.length>2000))throw Error('Invalid plan summary');const allowed=new Set(context.requirements.map(r=>r.id));const outline=parsed.chapters.map(c=>{if(c.purpose!=null&&(typeof c.purpose!=='string'||c.purpose.length>1000))throw Error('Invalid chapter purpose');if(typeof c.title!=='string'||!c.title.trim()||c.title.length>100||!Array.isArray(c.requirementIds)||!c.requirementIds.length||c.requirementIds.length>8||new Set(c.requirementIds).size!==c.requirementIds.length||c.requirementIds.some(id=>!allowed.has(id)))throw Error('Invalid chapter requirement references');return {id:crypto.randomUUID(),title:c.title.trim(),...(c.purpose?{purpose:c.purpose.trim()}:{}),requirementIds:[...c.requirementIds]};});const covered=new Set(outline.flatMap(c=>c.requirementIds));if([...allowed].some(id=>!covered.has(id)))throw Error('Model outline omitted requirements');this.value.summary=parsed.summary?.trim()||'';this.value.outline=outline;this.value.requirementsRevision=matrix.revision;this.value.approved=false;}
- tasks(){return this.value.outline.map((c,i)=>({id:c.id,batch:i+1,title:c.title,requirementIds:[...c.requirementIds],state:'pending'}));}
- writingTasks(matrix){
-  if(!this.value.approved||this.dirty||!this.revision)throw Error('Save and confirm the outline before writing');
-  const probe=new PlanSession(this.bridge);probe.value=structuredClone(this.value);probe.approve(matrix);
-  const {configuration}=this.context(matrix);
-  return this.tasks().map(task=>({...task,planRevision:this.revision,requirementsRevision:matrix.revision,configuration:structuredClone(configuration),template:structuredClone(this.value.template??null),requirements:task.requirementIds.map(id=>{const r=matrix.rows.find(r=>r.id===id);return structuredClone(requirementContext(r));})}));
- }
- async load(){const r=await this.bridge.request('GET','/documents/bid_plan');if(!r.ok&&r.status!==404)throw new DocumentError(r);if(!r.ok){this.saved=this.encode();return;}const md=r.body.markdown;if(!md.startsWith(prefix)||!md.endsWith('\n```\n'))throw Error('Unsupported plan');const value=JSON.parse(md.slice(prefix.length,-5));const old=this.value;try{this.value=value;this.validate();}catch(e){this.value=old;throw e;}this.saved=md;this.revision=r.body.revision;}
- async save(){const markdown=this.encode();const r=await this.bridge.request('PUT','/documents/bid_plan',{markdown,revision:this.revision});if(!r.ok)throw new DocumentError(r);this.saved=markdown;this.revision=r.body.revision;}
+  constructor(bridge) {
+    this.bridge = bridge;
+    this.revision = 0;
+    this.saved = '';
+    this.value = {
+      pages: 80,
+      figures: 'selective',
+      mode: 'metrics',
+      providers: '',
+      quality: 'high',
+      volume: 'combined',
+      outline: [],
+      approved: false,
+      requirementsRevision: 0,
+      template: null,
+    };
+  }
+  validate() {
+    const v = this.value;
+    if (v.summary != null && (typeof v.summary !== 'string' || v.summary.length > 2000))
+      throw new Error('Invalid plan summary');
+    if (v.brief != null && (typeof v.brief !== 'string' || v.brief.length > 4000))
+      throw new Error('Planning brief must be at most 4000 characters');
+    if (
+      v.template != null &&
+      (!v.template.id ||
+        typeof v.template.name !== 'string' ||
+        v.template.name.length > 255 ||
+        !/^.{1,250}\.docx$/i.test(v.template.name) ||
+        !/^[a-f0-9]{64}$/.test(v.template.hash))
+    )
+      throw new Error('Invalid template reference');
+    if (!Number.isInteger(v.pages) || v.pages < 1 || v.pages > 3000)
+      throw new Error('Target pages must be 1-3000');
+    for (const [key, choices] of Object.entries({
+      figures: ['none', 'selective', 'rich'],
+      mode: ['metrics', 'providers'],
+      quality: ['very-high', 'high', 'normal'],
+      volume: ['technical', 'commercial', 'combined'],
+    }))
+      if (!choices.includes(v[key])) throw new Error('Invalid plan option');
+    if (
+      typeof v.providers !== 'string' ||
+      v.providers.length > 4000 ||
+      !Array.isArray(v.outline) ||
+      v.outline.length > 80
+    )
+      throw new Error('Invalid outline');
+    const ids = new Set();
+    for (const c of v.outline) {
+      if (c.purpose != null && (typeof c.purpose !== 'string' || c.purpose.length > 1000))
+        throw new Error('Invalid chapter purpose');
+      if (
+        !c.id ||
+        ids.has(c.id) ||
+        typeof c.title !== 'string' ||
+        !c.title.trim() ||
+        c.title.length > 100 ||
+        !Array.isArray(c.requirementIds) ||
+        c.requirementIds.length > 8 ||
+        c.requirementIds.some((id) => typeof id !== 'string')
+      )
+        throw new Error('Invalid chapter');
+      ids.add(c.id);
+    }
+    if (v.approved && !v.outline.length) throw new Error('Outline required');
+  }
+  encode() {
+    this.validate();
+    return prefix + JSON.stringify(this.value, null, 2) + '\n```\n';
+  }
+  get dirty() {
+    try {
+      return this.encode() !== this.saved;
+    } catch {
+      return true;
+    }
+  }
+  change(key, value) {
+    this.value[key] = value;
+    if (key === 'mode' && value === 'metrics') this.value.providers = '';
+    this.value.approved = false;
+  }
+  build(matrix) {
+    requireResolvedSources(matrix);
+    if (matrix.dirty || !matrix.rows.length || matrix.rows.some((r) => !r.confirmed))
+      throw new Error('Save and confirm all requirements first');
+    const rows = matrix.rows.filter(
+      (r) => this.value.volume === 'combined' || r.category === this.value.volume,
+    );
+    if (!rows.length) throw new Error('No requirements in selected volume');
+    const outline = [];
+    for (const category of ['commercial', 'technical']) {
+      const group = rows.filter((r) => r.category === category);
+      let ids = [],
+        characters = 0,
+        part = 1;
+      const flush = () => {
+        if (!ids.length) return;
+        outline.push({
+          id: crypto.randomUUID(),
+          title:
+            (category === 'commercial' ? '\u5546\u52a1\u54cd\u5e94' : '\u6280\u672f\u54cd\u5e94') +
+            ' ' +
+            part++,
+          requirementIds: ids,
+        });
+        ids = [];
+        characters = 0;
+      };
+      for (const r of group) {
+        const size = [r.text, r.quote, r.location, r.evidence?.manualReview?.note || ''].join(
+          '\n',
+        ).length;
+        if (ids.length && (ids.length >= 8 || characters + size > 12000)) flush();
+        ids.push(r.id);
+        characters += size;
+      }
+      flush();
+    }
+    if (outline.length > 80)
+      throw new Error(
+        'Source material needs more than 80 chapters; narrow the volume or requirements',
+      );
+    this.value.outline = outline;
+    this.value.requirementsRevision = matrix.revision;
+    this.value.approved = false;
+  }
+  add() {
+    if (this.value.outline.length >= 80) throw new Error('Chapter limit is 80');
+    this.value.outline.push({
+      id: crypto.randomUUID(),
+      title: '\u65b0\u7ae0\u8282',
+      requirementIds: [],
+    });
+    this.value.approved = false;
+  }
+  move(id, delta) {
+    const rows = this.value.outline;
+    const index = rows.findIndex((c) => c.id === id),
+      target = index + delta;
+    if (index < 0 || target < 0 || target >= rows.length) return;
+    [rows[index], rows[target]] = [rows[target], rows[index]];
+    this.value.approved = false;
+  }
+  remove(id) {
+    this.value.outline = this.value.outline.filter((c) => c.id !== id);
+    this.value.approved = false;
+  }
+  assign(id, requirementId, selected) {
+    const c = this.value.outline.find((c) => c.id === id);
+    if (!c) throw new Error('Missing chapter');
+    const ids = new Set(c.requirementIds);
+    if (selected) ids.add(requirementId);
+    else ids.delete(requirementId);
+    if (ids.size > 8) throw new Error('Maximum eight requirements per chapter; split the chapter');
+    c.requirementIds = [...ids];
+    this.value.approved = false;
+  }
+  approve(matrix) {
+    requireResolvedSources(matrix);
+    this.validate();
+    if (
+      matrix.dirty ||
+      matrix.revision !== this.value.requirementsRevision ||
+      matrix.rows.some((r) => !r.confirmed) ||
+      !this.value.outline.length
+    )
+      throw new Error('Requirements changed; rebuild outline');
+    const scope = matrix.rows.filter(
+      (r) => this.value.volume === 'combined' || r.category === this.value.volume,
+    );
+    const covered = new Set(this.value.outline.flatMap((c) => c.requirementIds));
+    if (
+      scope.some((r) => !covered.has(r.id)) ||
+      [...covered].some((id) => !scope.some((r) => r.id === id))
+    )
+      throw new Error('Outline requirement coverage mismatch');
+    if (this.value.outline.some((c) => !c.requirementIds.length))
+      throw new Error('Assign requirements to each chapter');
+    this.value.approved = true;
+  }
+  context(matrix) {
+    requireResolvedSources(matrix);
+    if (matrix.dirty || !matrix.rows.length || matrix.rows.some((r) => !r.confirmed))
+      throw new Error('Save and confirm all requirements first');
+    this.validate();
+    const { pages, figures, mode, providers, quality, volume } = this.value;
+    return {
+      requirementsRevision: matrix.revision,
+      configuration: {
+        brief: this.value.brief || '',
+        pages,
+        figures,
+        mode,
+        ...(mode === 'providers' ? { providers } : {}),
+        quality,
+        volume,
+      },
+      requirements: matrix.rows
+        .filter((r) => volume === 'combined' || r.category === volume)
+        .map(requirementContext),
+    };
+  }
+  adopt(text, matrix) {
+    const context = this.context(matrix);
+    if (typeof text !== 'string' || text.length > 200000) throw new Error('Invalid outline result');
+    const raw = text
+      .trim()
+      .replace(/^```(?:json)?\s*/, '')
+      .replace(/```$/, '');
+    const parsed = JSON.parse(raw);
+    if (
+      parsed.requirementsRevision !== matrix.revision ||
+      !Array.isArray(parsed.chapters) ||
+      !parsed.chapters.length ||
+      parsed.chapters.length > 80
+    )
+      throw new Error('Invalid outline revision or chapter count');
+    if (
+      parsed.summary != null &&
+      (typeof parsed.summary !== 'string' || parsed.summary.length > 2000)
+    )
+      throw new Error('Invalid plan summary');
+    const allowed = new Set(context.requirements.map((r) => r.id));
+    const outline = parsed.chapters.map((c) => {
+      if (c.purpose != null && (typeof c.purpose !== 'string' || c.purpose.length > 1000))
+        throw new Error('Invalid chapter purpose');
+      if (
+        typeof c.title !== 'string' ||
+        !c.title.trim() ||
+        c.title.length > 100 ||
+        !Array.isArray(c.requirementIds) ||
+        !c.requirementIds.length ||
+        c.requirementIds.length > 8 ||
+        new Set(c.requirementIds).size !== c.requirementIds.length ||
+        c.requirementIds.some((id) => !allowed.has(id))
+      )
+        throw new Error('Invalid chapter requirement references');
+      return {
+        id: crypto.randomUUID(),
+        title: c.title.trim(),
+        ...(c.purpose ? { purpose: c.purpose.trim() } : {}),
+        requirementIds: [...c.requirementIds],
+      };
+    });
+    const covered = new Set(outline.flatMap((c) => c.requirementIds));
+    if ([...allowed].some((id) => !covered.has(id)))
+      throw new Error('Model outline omitted requirements');
+    this.value.summary = parsed.summary?.trim() || '';
+    this.value.outline = outline;
+    this.value.requirementsRevision = matrix.revision;
+    this.value.approved = false;
+  }
+  tasks() {
+    return this.value.outline.map((c, i) => ({
+      id: c.id,
+      batch: i + 1,
+      title: c.title,
+      requirementIds: [...c.requirementIds],
+      state: 'pending',
+    }));
+  }
+  writingTasks(matrix) {
+    if (!this.value.approved || this.dirty || !this.revision)
+      throw new Error('Save and confirm the outline before writing');
+    const probe = new PlanSession(this.bridge);
+    probe.value = structuredClone(this.value);
+    probe.approve(matrix);
+    const { configuration } = this.context(matrix);
+    return this.tasks().map((task) => ({
+      ...task,
+      planRevision: this.revision,
+      requirementsRevision: matrix.revision,
+      configuration: structuredClone(configuration),
+      template: structuredClone(this.value.template ?? null),
+      requirements: task.requirementIds.map((id) => {
+        const r = matrix.rows.find((r) => r.id === id);
+        return structuredClone(requirementContext(r));
+      }),
+    }));
+  }
+  async load() {
+    const r = await this.bridge.request('GET', '/documents/bid_plan');
+    if (!r.ok && r.status !== 404) throw new DocumentError(r);
+    if (!r.ok) {
+      this.saved = this.encode();
+      return;
+    }
+    const md = r.body.markdown;
+    if (!md.startsWith(prefix) || !md.endsWith('\n```\n')) throw new Error('Unsupported plan');
+    const value = JSON.parse(md.slice(prefix.length, -5));
+    const old = this.value;
+    try {
+      this.value = value;
+      this.validate();
+    } catch (e) {
+      this.value = old;
+      throw e;
+    }
+    this.saved = md;
+    this.revision = r.body.revision;
+  }
+  async save() {
+    const markdown = this.encode();
+    const r = await this.bridge.request('PUT', '/documents/bid_plan', {
+      markdown,
+      revision: this.revision,
+    });
+    if (!r.ok) throw new DocumentError(r);
+    this.saved = markdown;
+    this.revision = r.body.revision;
+  }
 }

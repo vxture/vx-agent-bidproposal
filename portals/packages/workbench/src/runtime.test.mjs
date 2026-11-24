@@ -12,12 +12,14 @@ import { StageNavigation } from './runtime.mjs';
 test('navigation replays selection after asynchronous panels mount and rejects unknown stages', () => {
   const navigation = new StageNavigation();
   const seen = [];
-  navigation.subscribe(stage => seen.push(stage));
+  navigation.subscribe((stage) => seen.push(stage));
   navigation.select('requirements');
   navigation.select('analysis');
   assert.equal(navigation.select('not-a-stage'), false);
   let visible;
-  navigation.subscribe(stage => { visible = stage; });
+  navigation.subscribe((stage) => {
+    visible = stage;
+  });
   navigation.replay();
   assert.equal(visible, 'analysis');
   assert.deepEqual(seen, ['requirements', 'analysis', 'analysis']);

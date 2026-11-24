@@ -5,58 +5,457 @@
  * @author AI-Generated
  * @date 2026-11-25
  */
-import {BackgroundRequest} from './background.mjs';
-import {autoSave} from './autosave.mjs';
-import { Requirements,parseCandidates } from './requirements.mjs';
+import { BackgroundRequest } from './background.mjs';
+import { autoSave } from './autosave.mjs';
+import { Requirements, parseCandidates } from './requirements.mjs';
 import { DocumentError } from './errors.mjs';
-import {manuallyReviewMatrixRow} from './source-verification.mjs';
-import {openSourceDrawer} from './source-verification-ui.mjs';
-export async function mountRequirements(bridge,{onState=()=>{},onAnalysisStarted=()=>{}}={}){
- const $=id=>document.getElementById(id);const m=new Requirements(bridge);let locked=false,taskId=null,timer,selectedId=null,page=0;
- const el=(tag,text)=>{const n=document.createElement(tag);if(text)n.textContent=text;return n;};
- const search=el('input');search.placeholder='\u641c\u7d22\u9700\u6c42';search.setAttribute('aria-label','\u641c\u7d22\u9700\u6c42\u77e9\u9635');$('matrix-filter').after(search);
- const stateFilter=el('select');stateFilter.setAttribute('aria-label','\u9700\u6c42\u786e\u8ba4\u72b6\u6001');for(const [value,label]of [['all','\u5168\u90e8\u72b6\u6001'],['pending','\u5f85\u786e\u8ba4'],['confirmed','\u5df2\u786e\u8ba4'],['blocked','\u6765\u6e90\u5f85\u590d\u6838']]){const o=el('option',label);o.value=value;stateFilter.append(o);}search.after(stateFilter);
- const pagination=el('div');pagination.className='matrix-pagination';const previous=el('button','\u4e0a\u4e00\u9875'),pageLabel=el('span'),next=el('button','\u4e0b\u4e00\u9875');pagination.append(previous,pageLabel,next);document.querySelector('.matrix-scroll').append(pagination);
- const sourceButton=el('button','\u56de\u770b\u4fdd\u5b58\u7684\u539f\u6587'),note=el('textarea'),reviewButton=el('button','\u4fdd\u5b58\u4eba\u5de5\u590d\u6838');note.placeholder='\u4fee\u6539\u9700\u6c42\u540e\uff0c\u8bf4\u660e\u5f53\u524d\u8868\u8ff0\u53ca\u9002\u7528\u8303\u56f4\u7684\u4f9d\u636e';note.maxLength=1600;note.setAttribute('aria-label','\u9700\u6c42\u4eba\u5de5\u590d\u6838\u8bf4\u660e');$('detail-confirm').before(sourceButton,note,reviewButton);
- const bg=new BackgroundRequest(bridge,'bid_analysis_request');await bg.load();
- const saver=autoSave(async()=>{await m.save();render();},{onState:(state,e)=>{if(state==='saved')say('\u5df2\u81ea\u52a8\u4fdd\u5b58');if(state==='error')say(e.message);}});
- let lastEdit;
- const say=s=>{$('matrix-status').textContent=s;$('matrix-status').hidden=!s;};
- function summary(){const n=m.rows.filter(r=>r.confirmed).length,open=m.unresolvedSources.length;$('matrix-summary').textContent=m.rows.length+' \u9879 \u00b7 \u5f85\u786e\u8ba4 '+(m.rows.length-n)+(open?' \u00b7 '+open+' \u9879\u6765\u6e90\u5f85\u5904\u7406':'');$('next-action').textContent=open?'\u53ef\u6838\u5bf9\u5df2\u91c7\u7eb3\u8981\u6c42\u3002\u4ecd\u6709 '+open+' \u9879\u6765\u6e90\u5f85\u5904\u7406\uff0c\u5728\u300c\u62db\u6807\u89e3\u8bfb\u300d\u67e5\u770b\uff1b\u5b8c\u6210\u524d\u6682\u4e0d\u542f\u52a8\u5168\u5c40\u7f16\u5199\u89c4\u5212\u3002':m.rows.length&&n===m.rows.length?'\u9700\u6c42\u5df2\u5168\u90e8\u786e\u8ba4\uff0c\u4e0b\u4e00\u6b65\uff1a\u7f16\u5199\u89c4\u5212\u3002': '\u6838\u5bf9\u4f9d\u636e\uff0c\u9010\u9879\u786e\u8ba4\u5546\u52a1\u4e0e\u6280\u672f\u8981\u6c42\u3002';}
- function select(id){selectedId=id;const r=m.rows.find(r=>r.id===id);$('requirement-detail').hidden=!r;if(!r)return;for(const key of ['category','text','quote','location'])$('detail-'+key).value=r[key];$('detail-origin').textContent=(r.origin==='ai'?'\u667a\u80fd\u89e3\u8bfb':'\u4eba\u5de5\u8865\u5145')+(r.evidence?' \u00b7 '+(r.evidence.scope==='shared'?'\u901a\u7528\u8981\u6c42':'\u672c\u5305\u8981\u6c42')+' \u00b7 '+(r.evidence.reason||'\u6a21\u578b\u6838\u9a8c\u7ed3\u679c\u5df2\u4fdd\u5b58'):' \u00b7 \u4eba\u5de5\u6838\u5bf9\u4f9d\u636e');note.value='';render();}
- function render(){
-  onState(m);if(m.dirty){let key;try{key=m.encode();}catch{}if(key&&key!==lastEdit){lastEdit=key;saver.change();}}
-
-  summary();$('matrix-rows').replaceChildren();const filter=$('matrix-filter').value;
-  const query=search.value.trim().toLowerCase(),filtered=m.rows.filter(r=>(filter==='all'||r.category===filter)&&(!query||(r.text+' '+r.quote).toLowerCase().includes(query))&&(stateFilter.value==='all'||stateFilter.value==='blocked'&&m.sourceProblems.has(r.id)||stateFilter.value==='confirmed'&&r.confirmed||stateFilter.value==='pending'&&!r.confirmed));
-  page=Math.max(0,Math.min(page,Math.ceil(filtered.length/40)-1));previous.disabled=page===0;next.disabled=(page+1)*40>=filtered.length;pageLabel.textContent=filtered.length+' \u9879 \u00b7 '+(filtered.length?page*40+1:0)+'\u2013'+Math.min((page+1)*40,filtered.length);
-  for(const r of filtered.slice(page*40,(page+1)*40)){
-   const tr=document.createElement('tr');tr.classList.toggle('selected',r.id===selectedId);
-   const category=document.createElement('td');category.textContent=r.category==='commercial'?'\u5546\u52a1':'\u6280\u672f';tr.append(category);
-   const content=document.createElement('td');const open=document.createElement('button');open.className='requirement-open';open.textContent=r.text;open.disabled=locked;open.onclick=()=>select(r.id);content.append(open);tr.append(content);
-   const state=document.createElement('td');const confirm=document.createElement('button');confirm.textContent=m.sourceProblems.has(r.id)?'\u6765\u6e90\u5f85\u590d\u6838':r.confirmed?'\u5df2\u786e\u8ba4':'\u786e\u8ba4';confirm.className=r.confirmed?'confirmed':'';confirm.disabled=locked||r.confirmed||m.sourceProblems.has(r.id);confirm.onclick=()=>void confirmRows(r.id);state.append(confirm);tr.append(state);
-   const evidence=document.createElement('td');const details=document.createElement('button');details.textContent='\u67e5\u770b\u4f9d\u636e';details.disabled=locked;details.onclick=()=>select(r.id);evidence.append(details);tr.append(evidence);$('matrix-rows').append(tr);
+import { manuallyReviewMatrixRow } from './source-verification.mjs';
+import { openSourceDrawer } from './source-verification-ui.mjs';
+export async function mountRequirements(
+  bridge,
+  { onState = () => {}, onAnalysisStarted = () => {} } = {},
+) {
+  const $ = (id) => document.getElementById(id);
+  const m = new Requirements(bridge);
+  let locked = false,
+    taskId = null,
+    timer,
+    selectedId = null,
+    page = 0;
+  const el = (tag, text) => {
+    const n = document.createElement(tag);
+    if (text) n.textContent = text;
+    return n;
+  };
+  const search = el('input');
+  search.placeholder = '\u641c\u7d22\u9700\u6c42';
+  search.setAttribute('aria-label', '\u641c\u7d22\u9700\u6c42\u77e9\u9635');
+  $('matrix-filter').after(search);
+  const stateFilter = el('select');
+  stateFilter.setAttribute('aria-label', '\u9700\u6c42\u786e\u8ba4\u72b6\u6001');
+  for (const [value, label] of [
+    ['all', '\u5168\u90e8\u72b6\u6001'],
+    ['pending', '\u5f85\u786e\u8ba4'],
+    ['confirmed', '\u5df2\u786e\u8ba4'],
+    ['blocked', '\u6765\u6e90\u5f85\u590d\u6838'],
+  ]) {
+    const o = el('option', label);
+    o.value = value;
+    stateFilter.append(o);
   }
-  $('matrix-save').disabled=locked||!m.dirty;$('matrix-all').disabled=locked||!m.rows.length;$('matrix-add').disabled=locked;$('analyze').disabled=locked;
-  const r=m.rows.find(r=>r.id===selectedId);if(r){for(const key of ['category','text','quote','location'])$('detail-'+key).disabled=locked;$('detail-status').textContent=m.sourceProblems.has(r.id)?'\u6765\u6e90\u5f85\u590d\u6838\uff1a'+m.sourceProblems.get(r.id):r.confirmed?'\u5df2\u786e\u8ba4':'\u5f85\u786e\u8ba4 \u00b7 \u4fee\u6539\u540e\u9700\u91cd\u65b0\u786e\u8ba4';$('detail-confirm').disabled=locked||r.confirmed||m.sourceProblems.has(r.id);sourceButton.hidden=!r.evidence;note.hidden=reviewButton.hidden=!r.evidence||!m.sourceProblems.has(r.id);reviewButton.disabled=locked;}
- }
- async function confirmRows(id){if(locked)return;locked=true;render();try{await m.recheck();m.confirm(id);render();await saver.flush();say('\u5df2\u786e\u8ba4\u5e76\u81ea\u52a8\u4fdd\u5b58');}catch(e){if(id)select(id);say(e.message);}finally{locked=false;render();}}
- for(const key of ['category','text','quote','location'])$('detail-'+key).oninput=()=>{if(!selectedId)return;m.edit(selectedId,{[key]:$('detail-'+key).value});render();say('\u6709\u672a\u4fdd\u5b58\u4fee\u6539');};
- $('detail-close').onclick=()=>{selectedId=null;$('requirement-detail').hidden=true;render();};
- $('detail-confirm').onclick=()=>void confirmRows(selectedId);
- sourceButton.onclick=async()=>{try{const r=m.rows.find(r=>r.id===selectedId),e=r.evidence,reply=await bridge.request('GET','/documents/'+e.analysisManifest);if(!reply.ok)throw new DocumentError(reply);const plan=JSON.parse(reply.body.markdown),segment=plan.batches.flatMap(b=>b.segments).find(s=>s.id===e.segmentId);await openSourceDrawer(bridge,{candidate:{...r,decision:e.manualReview,segmentId:e.segmentId,unit:e.unit,location:e.sourceLocation||segment?.location},segment,readingId:e.readingId,name:plan.name,hash:e.sourceHash,check:{...e.match,references:e.references||e.match.references},review:{scope:e.scope,reason:e.reason||'\u5f15\u6587\u4e0e\u9002\u7528\u8303\u56f4\u5df2\u6838\u9a8c\uff0c\u5b8c\u6574\u667a\u80fd\u6838\u9a8c\u8bf4\u660e\u4fdd\u5b58\u4e8e\u62db\u6807\u89e3\u8bfb\u9875'}});}catch(e){say(e.message);}};
- reviewButton.onclick=async()=>{try{locked=true;render();const row=m.rows.find(r=>r.id===selectedId);await manuallyReviewMatrixRow(bridge,row,note.value);await m.recheck();render();await saver.flush();say('\u4eba\u5de5\u590d\u6838\u5df2\u81ea\u52a8\u4fdd\u5b58\uff0c\u8bf7\u91cd\u65b0\u786e\u8ba4\u6b64\u9879');}catch(e){say(e.message);}finally{locked=false;render();}};
- async function poll(){try{if(bg.value&&!bg.value.applied){const job=await bg.sync(),step=job.steps[0];taskId=step.taskInstanceId;if(step.state==='done'){const result=await bg.result(step);m.adopt(parseCandidates(result.content.requirement_analysis));await m.save();bg.value.applied=true;await bg.save();sessionStorage.removeItem('bid-analysis:'+projectId);taskId=null;locked=false;render();say('\u89e3\u8bfb\u7ed3\u679c\u5df2\u81ea\u52a8\u4fdd\u5b58\uff0c\u8bf7\u6838\u5bf9\u9700\u6c42');return;}if(job.state==='error')throw Error(job.error);say('\u89e3\u8bfb\u4efb\u52a1\u5df2\u4ea4\u7ed9\u540e\u53f0\uff0c\u53ef\u4ee5\u79bb\u5f00\u9875\u9762\u3002 '+(job.state==='waiting'?'\u8bf7\u5904\u7406 RUYIN \u5f85\u529e':'') );timer=setTimeout(poll,2500);return;}const r=await bridge.request('GET','/tasks');if(!r.ok)throw new DocumentError(r);const task=r.body.items.find(t=>t.id===taskId);if(!task)throw Error('\u4efb\u52a1\u5df2\u4e0d\u53ef\u7528');if(task.hasResult){const result=await bridge.request('GET','/tasks/'+taskId+'/result');if(!result.ok)throw new DocumentError(result);const n=m.adopt(parseCandidates(result.body.content.requirement_analysis));say(n ? `\u89e3\u8bfb\u5b8c\u6210\uff0c\u65b0\u589e ${n} \u9879\u5f85\u786e\u8ba4\u9700\u6c42\uff0c\u8bf7\u6838\u5bf9\u4f9d\u636e\u5e76\u4fdd\u5b58\u3002` : '');locked=false;render();return;}if(['failed','cancelled','rejected'].includes(task.state))throw Error('\u89e3\u8bfb\u4efb\u52a1\u672a\u5b8c\u6210\uff0c\u8bf7\u5728 RUYIN \u4efb\u52a1\u9875\u67e5\u770b\u539f\u56e0');say('\u89e3\u8bfb\u4efb\u52a1\uff1a'+task.state+(task.waitingOn?.length?'\u3002\u8bf7\u5728 RUYIN \u5f85\u529e\u4e2d\u5b8c\u6210\u8d44\u6599\uff0f\u6210\u679c\u5ba1\u6838\u3002':''));timer=setTimeout(poll,2500);}catch(e){locked=false;say(e.message);render();}}
- $('analyze').onclick=()=>say('\u8bf7\u5728\u300c\u62db\u6807\u89e3\u8bfb\u300d\u542f\u52a8\u6216\u67e5\u770b\u5206\u6279\u667a\u80fd\u89e3\u8bfb\u3002\u5019\u9009\u9700\u6c42\u5c06\u5728\u6765\u6e90\u6838\u9a8c\u540e\u63a5\u5165\u77e9\u9635\u3002');
- $('matrix-add').onclick=()=>{try{m.add({text:'\u65b0\u589e\u9700\u6c42'});page=Math.floor((m.rows.length-1)/40);select(m.rows.at(-1).id);say('\u8bf7\u586b\u5199\u4f9d\u636e\u539f\u6587\u548c\u4f4d\u7f6e');}catch(e){say(e.message);}};
- for(const input of [$('matrix-filter'),stateFilter])input.onchange=()=>{page=0;render();};search.oninput=()=>{page=0;render();};previous.onclick=()=>{page--;render();};next.onclick=()=>{page++;render();};
- $('matrix-all').onclick=()=>void confirmRows();
- $('matrix-save').onclick=async()=>{try{locked=true;render();await saver.retry();if(m.dirty)await m.save();say('\u9700\u6c42\u77e9\u9635\u5df2\u52a0\u5bc6\u4fdd\u5b58 v'+m.revision);}catch(e){say(e.status===409?'\u53e6\u4e00\u7a97\u53e3\u5df2\u4fee\u6539\u3002\u5f53\u524d\u5185\u5bb9\u4ecd\u4fdd\u7559\uff0c\u8bf7\u590d\u5236\u4fee\u6539\u540e\u91cd\u65b0\u6253\u5f00\u9879\u76ee\u5408\u5e76\u3002':e.message);}finally{locked=false;render();}};
- window.addEventListener('pagehide',()=>{void saver.flush().catch(()=>{});clearTimeout(timer);});
- window.addEventListener('beforeunload',e=>{if(m.dirty){e.preventDefault();e.returnValue='';}clearTimeout(timer);});
- const p=await bridge.request('GET','/project');if(!p.ok)throw new DocumentError(p);const projectId=p.body.projectId;await m.load();render();say('');if(bg.value){sessionStorage.removeItem('bid-analysis:'+projectId);taskId=null;}else taskId=sessionStorage.getItem('bid-analysis:'+projectId);if(bg.value&&!bg.value.applied||taskId){locked=true;render();void poll();}
- const flush=async()=>{await saver.flush();if(m.dirty)await m.save();};
- let pendingReload;const reload=()=>{if(pendingReload)return pendingReload;pendingReload=(async()=>{if(locked)return;locked=true;render();try{await flush();await m.load();if(selectedId&&m.rows.some(r=>r.id===selectedId))select(selectedId);else{selectedId=null;$('requirement-detail').hidden=true;}render();}finally{locked=false;render();}})().finally(()=>pendingReload=null);return pendingReload;};
- let visible=false;bridge.onStage(section=>{const next=section==='requirements';if(next===visible)return;visible=next;if(visible)void reload().catch(e=>say(e.message));});
- return {model:m,flush,reload};
+  search.after(stateFilter);
+  const pagination = el('div');
+  pagination.className = 'matrix-pagination';
+  const previous = el('button', '\u4e0a\u4e00\u9875'),
+    pageLabel = el('span'),
+    next = el('button', '\u4e0b\u4e00\u9875');
+  pagination.append(previous, pageLabel, next);
+  document.querySelector('.matrix-scroll').append(pagination);
+  const sourceButton = el('button', '\u56de\u770b\u4fdd\u5b58\u7684\u539f\u6587'),
+    note = el('textarea'),
+    reviewButton = el('button', '\u4fdd\u5b58\u4eba\u5de5\u590d\u6838');
+  note.placeholder =
+    '\u4fee\u6539\u9700\u6c42\u540e\uff0c\u8bf4\u660e\u5f53\u524d\u8868\u8ff0\u53ca\u9002\u7528\u8303\u56f4\u7684\u4f9d\u636e';
+  note.maxLength = 1600;
+  note.setAttribute('aria-label', '\u9700\u6c42\u4eba\u5de5\u590d\u6838\u8bf4\u660e');
+  $('detail-confirm').before(sourceButton, note, reviewButton);
+  const bg = new BackgroundRequest(bridge, 'bid_analysis_request');
+  await bg.load();
+  const saver = autoSave(
+    async () => {
+      await m.save();
+      render();
+    },
+    {
+      onState: (state, e) => {
+        if (state === 'saved') say('\u5df2\u81ea\u52a8\u4fdd\u5b58');
+        if (state === 'error') say(e.message);
+      },
+    },
+  );
+  let lastEdit;
+  const say = (s) => {
+    $('matrix-status').textContent = s;
+    $('matrix-status').hidden = !s;
+  };
+  function summary() {
+    const n = m.rows.filter((r) => r.confirmed).length,
+      open = m.unresolvedSources.length;
+    $('matrix-summary').textContent =
+      m.rows.length +
+      ' \u9879 \u00b7 \u5f85\u786e\u8ba4 ' +
+      (m.rows.length - n) +
+      (open ? ' \u00b7 ' + open + ' \u9879\u6765\u6e90\u5f85\u5904\u7406' : '');
+    $('next-action').textContent = open
+      ? '\u53ef\u6838\u5bf9\u5df2\u91c7\u7eb3\u8981\u6c42\u3002\u4ecd\u6709 ' +
+        open +
+        ' \u9879\u6765\u6e90\u5f85\u5904\u7406\uff0c\u5728\u300c\u62db\u6807\u89e3\u8bfb\u300d\u67e5\u770b\uff1b\u5b8c\u6210\u524d\u6682\u4e0d\u542f\u52a8\u5168\u5c40\u7f16\u5199\u89c4\u5212\u3002'
+      : m.rows.length && n === m.rows.length
+        ? '\u9700\u6c42\u5df2\u5168\u90e8\u786e\u8ba4\uff0c\u4e0b\u4e00\u6b65\uff1a\u7f16\u5199\u89c4\u5212\u3002'
+        : '\u6838\u5bf9\u4f9d\u636e\uff0c\u9010\u9879\u786e\u8ba4\u5546\u52a1\u4e0e\u6280\u672f\u8981\u6c42\u3002';
+  }
+  function select(id) {
+    selectedId = id;
+    const r = m.rows.find((r) => r.id === id);
+    $('requirement-detail').hidden = !r;
+    if (!r) return;
+    for (const key of ['category', 'text', 'quote', 'location']) $('detail-' + key).value = r[key];
+    $('detail-origin').textContent =
+      (r.origin === 'ai' ? '\u667a\u80fd\u89e3\u8bfb' : '\u4eba\u5de5\u8865\u5145') +
+      (r.evidence
+        ? ' \u00b7 ' +
+          (r.evidence.scope === 'shared'
+            ? '\u901a\u7528\u8981\u6c42'
+            : '\u672c\u5305\u8981\u6c42') +
+          ' \u00b7 ' +
+          (r.evidence.reason || '\u6a21\u578b\u6838\u9a8c\u7ed3\u679c\u5df2\u4fdd\u5b58')
+        : ' \u00b7 \u4eba\u5de5\u6838\u5bf9\u4f9d\u636e');
+    note.value = '';
+    render();
+  }
+  function render() {
+    onState(m);
+    if (m.dirty) {
+      let key;
+      try {
+        key = m.encode();
+      } catch {}
+      if (key && key !== lastEdit) {
+        lastEdit = key;
+        saver.change();
+      }
+    }
+
+    summary();
+    $('matrix-rows').replaceChildren();
+    const filter = $('matrix-filter').value;
+    const query = search.value.trim().toLowerCase(),
+      filtered = m.rows.filter(
+        (r) =>
+          (filter === 'all' || r.category === filter) &&
+          (!query || (r.text + ' ' + r.quote).toLowerCase().includes(query)) &&
+          (stateFilter.value === 'all' ||
+            (stateFilter.value === 'blocked' && m.sourceProblems.has(r.id)) ||
+            (stateFilter.value === 'confirmed' && r.confirmed) ||
+            (stateFilter.value === 'pending' && !r.confirmed)),
+      );
+    page = Math.max(0, Math.min(page, Math.ceil(filtered.length / 40) - 1));
+    previous.disabled = page === 0;
+    next.disabled = (page + 1) * 40 >= filtered.length;
+    pageLabel.textContent =
+      filtered.length +
+      ' \u9879 \u00b7 ' +
+      (filtered.length ? page * 40 + 1 : 0) +
+      '\u2013' +
+      Math.min((page + 1) * 40, filtered.length);
+    for (const r of filtered.slice(page * 40, (page + 1) * 40)) {
+      const tr = document.createElement('tr');
+      tr.classList.toggle('selected', r.id === selectedId);
+      const category = document.createElement('td');
+      category.textContent = r.category === 'commercial' ? '\u5546\u52a1' : '\u6280\u672f';
+      tr.append(category);
+      const content = document.createElement('td');
+      const open = document.createElement('button');
+      open.className = 'requirement-open';
+      open.textContent = r.text;
+      open.disabled = locked;
+      open.onclick = () => select(r.id);
+      content.append(open);
+      tr.append(content);
+      const state = document.createElement('td');
+      const confirm = document.createElement('button');
+      confirm.textContent = m.sourceProblems.has(r.id)
+        ? '\u6765\u6e90\u5f85\u590d\u6838'
+        : r.confirmed
+          ? '\u5df2\u786e\u8ba4'
+          : '\u786e\u8ba4';
+      confirm.className = r.confirmed ? 'confirmed' : '';
+      confirm.disabled = locked || r.confirmed || m.sourceProblems.has(r.id);
+      confirm.onclick = () => void confirmRows(r.id);
+      state.append(confirm);
+      tr.append(state);
+      const evidence = document.createElement('td');
+      const details = document.createElement('button');
+      details.textContent = '\u67e5\u770b\u4f9d\u636e';
+      details.disabled = locked;
+      details.onclick = () => select(r.id);
+      evidence.append(details);
+      tr.append(evidence);
+      $('matrix-rows').append(tr);
+    }
+    $('matrix-save').disabled = locked || !m.dirty;
+    $('matrix-all').disabled = locked || !m.rows.length;
+    $('matrix-add').disabled = locked;
+    $('analyze').disabled = locked;
+    const r = m.rows.find((r) => r.id === selectedId);
+    if (r) {
+      for (const key of ['category', 'text', 'quote', 'location'])
+        $('detail-' + key).disabled = locked;
+      $('detail-status').textContent = m.sourceProblems.has(r.id)
+        ? '\u6765\u6e90\u5f85\u590d\u6838\uff1a' + m.sourceProblems.get(r.id)
+        : r.confirmed
+          ? '\u5df2\u786e\u8ba4'
+          : '\u5f85\u786e\u8ba4 \u00b7 \u4fee\u6539\u540e\u9700\u91cd\u65b0\u786e\u8ba4';
+      $('detail-confirm').disabled = locked || r.confirmed || m.sourceProblems.has(r.id);
+      sourceButton.hidden = !r.evidence;
+      note.hidden = reviewButton.hidden = !r.evidence || !m.sourceProblems.has(r.id);
+      reviewButton.disabled = locked;
+    }
+  }
+  async function confirmRows(id) {
+    if (locked) return;
+    locked = true;
+    render();
+    try {
+      await m.recheck();
+      m.confirm(id);
+      render();
+      await saver.flush();
+      say('\u5df2\u786e\u8ba4\u5e76\u81ea\u52a8\u4fdd\u5b58');
+    } catch (e) {
+      if (id) select(id);
+      say(e.message);
+    } finally {
+      locked = false;
+      render();
+    }
+  }
+  for (const key of ['category', 'text', 'quote', 'location'])
+    $('detail-' + key).oninput = () => {
+      if (!selectedId) return;
+      m.edit(selectedId, { [key]: $('detail-' + key).value });
+      render();
+      say('\u6709\u672a\u4fdd\u5b58\u4fee\u6539');
+    };
+  $('detail-close').onclick = () => {
+    selectedId = null;
+    $('requirement-detail').hidden = true;
+    render();
+  };
+  $('detail-confirm').onclick = () => void confirmRows(selectedId);
+  sourceButton.onclick = async () => {
+    try {
+      const r = m.rows.find((r) => r.id === selectedId),
+        e = r.evidence,
+        reply = await bridge.request('GET', '/documents/' + e.analysisManifest);
+      if (!reply.ok) throw new DocumentError(reply);
+      const plan = JSON.parse(reply.body.markdown),
+        segment = plan.batches.flatMap((b) => b.segments).find((s) => s.id === e.segmentId);
+      await openSourceDrawer(bridge, {
+        candidate: {
+          ...r,
+          decision: e.manualReview,
+          segmentId: e.segmentId,
+          unit: e.unit,
+          location: e.sourceLocation || segment?.location,
+        },
+        segment,
+        readingId: e.readingId,
+        name: plan.name,
+        hash: e.sourceHash,
+        check: { ...e.match, references: e.references || e.match.references },
+        review: {
+          scope: e.scope,
+          reason:
+            e.reason ||
+            '\u5f15\u6587\u4e0e\u9002\u7528\u8303\u56f4\u5df2\u6838\u9a8c\uff0c\u5b8c\u6574\u667a\u80fd\u6838\u9a8c\u8bf4\u660e\u4fdd\u5b58\u4e8e\u62db\u6807\u89e3\u8bfb\u9875',
+        },
+      });
+    } catch (e) {
+      say(e.message);
+    }
+  };
+  reviewButton.onclick = async () => {
+    try {
+      locked = true;
+      render();
+      const row = m.rows.find((r) => r.id === selectedId);
+      await manuallyReviewMatrixRow(bridge, row, note.value);
+      await m.recheck();
+      render();
+      await saver.flush();
+      say(
+        '\u4eba\u5de5\u590d\u6838\u5df2\u81ea\u52a8\u4fdd\u5b58\uff0c\u8bf7\u91cd\u65b0\u786e\u8ba4\u6b64\u9879',
+      );
+    } catch (e) {
+      say(e.message);
+    } finally {
+      locked = false;
+      render();
+    }
+  };
+  async function poll() {
+    try {
+      if (bg.value && !bg.value.applied) {
+        const job = await bg.sync(),
+          step = job.steps[0];
+        taskId = step.taskInstanceId;
+        if (step.state === 'done') {
+          const result = await bg.result(step);
+          m.adopt(parseCandidates(result.content.requirement_analysis));
+          await m.save();
+          bg.value.applied = true;
+          await bg.save();
+          sessionStorage.removeItem('bid-analysis:' + projectId);
+          taskId = null;
+          locked = false;
+          render();
+          say(
+            '\u89e3\u8bfb\u7ed3\u679c\u5df2\u81ea\u52a8\u4fdd\u5b58\uff0c\u8bf7\u6838\u5bf9\u9700\u6c42',
+          );
+          return;
+        }
+        if (job.state === 'error') throw new Error(job.error);
+        say(
+          '\u89e3\u8bfb\u4efb\u52a1\u5df2\u4ea4\u7ed9\u540e\u53f0\uff0c\u53ef\u4ee5\u79bb\u5f00\u9875\u9762\u3002 ' +
+            (job.state === 'waiting' ? '\u8bf7\u5904\u7406 RUYIN \u5f85\u529e' : ''),
+        );
+        timer = setTimeout(poll, 2500);
+        return;
+      }
+      const r = await bridge.request('GET', '/tasks');
+      if (!r.ok) throw new DocumentError(r);
+      const task = r.body.items.find((t) => t.id === taskId);
+      if (!task) throw new Error('\u4efb\u52a1\u5df2\u4e0d\u53ef\u7528');
+      if (task.hasResult) {
+        const result = await bridge.request('GET', '/tasks/' + taskId + '/result');
+        if (!result.ok) throw new DocumentError(result);
+        const n = m.adopt(parseCandidates(result.body.content.requirement_analysis));
+        say(
+          n
+            ? `\u89e3\u8bfb\u5b8c\u6210\uff0c\u65b0\u589e ${n} \u9879\u5f85\u786e\u8ba4\u9700\u6c42\uff0c\u8bf7\u6838\u5bf9\u4f9d\u636e\u5e76\u4fdd\u5b58\u3002`
+            : '',
+        );
+        locked = false;
+        render();
+        return;
+      }
+      if (['failed', 'cancelled', 'rejected'].includes(task.state))
+        throw new Error(
+          '\u89e3\u8bfb\u4efb\u52a1\u672a\u5b8c\u6210\uff0c\u8bf7\u5728 RUYIN \u4efb\u52a1\u9875\u67e5\u770b\u539f\u56e0',
+        );
+      say(
+        '\u89e3\u8bfb\u4efb\u52a1\uff1a' +
+          task.state +
+          (task.waitingOn?.length
+            ? '\u3002\u8bf7\u5728 RUYIN \u5f85\u529e\u4e2d\u5b8c\u6210\u8d44\u6599\uff0f\u6210\u679c\u5ba1\u6838\u3002'
+            : ''),
+      );
+      timer = setTimeout(poll, 2500);
+    } catch (e) {
+      locked = false;
+      say(e.message);
+      render();
+    }
+  }
+  $('analyze').onclick = () =>
+    say(
+      '\u8bf7\u5728\u300c\u62db\u6807\u89e3\u8bfb\u300d\u542f\u52a8\u6216\u67e5\u770b\u5206\u6279\u667a\u80fd\u89e3\u8bfb\u3002\u5019\u9009\u9700\u6c42\u5c06\u5728\u6765\u6e90\u6838\u9a8c\u540e\u63a5\u5165\u77e9\u9635\u3002',
+    );
+  $('matrix-add').onclick = () => {
+    try {
+      m.add({ text: '\u65b0\u589e\u9700\u6c42' });
+      page = Math.floor((m.rows.length - 1) / 40);
+      select(m.rows.at(-1).id);
+      say('\u8bf7\u586b\u5199\u4f9d\u636e\u539f\u6587\u548c\u4f4d\u7f6e');
+    } catch (e) {
+      say(e.message);
+    }
+  };
+  for (const input of [$('matrix-filter'), stateFilter])
+    input.onchange = () => {
+      page = 0;
+      render();
+    };
+  search.oninput = () => {
+    page = 0;
+    render();
+  };
+  previous.onclick = () => {
+    page--;
+    render();
+  };
+  next.onclick = () => {
+    page++;
+    render();
+  };
+  $('matrix-all').onclick = () => void confirmRows();
+  $('matrix-save').onclick = async () => {
+    try {
+      locked = true;
+      render();
+      await saver.retry();
+      if (m.dirty) await m.save();
+      say('\u9700\u6c42\u77e9\u9635\u5df2\u52a0\u5bc6\u4fdd\u5b58 v' + m.revision);
+    } catch (e) {
+      say(
+        e.status === 409
+          ? '\u53e6\u4e00\u7a97\u53e3\u5df2\u4fee\u6539\u3002\u5f53\u524d\u5185\u5bb9\u4ecd\u4fdd\u7559\uff0c\u8bf7\u590d\u5236\u4fee\u6539\u540e\u91cd\u65b0\u6253\u5f00\u9879\u76ee\u5408\u5e76\u3002'
+          : e.message,
+      );
+    } finally {
+      locked = false;
+      render();
+    }
+  };
+  window.addEventListener('pagehide', () => {
+    void saver.flush().catch(() => {});
+    clearTimeout(timer);
+  });
+  window.addEventListener('beforeunload', (e) => {
+    if (m.dirty) {
+      e.preventDefault();
+    }
+    clearTimeout(timer);
+  });
+  const p = await bridge.request('GET', '/project');
+  if (!p.ok) throw new DocumentError(p);
+  const projectId = p.body.projectId;
+  await m.load();
+  render();
+  say('');
+  if (bg.value) {
+    sessionStorage.removeItem('bid-analysis:' + projectId);
+    taskId = null;
+  } else taskId = sessionStorage.getItem('bid-analysis:' + projectId);
+  if ((bg.value && !bg.value.applied) || taskId) {
+    locked = true;
+    render();
+    void poll();
+  }
+  const flush = async () => {
+    await saver.flush();
+    if (m.dirty) await m.save();
+  };
+  let pendingReload;
+  const reload = () => {
+    if (pendingReload) return pendingReload;
+    pendingReload = (async () => {
+      if (locked) return;
+      locked = true;
+      render();
+      try {
+        await flush();
+        await m.load();
+        if (selectedId && m.rows.some((r) => r.id === selectedId)) select(selectedId);
+        else {
+          selectedId = null;
+          $('requirement-detail').hidden = true;
+        }
+        render();
+      } finally {
+        locked = false;
+        render();
+      }
+    })().finally(() => (pendingReload = null));
+    return pendingReload;
+  };
+  let visible = false;
+  bridge.onStage((section) => {
+    const next = section === 'requirements';
+    if (next === visible) return;
+    visible = next;
+    if (visible) void reload().catch((e) => say(e.message));
+  });
+  return { model: m, flush, reload };
 }

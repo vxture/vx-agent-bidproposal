@@ -11,6 +11,10 @@ import { fileURLToPath } from 'node:url';
 
 for (const entry of readdirSync(new URL('./src/', import.meta.url))) {
   if (!entry.endsWith('.mjs')) continue;
-  const check = spawnSync(process.execPath, ['--check', fileURLToPath(new URL('./src/' + entry, import.meta.url))], { stdio: 'inherit' });
+  const check = spawnSync(
+    process.execPath,
+    ['--check', fileURLToPath(new URL('./src/' + entry, import.meta.url))],
+    { stdio: 'inherit' },
+  );
   if (check.status !== 0) process.exit(check.status || 1);
 }

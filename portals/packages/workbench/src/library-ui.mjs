@@ -5,26 +5,371 @@
  * @author AI-Generated
  * @date 2026-11-25
  */
-const el=(tag,text,cls)=>{const n=document.createElement(tag);if(text!=null)n.textContent=text;if(cls)n.className=cls;return n;};
-export const CATEGORIES={qualification:'\u4f01\u4e1a\u8d44\u8d28',staff:'\u4eba\u5458\u4e0e\u62df\u6295\u5165\u4eba\u5458',product:'\u4f01\u4e1a\u4ea7\u54c1',solution:'\u65b9\u6848\u8d44\u6599',case:'\u9879\u76ee\u6848\u4f8b'};
-const states={queued:'\u7b49\u5f85\u8bfb\u53d6',running:'\u6b63\u5728\u8bfb\u53d6',completed:'\u539f\u6587\u5df2\u4fdd\u5b58',failed:'\u8bfb\u53d6\u672a\u5b8c\u6210'};
-export async function mountLibrary(bridge,root){
- const request=async(method,path,body)=>{const r=await bridge.request(method,path,body);if(!r.ok)throw Error(r.error?.message||'Library request failed');return r.body;};
- const header=el('header',null,'library-heading'),intro=el('div');intro.append(el('p','\u6807\u4e66\u65b9\u6848\u667a\u80fd\u4f53','eyebrow'),el('h1','\u77e5\u8bc6\u8d44\u6599'),el('p','\u4fdd\u5b58\u4f01\u4e1a\u6750\u6599\uff0c\u5728\u4e0d\u540c\u6807\u4e66\u4e2d\u6309\u7248\u672c\u9009\u7528\u3002','muted'));const add=el('button','\u5bfc\u5165\u8d44\u6599','primary');header.append(intro,add);
- const toolbar=el('div',null,'library-toolbar'),category=el('select'),search=el('input'),refresh=el('button','\u5237\u65b0');category.setAttribute('aria-label','\u8d44\u6599\u5206\u7c7b');category.append(new Option('\u5168\u90e8\u5206\u7c7b','all'));for(const [value,name]of Object.entries(CATEGORIES))category.append(new Option(name,value));search.placeholder='\u641c\u7d22\u8d44\u6599';search.setAttribute('aria-label','\u641c\u7d22\u8d44\u6599');const count=el('span');toolbar.append(category,search,count,refresh);
- const intake=el('section',null,'library-intake');intake.hidden=true;const uploadCategory=el('select');uploadCategory.setAttribute('aria-label','\u5bfc\u5165\u5206\u7c7b');for(const [value,name]of Object.entries(CATEGORIES))uploadCategory.append(new Option(name,value));const upload=el('input');upload.type='file';upload.multiple=true;upload.accept='.pdf,.docx,.md';upload.setAttribute('aria-label','\u9009\u62e9\u8d44\u6599\u6587\u4ef6');const cancel=el('button','\u53d6\u6d88'),intakeTitle=el('h2','\u5bfc\u5165\u4f01\u4e1a\u8d44\u6599');intake.append(intakeTitle,el('p','\u652f\u6301 PDF\u3001DOCX \u548c Markdown\uff0c\u6bcf\u4efd\u6700\u5927 20 MB\u3002\u539f\u4ef6\u52a0\u5bc6\u4fdd\u5b58\uff0c\u8bfb\u53d6\u5728\u540e\u53f0\u7ee7\u7eed\u3002\u672c\u6b65\u4e0d\u8c03\u7528\u6a21\u578b\u3002'),uploadCategory,upload,cancel);
- const status=el('p',null,'library-status');status.setAttribute('role','status');const layout=el('div',null,'library-layout'),list=el('div',null,'library-list'),detail=el('aside',null,'library-detail');detail.setAttribute('aria-label','\u8d44\u6599\u539f\u6587\u4e0e\u7248\u672c');layout.append(list,detail);root.append(header,toolbar,intake,status,layout);
- let items=[],selected=null,version=null,unitIndex=0,target=null,busy=false,stopped=false,timer,detailKey='',listKey='',readSequence=0;
- const say=text=>status.textContent=text;
- function schedule(){clearTimeout(timer);if(!stopped&&!document.hidden&&items.some(i=>i.versions.some(v=>['queued','running'].includes(v.reading?.state))))timer=setTimeout(()=>void load().catch(e=>{say(e.message);schedule();}),2000);}
- async function showDetail(){const sequence=++readSequence;detail.replaceChildren();const item=items.find(i=>i.id===selected);if(!item){detail.hidden=true;return;}detail.hidden=false;const v=item.versions.find(v=>v.version===version)||item.versions.at(-1);version=v.version;const top=el('div',null,'library-detail-heading'),close=el('button','\u5173\u95ed\u8d44\u6599');close.onclick=()=>{selected=null;detailKey='';void render();};top.append(el('h2',item.name),close);detail.append(top,el('p',CATEGORIES[item.category]||item.category,'muted'));const versions=el('select');versions.setAttribute('aria-label','\u8d44\u6599\u7248\u672c');for(const value of [...item.versions].reverse())versions.append(new Option('v'+value.version+' \u00b7 '+new Date(value.addedAt).toLocaleString(),String(value.version)));versions.value=String(v.version);versions.onchange=()=>{version=Number(versions.value);unitIndex=0;detailKey='';void render();};const update=el('button','\u6dfb\u52a0\u65b0\u7248\u672c');update.onclick=()=>{if(busy)return;target=item;uploadCategory.value=item.category;uploadCategory.disabled=true;upload.multiple=false;intakeTitle.textContent='\u6dfb\u52a0\u65b0\u7248\u672c \u00b7 '+item.name;intake.hidden=false;};detail.append(versions,update,el('p',(states[v.reading?.state]||'\u5f85\u8bfb\u53d6')+' \u00b7 '+(v.reading?.units||0)+' \u4e2a\u539f\u6587\u5757','library-reading-state'),el('p','SHA256 '+v.hash,'library-hash'));
-  if(!v.reading||v.reading.state==='failed'){const retry=el('button','\u91cd\u8bd5\u8bfb\u53d6');retry.onclick=()=>void act(async()=>{await request('POST','/items/'+item.id+'/versions/'+v.version+'/retry');await load();});detail.append(el('p',v.reading?.error||'\u6b63\u6587\u5feb\u7167\u5c1a\u672a\u5efa\u7acb','source-warning'),retry);}for(const flag of v.reading?.flags||[])detail.append(el('p',flag,'source-warning'));
-  if(!v.reading?.units)return;unitIndex=Math.min(unitIndex,v.reading.units-1);const pages=el('select');pages.setAttribute('aria-label','\u539f\u6587\u9875\u6216\u7ed3\u6784\u5757');for(let i=0;i<v.reading.units;i++)pages.append(new Option('\u539f\u6587\u5757 '+(i+1),String(i)));pages.value=String(unitIndex);pages.onchange=()=>{unitIndex=Number(pages.value);detailKey='';void render();};detail.append(pages);try{const unit=await request('GET','/items/'+item.id+'/versions/'+v.version+'/units/'+unitIndex);if(sequence!==readSequence)return;detail.append(el('p',unit.location.page?'\u7b2c '+unit.location.page+' \u9875':'\u7ed3\u6784\u5757 '+(unitIndex+1),'eyebrow'),el('pre',unit.text||'\u8be5\u5757\u65e0\u53ef\u63d0\u53d6\u6587\u5b57\uff0c\u9700\u4eba\u5de5\u6838\u5bf9','library-source'));for(const t of unit.tables||[]){const table=el('table',null,'reading-grid');for(const row of t.rows){const tr=el('tr');for(const cell of row)tr.append(el('td',cell===null?'\u5408\u5e76\u4f4d\u7f6e':cell));table.append(tr);}const wrap=el('div',null,'source-table-wrap');wrap.append(table);detail.append(wrap);}}catch(e){if(sequence===readSequence)detail.append(el('p',e.message,'source-warning'));}
- }
- async function render(){const filtered=items.filter(i=>(category.value==='all'||i.category===category.value)&&i.name.toLocaleLowerCase().includes(search.value.trim().toLocaleLowerCase()));count.textContent=filtered.length+' / '+items.length+' \u4efd';const key=JSON.stringify([items,selected,category.value,search.value]);if(key!==listKey){listKey=key;list.replaceChildren();for(const item of filtered){const latest=item.versions.at(-1),row=el('button',null,'library-row');row.setAttribute('aria-current',String(item.id===selected));row.append(el('strong',item.name),el('span',CATEGORIES[item.category]||item.category),el('span','v'+latest.version+' \u00b7 '+states[latest.reading?.state]),el('span',Math.ceil(latest.bytes/1024)+' KB'));row.onclick=()=>{selected=item.id;version=latest.version;unitIndex=0;detailKey='';void render();};list.append(row);}if(!filtered.length)list.append(el('section',items.length?'\u6ca1\u6709\u7b26\u5408\u7b5b\u9009\u7684\u8d44\u6599':'\u4ece\u4f01\u4e1a\u8d44\u8d28\u3001\u4eba\u5458\u3001\u4ea7\u54c1\u6216\u6848\u4f8b\u5f00\u59cb\uff0c\u5bfc\u5165\u7b2c\u4e00\u4efd\u8d44\u6599\u3002','library-empty'));}layout.classList.toggle('has-detail',!!selected);const keyDetail=JSON.stringify([selected,version,unitIndex,items.find(i=>i.id===selected)]);if(keyDetail!==detailKey){detailKey=keyDetail;await showDetail();}}
- async function load(){items=(await request('GET','/items')).items;await render();schedule();}
- async function act(fn){if(busy)return;busy=true;add.disabled=true;try{await fn();}catch(e){say(e.message);}finally{busy=false;add.disabled=false;}}
- add.onclick=()=>{target=null;intakeTitle.textContent='\u5bfc\u5165\u4f01\u4e1a\u8d44\u6599';upload.multiple=true;uploadCategory.disabled=false;if(category.value!=='all')uploadCategory.value=category.value;intake.hidden=false;};cancel.onclick=()=>{intake.hidden=true;target=null;};
- upload.onchange=()=>void act(async()=>{const files=[...upload.files];if(!files.length)return;upload.disabled=true;try{for(const file of files){if(file.size>20*1024*1024)throw Error('\u6587\u4ef6\u8d85\u8fc7 20 MB');say('\u6b63\u5728\u5bfc\u5165 '+file.name);const bytes=new Uint8Array(await file.arrayBuffer());let binary='';for(let at=0;at<bytes.length;at+=32768)binary+=String.fromCharCode(...bytes.subarray(at,at+32768));const item=await request('POST','/items',{name:file.name,category:uploadCategory.value,base64:btoa(binary),...(target?{id:target.id,expectedVersion:target.versions.length}:{})});selected=item.id;version=item.versions.at(-1).version;unitIndex=0;await load();}intake.hidden=true;say('\u5bfc\u5165\u5df2\u4fdd\u5b58\uff0c\u6b63\u6587\u8bfb\u53d6\u5728\u540e\u53f0\u7ee7\u7eed\uff1b\u53ef\u79bb\u5f00\u672c\u9875\u3002');}finally{upload.disabled=false;upload.value='';}});
- refresh.onclick=()=>void load().catch(e=>say(e.message));category.onchange=search.oninput=()=>void render();document.addEventListener('visibilitychange',()=>{if(document.hidden)clearTimeout(timer);else void load().catch(e=>say(e.message));});window.addEventListener('pagehide',()=>{stopped=true;clearTimeout(timer);});await load();return {refresh:load,get items(){return items;}};
+const el = (tag, text, cls) => {
+  const n = document.createElement(tag);
+  if (text != null) n.textContent = text;
+  if (cls) n.className = cls;
+  return n;
+};
+export const CATEGORIES = {
+  qualification: '\u4f01\u4e1a\u8d44\u8d28',
+  staff: '\u4eba\u5458\u4e0e\u62df\u6295\u5165\u4eba\u5458',
+  product: '\u4f01\u4e1a\u4ea7\u54c1',
+  solution: '\u65b9\u6848\u8d44\u6599',
+  case: '\u9879\u76ee\u6848\u4f8b',
+};
+const states = {
+  queued: '\u7b49\u5f85\u8bfb\u53d6',
+  running: '\u6b63\u5728\u8bfb\u53d6',
+  completed: '\u539f\u6587\u5df2\u4fdd\u5b58',
+  failed: '\u8bfb\u53d6\u672a\u5b8c\u6210',
+};
+export async function mountLibrary(bridge, root) {
+  const request = async (method, path, body) => {
+    const r = await bridge.request(method, path, body);
+    if (!r.ok) throw new Error(r.error?.message || 'Library request failed');
+    return r.body;
+  };
+  const header = el('header', null, 'library-heading'),
+    intro = el('div');
+  intro.append(
+    el('p', '\u6807\u4e66\u65b9\u6848\u667a\u80fd\u4f53', 'eyebrow'),
+    el('h1', '\u77e5\u8bc6\u8d44\u6599'),
+    el(
+      'p',
+      '\u4fdd\u5b58\u4f01\u4e1a\u6750\u6599\uff0c\u5728\u4e0d\u540c\u6807\u4e66\u4e2d\u6309\u7248\u672c\u9009\u7528\u3002',
+      'muted',
+    ),
+  );
+  const add = el('button', '\u5bfc\u5165\u8d44\u6599', 'primary');
+  header.append(intro, add);
+  const toolbar = el('div', null, 'library-toolbar'),
+    category = el('select'),
+    search = el('input'),
+    refresh = el('button', '\u5237\u65b0');
+  category.setAttribute('aria-label', '\u8d44\u6599\u5206\u7c7b');
+  category.append(new Option('\u5168\u90e8\u5206\u7c7b', 'all'));
+  for (const [value, name] of Object.entries(CATEGORIES)) category.append(new Option(name, value));
+  search.placeholder = '\u641c\u7d22\u8d44\u6599';
+  search.setAttribute('aria-label', '\u641c\u7d22\u8d44\u6599');
+  const count = el('span');
+  toolbar.append(category, search, count, refresh);
+  const intake = el('section', null, 'library-intake');
+  intake.hidden = true;
+  const uploadCategory = el('select');
+  uploadCategory.setAttribute('aria-label', '\u5bfc\u5165\u5206\u7c7b');
+  for (const [value, name] of Object.entries(CATEGORIES))
+    uploadCategory.append(new Option(name, value));
+  const upload = el('input');
+  upload.type = 'file';
+  upload.multiple = true;
+  upload.accept = '.pdf,.docx,.md';
+  upload.setAttribute('aria-label', '\u9009\u62e9\u8d44\u6599\u6587\u4ef6');
+  const cancel = el('button', '\u53d6\u6d88'),
+    intakeTitle = el('h2', '\u5bfc\u5165\u4f01\u4e1a\u8d44\u6599');
+  intake.append(
+    intakeTitle,
+    el(
+      'p',
+      '\u652f\u6301 PDF\u3001DOCX \u548c Markdown\uff0c\u6bcf\u4efd\u6700\u5927 20 MB\u3002\u539f\u4ef6\u52a0\u5bc6\u4fdd\u5b58\uff0c\u8bfb\u53d6\u5728\u540e\u53f0\u7ee7\u7eed\u3002\u672c\u6b65\u4e0d\u8c03\u7528\u6a21\u578b\u3002',
+    ),
+    uploadCategory,
+    upload,
+    cancel,
+  );
+  const status = el('p', null, 'library-status');
+  status.setAttribute('role', 'status');
+  const layout = el('div', null, 'library-layout'),
+    list = el('div', null, 'library-list'),
+    detail = el('aside', null, 'library-detail');
+  detail.setAttribute('aria-label', '\u8d44\u6599\u539f\u6587\u4e0e\u7248\u672c');
+  layout.append(list, detail);
+  root.append(header, toolbar, intake, status, layout);
+  let items = [],
+    selected = null,
+    version = null,
+    unitIndex = 0,
+    target = null,
+    busy = false,
+    stopped = false,
+    timer,
+    detailKey = '',
+    listKey = '',
+    readSequence = 0;
+  const say = (text) => (status.textContent = text);
+  function schedule() {
+    clearTimeout(timer);
+    if (
+      !stopped &&
+      !document.hidden &&
+      items.some((i) => i.versions.some((v) => ['queued', 'running'].includes(v.reading?.state)))
+    )
+      timer = setTimeout(
+        () =>
+          void load().catch((e) => {
+            say(e.message);
+            schedule();
+          }),
+        2000,
+      );
+  }
+  async function showDetail() {
+    const sequence = ++readSequence;
+    detail.replaceChildren();
+    const item = items.find((i) => i.id === selected);
+    if (!item) {
+      detail.hidden = true;
+      return;
+    }
+    detail.hidden = false;
+    const v = item.versions.find((v) => v.version === version) || item.versions.at(-1);
+    version = v.version;
+    const top = el('div', null, 'library-detail-heading'),
+      close = el('button', '\u5173\u95ed\u8d44\u6599');
+    close.onclick = () => {
+      selected = null;
+      detailKey = '';
+      void render();
+    };
+    top.append(el('h2', item.name), close);
+    detail.append(top, el('p', CATEGORIES[item.category] || item.category, 'muted'));
+    const versions = el('select');
+    versions.setAttribute('aria-label', '\u8d44\u6599\u7248\u672c');
+    for (const value of [...item.versions].reverse())
+      versions.append(
+        new Option(
+          'v' + value.version + ' \u00b7 ' + new Date(value.addedAt).toLocaleString(),
+          String(value.version),
+        ),
+      );
+    versions.value = String(v.version);
+    versions.onchange = () => {
+      version = Number(versions.value);
+      unitIndex = 0;
+      detailKey = '';
+      void render();
+    };
+    const update = el('button', '\u6dfb\u52a0\u65b0\u7248\u672c');
+    update.onclick = () => {
+      if (busy) return;
+      target = item;
+      uploadCategory.value = item.category;
+      uploadCategory.disabled = true;
+      upload.multiple = false;
+      intakeTitle.textContent = '\u6dfb\u52a0\u65b0\u7248\u672c \u00b7 ' + item.name;
+      intake.hidden = false;
+    };
+    detail.append(
+      versions,
+      update,
+      el(
+        'p',
+        (states[v.reading?.state] || '\u5f85\u8bfb\u53d6') +
+          ' \u00b7 ' +
+          (v.reading?.units || 0) +
+          ' \u4e2a\u539f\u6587\u5757',
+        'library-reading-state',
+      ),
+      el('p', 'SHA256 ' + v.hash, 'library-hash'),
+    );
+    if (!v.reading || v.reading.state === 'failed') {
+      const retry = el('button', '\u91cd\u8bd5\u8bfb\u53d6');
+      retry.onclick = () =>
+        void act(async () => {
+          await request('POST', '/items/' + item.id + '/versions/' + v.version + '/retry');
+          await load();
+        });
+      detail.append(
+        el(
+          'p',
+          v.reading?.error || '\u6b63\u6587\u5feb\u7167\u5c1a\u672a\u5efa\u7acb',
+          'source-warning',
+        ),
+        retry,
+      );
+    }
+    for (const flag of v.reading?.flags || []) detail.append(el('p', flag, 'source-warning'));
+    if (!v.reading?.units) return;
+    unitIndex = Math.min(unitIndex, v.reading.units - 1);
+    const pages = el('select');
+    pages.setAttribute('aria-label', '\u539f\u6587\u9875\u6216\u7ed3\u6784\u5757');
+    for (let i = 0; i < v.reading.units; i++)
+      pages.append(new Option('\u539f\u6587\u5757 ' + (i + 1), String(i)));
+    pages.value = String(unitIndex);
+    pages.onchange = () => {
+      unitIndex = Number(pages.value);
+      detailKey = '';
+      void render();
+    };
+    detail.append(pages);
+    try {
+      const unit = await request(
+        'GET',
+        '/items/' + item.id + '/versions/' + v.version + '/units/' + unitIndex,
+      );
+      if (sequence !== readSequence) return;
+      detail.append(
+        el(
+          'p',
+          unit.location.page
+            ? '\u7b2c ' + unit.location.page + ' \u9875'
+            : '\u7ed3\u6784\u5757 ' + (unitIndex + 1),
+          'eyebrow',
+        ),
+        el(
+          'pre',
+          unit.text ||
+            '\u8be5\u5757\u65e0\u53ef\u63d0\u53d6\u6587\u5b57\uff0c\u9700\u4eba\u5de5\u6838\u5bf9',
+          'library-source',
+        ),
+      );
+      for (const t of unit.tables || []) {
+        const table = el('table', null, 'reading-grid');
+        for (const row of t.rows) {
+          const tr = el('tr');
+          for (const cell of row)
+            tr.append(el('td', cell === null ? '\u5408\u5e76\u4f4d\u7f6e' : cell));
+          table.append(tr);
+        }
+        const wrap = el('div', null, 'source-table-wrap');
+        wrap.append(table);
+        detail.append(wrap);
+      }
+    } catch (e) {
+      if (sequence === readSequence) detail.append(el('p', e.message, 'source-warning'));
+    }
+  }
+  async function render() {
+    const filtered = items.filter(
+      (i) =>
+        (category.value === 'all' || i.category === category.value) &&
+        i.name.toLocaleLowerCase().includes(search.value.trim().toLocaleLowerCase()),
+    );
+    count.textContent = filtered.length + ' / ' + items.length + ' \u4efd';
+    const key = JSON.stringify([items, selected, category.value, search.value]);
+    if (key !== listKey) {
+      listKey = key;
+      list.replaceChildren();
+      for (const item of filtered) {
+        const latest = item.versions.at(-1),
+          row = el('button', null, 'library-row');
+        row.setAttribute('aria-current', String(item.id === selected));
+        row.append(
+          el('strong', item.name),
+          el('span', CATEGORIES[item.category] || item.category),
+          el('span', 'v' + latest.version + ' \u00b7 ' + states[latest.reading?.state]),
+          el('span', Math.ceil(latest.bytes / 1024) + ' KB'),
+        );
+        row.onclick = () => {
+          selected = item.id;
+          version = latest.version;
+          unitIndex = 0;
+          detailKey = '';
+          void render();
+        };
+        list.append(row);
+      }
+      if (!filtered.length)
+        list.append(
+          el(
+            'section',
+            items.length
+              ? '\u6ca1\u6709\u7b26\u5408\u7b5b\u9009\u7684\u8d44\u6599'
+              : '\u4ece\u4f01\u4e1a\u8d44\u8d28\u3001\u4eba\u5458\u3001\u4ea7\u54c1\u6216\u6848\u4f8b\u5f00\u59cb\uff0c\u5bfc\u5165\u7b2c\u4e00\u4efd\u8d44\u6599\u3002',
+            'library-empty',
+          ),
+        );
+    }
+    layout.classList.toggle('has-detail', !!selected);
+    const keyDetail = JSON.stringify([
+      selected,
+      version,
+      unitIndex,
+      items.find((i) => i.id === selected),
+    ]);
+    if (keyDetail !== detailKey) {
+      detailKey = keyDetail;
+      await showDetail();
+    }
+  }
+  async function load() {
+    items = (await request('GET', '/items')).items;
+    await render();
+    schedule();
+  }
+  async function act(fn) {
+    if (busy) return;
+    busy = true;
+    add.disabled = true;
+    try {
+      await fn();
+    } catch (e) {
+      say(e.message);
+    } finally {
+      busy = false;
+      add.disabled = false;
+    }
+  }
+  add.onclick = () => {
+    target = null;
+    intakeTitle.textContent = '\u5bfc\u5165\u4f01\u4e1a\u8d44\u6599';
+    upload.multiple = true;
+    uploadCategory.disabled = false;
+    if (category.value !== 'all') uploadCategory.value = category.value;
+    intake.hidden = false;
+  };
+  cancel.onclick = () => {
+    intake.hidden = true;
+    target = null;
+  };
+  upload.onchange = () =>
+    void act(async () => {
+      const files = [...upload.files];
+      if (!files.length) return;
+      upload.disabled = true;
+      try {
+        for (const file of files) {
+          if (file.size > 20 * 1024 * 1024) throw new Error('\u6587\u4ef6\u8d85\u8fc7 20 MB');
+          say('\u6b63\u5728\u5bfc\u5165 ' + file.name);
+          const bytes = new Uint8Array(await file.arrayBuffer());
+          let binary = '';
+          for (let at = 0; at < bytes.length; at += 32768)
+            binary += String.fromCharCode(...bytes.subarray(at, at + 32768));
+          const item = await request('POST', '/items', {
+            name: file.name,
+            category: uploadCategory.value,
+            base64: btoa(binary),
+            ...(target ? { id: target.id, expectedVersion: target.versions.length } : {}),
+          });
+          selected = item.id;
+          version = item.versions.at(-1).version;
+          unitIndex = 0;
+          await load();
+        }
+        intake.hidden = true;
+        say(
+          '\u5bfc\u5165\u5df2\u4fdd\u5b58\uff0c\u6b63\u6587\u8bfb\u53d6\u5728\u540e\u53f0\u7ee7\u7eed\uff1b\u53ef\u79bb\u5f00\u672c\u9875\u3002',
+        );
+      } finally {
+        upload.disabled = false;
+        upload.value = '';
+      }
+    });
+  refresh.onclick = () => void load().catch((e) => say(e.message));
+  category.onchange = search.oninput = () => void render();
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) clearTimeout(timer);
+    else void load().catch((e) => say(e.message));
+  });
+  window.addEventListener('pagehide', () => {
+    stopped = true;
+    clearTimeout(timer);
+  });
+  await load();
+  return {
+    refresh: load,
+    get items() {
+      return items;
+    },
+  };
 }

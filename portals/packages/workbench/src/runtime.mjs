@@ -21,7 +21,7 @@ export class StageNavigation {
   }
 
   select(section) {
-    if (!STAGES.some(stage => stage.id === section)) return false;
+    if (!STAGES.some((stage) => stage.id === section)) return false;
     this.current = section;
     this.replay();
     return true;

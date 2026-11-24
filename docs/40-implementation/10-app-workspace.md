@@ -79,7 +79,7 @@ do not establish production storage, task execution or export readiness.
 Desktop packaging currently uses the existing local RUYIN CLI build:
 
 ```bash
-node portals/desktop/build.mjs /absolute/path/to/vxture-ruyin [OUTPUT]
+node portals/desktop/build.mjs /absolute/path/to/vxture-ruyin
 ```
 
 It produces an explicitly unsigned candidate, not a released installation.
