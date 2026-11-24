@@ -49,6 +49,9 @@ the service-role connection and provisioning tables, and Redis PING. It does
 not mint tokens, spend credits, send deliveries or claim that upstream grants
 and real-user flows have passed. The product deployment verifier must require
 both liveness and readiness before reporting success or pruning old images.
+Rollback uses the deployment script from the checked-out target revision, so
+the readiness requirement cannot incorrectly reject a restored pre-readiness
+image. It does not replace the installed current-release deployment script.
 
 This follow-up is local product work. It does not activate public routing,
 change platform configuration or replace the remaining real-account acceptance.

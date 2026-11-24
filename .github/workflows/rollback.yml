@@ -113,6 +113,11 @@ jobs:
           deploy_dir="${DEPLOY_DIR:-/srv/md0/${PRODUCT_CODE}/deploy}"
           ssh_opts=(-i ~/.ssh/deploy_key -p "$port" -o ServerAliveInterval=30 -o ServerAliveCountMax=20 -o ConnectTimeout=30)
 
+          # The checked-out target owns its verifier. An older image may not
+          # expose readiness yet, so the currently installed verifier is wrong.
+          scp -i ~/.ssh/deploy_key -P "$port" -o ConnectTimeout=30 \
+            deploy/deploy.sh "$DEPLOY_USER@$DEPLOY_HOST:$deploy_dir/rollback-deploy.sh"
+
           cat > /tmp/rollback.sh <<'REMOTE_SCRIPT'
           set -euo pipefail
           cd "$REPO_DIR"
@@ -126,8 +131,8 @@ jobs:
             printf '%s' "$ALIYUN_ACR_PASSWORD" | timeout 45 docker login "$ALIYUN_ACR_REGISTRY" -u "$ALIYUN_ACR_USERNAME" --password-stdin || true
           fi
           echo "[rollback] recreating ${PRODUCT_CODE}-app at $IMAGE_TAG"
-          bash deploy.sh start
-          bash deploy.sh verify
+          bash rollback-deploy.sh start
+          bash rollback-deploy.sh verify
           REMOTE_SCRIPT
           scp -i ~/.ssh/deploy_key -P "$port" -o ConnectTimeout=30 /tmp/rollback.sh "$DEPLOY_USER@$DEPLOY_HOST:/tmp/rollback.sh"
 
