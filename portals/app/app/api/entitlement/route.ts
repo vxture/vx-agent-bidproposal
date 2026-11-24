@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import type { AccessState } from "../../access/types";
+import { getBidPlanPolicy } from "../../entitlement/bid-plan-policy";
 import { GET as readAccess } from "../access/route";
 
 // GET /api/entitlement (C2 verification channel): resolve the current session's
@@ -12,7 +13,11 @@ export async function GET(): Promise<Response> {
   const decision = await access.json() as AccessState;
   const headers = { "cache-control": "private, no-store" };
   if (decision.status === "authenticated") {
-    return NextResponse.json({ entitlement: decision.entitlement, gates: decision.gates }, { headers });
+    return NextResponse.json({
+      entitlement: decision.entitlement,
+      gates: decision.gates,
+      bidPolicy: getBidPlanPolicy(decision.entitlement),
+    }, { headers });
   }
   const status = decision.status === "unavailable" || decision.status === "unconfigured" ? 503
     : decision.status === "unassigned" || decision.status === "inactive-account" || decision.status === "no-workspace" ? 403
