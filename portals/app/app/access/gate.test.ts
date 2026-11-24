@@ -26,7 +26,7 @@ import { dirname, resolve as resolvePath } from "node:path";
 const require_ = createRequire(import.meta.url);
 
 /** Tokens bidproposal defines for itself. Everything else must come from the DS. */
-const OURS = /^--vx-gate/;
+const OURS = /^--bidproposal-/;
 
 /** Read a CSS file and every file it @imports, depth-first, once each. */
 function readCssGraph(entry: string, seen = new Set<string>()): string {

@@ -9,7 +9,7 @@ import { ProductGate } from "../access/product-gate";
 // re-runs, and the visitor lands inside with entitlement already resolved.
 // Middleware sends an unverified visitor here from anywhere in the product.
 export const metadata = {
-  title: `${BRAND.displayName} - 访问验证`,
+  title: `${BRAND.displayName} - \u8bbf\u95ee\u9a8c\u8bc1`,
 };
 
 export default async function GatePage({
@@ -24,11 +24,5 @@ export default async function GatePage({
   // crafted `?from=` cannot turn the gate into an open redirect.
   const destination = safeReturnTo(typeof raw === "string" ? raw : null);
 
-  return (
-    <ProductGate
-      productName={BRAND.displayName}
-      destination={destination}
-      tagline="验证通过后将自动进入产品"
-    />
-  );
+  return <ProductGate destination={destination} />;
 }
