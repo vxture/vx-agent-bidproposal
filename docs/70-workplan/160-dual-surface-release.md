@@ -31,6 +31,26 @@ Do not create sync routes, tables, background jobs or disabled entry points.
 
 ## Corrected batches - 2026-11-25
 
+Current production checkpoint: v0.2.1 / f94b97a7 is deployed through the existing
+protected workflow, run 45505501220. Exact image digest:
+`sha256:661431a269a90e2d4b70a25f400d49d270b823ea4bd5e2881cd2fa228d2b58e9`.
+Health/readiness pass, anonymous runtime access returns 401, and original DB/
+Redis container identities are unchanged. The protected runtime key, encrypted
+volume, project originals and library versions are retained. No platform source
+or worker01 configuration changed. Earlier API/entry-only release statements
+below are dated history, not the current deployment state.
+
+The same real subscribed workspace has completed bounded source reading,
+background generation, source/scope verification (15 exact-match requirements),
+human confirmation, a reviewed two-chapter plan, both generated chapters and
+independent review of both chapters. Review found four honest source/gap issues;
+it did not fabricate a clean compliance result. A source-traceability correction
+produced a separate candidate and retained the first draft. Production layout
+generated a six-page DOCX/PDF snapshot, but browser download acceptance exposed
+an adapter path mismatch and remains a release gate. Isolated renderer/Redis
+tests are not substitutes for actual downloads. Desktop authentication, signed
+installation, comparison/OCR and complete plan-rule acceptance remain open.
+
 The owner identified the missing desktop host chrome in the B6.1 Web preview.
 Do not replace it with another invented navigation or editor. The complete
 baseline is [50-desktop-baseline.md](../40-implementation/50-desktop-baseline.md).
@@ -505,3 +525,20 @@ so its shared workflow projection restores saved times/progress after returning
 from the library or directly loading settings. No replacement state calculation
 is added to the Web shell. Full live generation/review/export and signed desktop
 acceptance are still pending until the follow-up passes.
+
+## B6.7 production download follow-up, 2026-11-25
+
+The first real browser download failed before navigation: the server issued
+`/api/workbench/downloads/<ticket>` while the shared desktop-derived UI correctly
+expected its environment-neutral `/downloads/<ticket>` contract. Normalize the
+successful issued response only in the Web transport and retain an exact map to
+the server-issued same-origin URL. Keep the shared pages, server's scoped
+single-use validation and desktop adapter unchanged. Invalid responses, unrelated
+requests and foreign/modified URLs must never authorize a download.
+
+Local acceptance: 289 product, 105 shared/adapter and three desktop tests pass;
+workspace type checks and the standalone build pass. The candidate still needs
+protected PR/main gates, Bid-only release and actual three-format downloads plus
+page-by-page visual inspection. Keep V1 and subsequent outputs as real historical
+snapshots, mark changed sources/reports stale, and never turn pending proof into
+an automatically cleared finding.

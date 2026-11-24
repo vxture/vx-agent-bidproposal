@@ -6,18 +6,18 @@ governance base that every product repo copied from here inherits unchanged.
 
 ## What bidproposal is
 
-`bidproposal` is the platform product code of 标书方案智能体 (Proposal Writing
-Agent; `product.products` row seeded by the platform on 2026-09-01,
-`release_stage=developing`). This repo is its **cloud capability surface**: the
-confidential service that the RUYIN desktop runtime (a zero-secret public
-client) calls for model turns and for Runos-distributed skills (vxture-ruyin
-ADR-009 / ADR-020; this repo's ADR-001). Its initial API release `v0.1.0` is
-deployed on worker02 and its product login/signing configuration is registered.
-Public routing, real-user integration and full Web/desktop delivery remain
-unaccepted. Current evidence and boundaries are in
-`docs/70-workplan/160-dual-surface-release.md`; older template production claims
-below are not proof of Bid business readiness. Do not modify platform code or
-worker01 configuration to integrate this product.
+`bidproposal` is one Proposal Writing Agent product with a Web application and
+a separately packaged RUYIN desktop surface. Its complete original project UI,
+six-stage sidebar and business panels are shared, with environment adapters for
+identity, files, durable storage, jobs and document layout. The Web application
+is live at https://bidproposal.ruyin.work/ on worker02, currently v0.2.1.
+It uses its own product session, C2/member checks and confidential provider
+credentials. RUYIN remains a zero-secret host; its session is not Bid identity.
+Desktop product authentication and signed install/update acceptance remain open.
+Current evidence and remaining gates are in
+`docs/70-workplan/160-dual-surface-release.md`. Do not modify platform code or
+worker01 configuration to integrate this product. Cross-environment project
+synchronization is outside this release and must not appear in public UI.
 
 The template's three platform channels (C1 login, C2 entitlement, C3
 provisioning), the guardrails, CI and release chain are kept as-is; the

@@ -6,8 +6,11 @@ B6.2 freezes the original host plus product application before Web migration.
 Do not reuse the rejected independent editor or horizontal navigation preview.
 B6.3 runtime verification is recorded in
 [60-runtime-adaptation-preflight.md](../40-implementation/60-runtime-adaptation-preflight.md).
-Published-package, shared-host-UI, desktop-identity and layout-fidelity gates
-remain open before their respective implementation batches.
+The public UI/Node packages 0.2.2 and Linux layout prerequisites are resolved.
+The complete Web workbench is deployed as v0.2.1; live six-stage acceptance is
+in progress. Desktop product identity/signing and commercial feature gaps remain
+open. Use the current dated checkpoint in the release tracker, rather than the
+historical prerequisite statements, to decide the next batch.
 
 vxtpl is built incrementally. Each batch is one PR with machine-checked
 acceptance (self-rectify runbook batches A-G). Authority for the plan: platform

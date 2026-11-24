@@ -4,6 +4,20 @@ Start here if you are an AI agent working in this repo.
 
 ## What this repo is
 
+Current checkpoint, 2026-11-25: the complete shared Web workbench is live at
+https://bidproposal.ruyin.work/, v0.2.1 / f94b97a7 (PR #22). Its durable encrypted
+projects, uploaded originals, versioned library and background jobs survived the
+v0.2.0 upgrade. Real own-product generation and source verification produced 15
+source-matched requirements; human confirmation and the two-chapter planning
+checkpoint passed. Full chapter/review/export acceptance is still in progress.
+Published RUYIN UI/Node adapters 0.2.2 are consumed from the registry. The package
+and layout prerequisites described below were historical B6.3 observations;
+they no longer block Web delivery. Desktop product identity/signing and the
+independent comparison/OCR gaps remain explicit gates. Never substitute a
+Workbench token for Bid identity. Keep original dirty checkouts and project data.
+Read the current release tracker first; older template and milestone statements
+below must not be treated as present production state.
+
 This is `bidproposal`, the platform product code of 标书方案智能体 (Proposal
 Writing Agent). The repo is that product's **cloud capability surface** for the
 RUYIN desktop runtime (ADR-001 of this repo; vxture-ruyin ADR-009 / ADR-020):
