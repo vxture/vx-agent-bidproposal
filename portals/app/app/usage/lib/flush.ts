@@ -1,7 +1,10 @@
 import { getUsageStore, type UsageRow, type UsageStore } from "./store";
-import { getPlatformClientConfig, type PlatformClientConfig } from "../../entitlement/platform-client";
+import { BRAND } from "@bidproposal/shared/brand";
+import type { PlatformClientConfig } from "../../entitlement/platform-client";
 import { getEntitlementResolver } from "../../entitlement/resolver";
 import { assertInternalTarget } from "../../lib/internal-target";
+import { getS2SConfig, mintS2SToken, PLATFORM_AUDIENCE } from "../../lib/s2s-token";
+import { isDeployedStage } from "../../lib/deploy-stage";
 
 // Async flush job: drain buffered counter usage and report to the platform
 // consume service (the single writer).
@@ -74,7 +77,8 @@ export async function flushUsage(opts: FlushOptions = {}): Promise<FlushSummary>
         // Recorded but not covered: refresh entitlement so the UI's quota view
         // catches up within a click instead of a TTL.
         gated++;
-        (opts.onGated ?? ((ws: string) => getEntitlementResolver().invalidate(ws)))(row.workspaceId);
+        if (opts.onGated) opts.onGated(row.workspaceId);
+        else if (!isDeployedStage()) getEntitlementResolver().invalidate(row.workspaceId);
       }
     } else {
       retried++; // 4xx/5xx -> not recorded, stays buffered
@@ -91,14 +95,18 @@ export async function flushUsage(opts: FlushOptions = {}): Promise<FlushSummary>
  * next to the event for two-sided reconciliation, and the idempotency key is
  * the one id both sides already share.
  */
-export function makePlatformConsume(cfg: PlatformClientConfig): ConsumeFn {
+export function makePlatformConsume(
+  cfg: Pick<PlatformClientConfig, "baseUrl" | "product">,
+  mint: (workspaceId: string) => Promise<string> = workspaceId => mintS2SToken(PLATFORM_AUDIENCE, { workspaceId }),
+): ConsumeFn {
   return async (row) => {
+    if (cfg.product !== BRAND.productCode) throw new Error("Usage product mismatch");
     const url = assertInternalTarget(`${cfg.baseUrl.replace(/\/$/, "")}/usage/consume`);
     const res = await fetch(url, {
       method: "POST",
       headers: {
         "content-type": "application/json",
-        "x-vxture-internal-auth": cfg.authToken,
+        authorization: `Bearer ${await mint(row.workspaceId)}`,
         "x-request-id": row.idempotencyKey,
       },
       body: JSON.stringify({
@@ -110,6 +118,8 @@ export function makePlatformConsume(cfg: PlatformClientConfig): ConsumeFn {
         ...(row.endUserId ? { end_user_id: row.endUserId } : {}),
       }),
       cache: "no-store",
+      redirect: "error",
+      signal: AbortSignal.timeout(10_000),
     });
     const body = (await res.json().catch(() => undefined)) as ConsumeBody | undefined;
     return { status: res.status, body };
@@ -118,7 +128,7 @@ export function makePlatformConsume(cfg: PlatformClientConfig): ConsumeFn {
 
 /** Consume caller from env config, or null when the platform is not configured (offline). */
 function defaultConsume(): ConsumeFn | null {
-  const cfg = getPlatformClientConfig();
-  if (!cfg) return null;
-  return makePlatformConsume(cfg);
+  const baseUrl = process.env.PLATFORM_API_URL;
+  if (!baseUrl || !getS2SConfig()) return null;
+  return makePlatformConsume({ baseUrl, product: BRAND.productCode });
 }
