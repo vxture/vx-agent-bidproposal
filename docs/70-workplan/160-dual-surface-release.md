@@ -3,7 +3,58 @@
 Owner direction, 2026-11-24: one agent product, `bidproposal`, with two
 surfaces. Platform integration is configuration only through existing
 product onboarding and commerce pages. Do not change platform source code
-or server environment variables. Preserve the current platform contract.
+or worker01 configuration. Bid's own worker02 runtime configuration is allowed.
+Preserve the current platform contract.
+
+## Current checkpoint - 2026-11-24
+
+This checkpoint supersedes the historical prerequisites recorded below.
+
+- Product API `v0.1.0`, commit `cdafcc002e1de9be9f9555d03e0396612ddc94f9`,
+  is deployed on worker02 through the protected product workflow. The pinned
+  `db-init` workflow applied the existing baseline and three increments.
+  The app connects as `bidproposal_svc`, without superuser/create-db/create-role
+  privileges. Redis, database access, contract, anonymous refusal, template
+  exclusion and signature/tamper checks passed on the product host.
+- Opera has the enabled confidential Bid client, exact HTTPS callbacks, PKCE,
+  back-channel logout and Webhook signing. Upstream registration is saved.
+  The owner granted Bid the current 12 Atlas routes and 879 Runos capabilities
+  with read risk ceiling; no RUYIN provider execution permission was added.
+- Starter, Pro, Business and Enterprise v1 are published and public. Enterprise
+  remains contact-sales with no checkout price rows. Free v1 is draft. Annual
+  Starter/Pro/Business prices equal ten monthly payments. The product exposes
+  platform plan limits but proposal/comparison business accounting is unfinished.
+- `bidproposal.ruyin.work` resolves to the shared edge. Its existing wildcard
+  is configured, but the generated live map still lacks Bid. The established
+  platform `sync-product-edge` workflow previously served CoSpace; saving the
+  Opera record does not automatically run it. The owner continues to prohibit
+  worker01 configuration changes, including indirect execution of that workflow.
+  No custom edge script or product-specific vhost is to be installed.
+- Public HTTPS, real login/C2/assignment, full-logout behavior and an actual
+  signed lifecycle delivery remain unverified. No fake subscription, usage or
+  lifecycle event may be used to mark those checks complete.
+- The Web front door is a developing preview. Desktop 1.17.2 is a local unsigned
+  candidate with 99 passing tests; released-host compatibility and signing remain
+  pending. Neither package readiness nor API liveness proves a complete business
+  application. Ports were assigned by the owner; the unique external registry
+  still needs its original account-verification block resolved.
+
+## Product readiness follow-up
+
+Add the standard optional `GET /api/ready` from platform standard 025, separate
+from the unchanged dependency-free `/api/health`. It reports fixed check status
+words plus shared build identity, with no private endpoints, credentials,
+customer records or raw errors. Readiness validates runtime configuration,
+the service-role connection and provisioning tables, and Redis PING. It does
+not mint tokens, spend credits, send deliveries or claim that upstream grants
+and real-user flows have passed. The product deployment verifier must require
+both liveness and readiness before reporting success or pruning old images.
+Rollback uses the deployment script from the checked-out target revision, so
+the readiness requirement cannot incorrectly reject a restored pre-readiness
+image. It does not replace the installed current-release deployment script.
+
+This follow-up is local product work. It does not activate public routing,
+change platform configuration or replace the remaining real-account acceptance.
 
 | Batch | Scope | Acceptance |
 | --- | --- | --- |
