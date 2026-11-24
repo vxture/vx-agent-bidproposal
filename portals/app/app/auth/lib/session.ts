@@ -1,6 +1,10 @@
 import type { OidcConfig } from "./config";
 import { verifyToken, refreshTokens } from "./oidc";
-import { getSession, putSession, type RpSession } from "./session-store";
+import {
+  getSession,
+  replaceSessionIfCurrent,
+  type RpSession,
+} from "./session-store";
 import { toAuthUser, type AccessClaims, type AuthUser } from "./claims";
 
 // Per-request auth (080-rp section 2.6 / 2.9): rpsid -> session -> silent refresh
@@ -10,7 +14,10 @@ import { toAuthUser, type AccessClaims, type AuthUser } from "./claims";
 
 const REFRESH_SKEW_SECONDS = 60;
 
-export async function getAuthUser(cfg: OidcConfig, rpsid: string): Promise<AuthUser | null> {
+export async function getAuthUser(
+  cfg: OidcConfig,
+  rpsid: string,
+): Promise<AuthUser | null> {
   return (await getAuthContext(cfg, rpsid))?.user ?? null;
 }
 
@@ -23,7 +30,29 @@ export async function getAuthUser(cfg: OidcConfig, rpsid: string): Promise<AuthU
  * token cannot be reconstructed from AuthUser. It stays server-side; nothing
  * here ever puts it on a response.
  */
+const resolutions = new Map<
+  string,
+  Promise<{ user: AuthUser; accessToken: string; idToken: string } | null>
+>();
+
+/** Coalesce concurrent reads while a rotating refresh token is in flight. */
 export async function getAuthContext(
+  cfg: OidcConfig,
+  rpsid: string,
+): Promise<{ user: AuthUser; accessToken: string; idToken: string } | null> {
+  const key = cfg.clientId + ":" + rpsid;
+  const pending = resolutions.get(key);
+  if (pending) return pending;
+  const next = resolveAuthContext(cfg, rpsid);
+  resolutions.set(key, next);
+  try {
+    return await next;
+  } finally {
+    if (resolutions.get(key) === next) resolutions.delete(key);
+  }
+}
+
+async function resolveAuthContext(
   cfg: OidcConfig,
   rpsid: string,
 ): Promise<{ user: AuthUser; accessToken: string; idToken: string } | null> {
@@ -31,7 +60,10 @@ export async function getAuthContext(
   if (!session) return null;
 
   const now = Math.floor(Date.now() / 1000);
-  if (session.accessExpiresAt - now <= REFRESH_SKEW_SECONDS && session.refreshToken) {
+  if (
+    session.accessExpiresAt - now <= REFRESH_SKEW_SECONDS &&
+    session.refreshToken
+  ) {
     session = await tryRefresh(cfg, rpsid, session);
     if (!session) return null; // refresh failed -> session invalid
   }
@@ -42,7 +74,11 @@ export async function getAuthContext(
   } catch {
     return null;
   }
-  return { user: toAuthUser(claims), accessToken: session.accessToken, idToken: session.idToken };
+  return {
+    user: toAuthUser(claims),
+    accessToken: session.accessToken,
+    idToken: session.idToken,
+  };
 }
 
 async function tryRefresh(
@@ -58,10 +94,18 @@ async function tryRefresh(
       idToken: tokens.id_token ?? session.idToken,
       // rotation: the IdP returns a fresh refresh token; store it, drop the old
       refreshToken: tokens.refresh_token ?? session.refreshToken,
-      accessExpiresAt: Math.floor(Date.now() / 1000) + (tokens.expires_in ?? 300),
+      accessExpiresAt:
+        Math.floor(Date.now() / 1000) + (tokens.expires_in ?? 300),
     };
-    await putSession(cfg.clientId, rpsid, next, cfg.sessionTtlSeconds);
-    return next;
+    return (await replaceSessionIfCurrent(
+      cfg.clientId,
+      rpsid,
+      session,
+      next,
+      cfg.sessionTtlSeconds,
+    ))
+      ? next
+      : null;
   } catch {
     // invalid_grant (expired/revoked/replayed) -> session is dead
     return null;

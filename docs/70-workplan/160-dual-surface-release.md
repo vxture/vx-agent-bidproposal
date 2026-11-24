@@ -398,3 +398,67 @@ The candidate parser verified openai.pdf 1.0.1 against live Runos: 2,517 content
 characters, two resources, verified skill-package-v1 digest. Local validation:
 275 tests, type checking and the standalone build passed. No Runos/platform
 source or server configuration is changed for this correction.
+
+## B6.5 complete Web host implementation scope
+
+Under the owner's current full completion/deployment authorization, implement
+`portals/app/app/workbench-server/**` and its API route handlers for the verified
+Bid product session, server-side org/workspace namespace, encrypted durable
+projects/documents/files, original runtime tasks/jobs/checkpoints and library.
+Use published `@vxture/ruyin-core`, `ruyin-node-runtime`, `ruyin-document` and
+`ruyin-workbench-ui` only; no private cross-repository app imports. Register
+product-owned server volume/master-key configuration on worker02 only, preserving
+all existing database/Redis/identity values. The server requires a configured key
+and exclusive process ownership; it must never generate a plaintext development
+master key or claim distributed storage support.
+
+Compose the existing shared UI in `portals/app/app/workbench/**` and the product
+entry/layout, preserving the original left workflow, states/times, project
+catalog, settings/files, library, task reviews and six Bid business panels.
+Build the existing product assets under `portals/app/public/workbench` with only
+a cookie/environment adapter; align the design-system dependency. Update manifests,
+lockfile, Next tracing/external packages, Docker reader/layout dependencies and
+product compose configuration as required. Keep entry/status pages and no public
+synchronization UI. Add authorization/scope/isolation/revision/recovery tests,
+actual standalone/installed-package checks, reader/layout fidelity and full
+workflow acceptance before product release.
+
+Each actual model call re-resolves the original own-product session and rechecks
+subject/org/workspace plus C2 and member assignment. Persist opaque RP session
+references only inside encrypted server records; never expose them, platform
+access tokens or provider credentials through business documents or client bundles.
+Workspaces derive exclusively from verified identity. No platform source,
+worker01 configuration, subscription identity or payment changes.
+
+## B6.4.2 / B6.5 implementation checkpoint, 2026-11-25
+
+RUYIN PR #314 extracted the original project presentation and PR #315 extracted
+its existing Node adapters. Both exact PR/main gates, CodeQL and Windows package
+checks passed. The existing packages-v0.2.2 workflow published six public packages
+from 36ce2c61. Bid installs those registry packages with integrity-locked versions;
+there is no cross-repository source override.
+
+The Web host composes the original sidebar, timestamps, project directory,
+settings/material selection, task checkpoints and six Bid panels. The actual
+standalone artifact passed synthetic own-product session/C2/seat checks,
+workspace isolation, cross-origin refusal, revision conflicts, file upload and
+private-record refusal. Browser checks opened the original reading panel and
+uploaded the P9 synthetic tender through project settings. The Node adapter's
+874 native integration tests and Web host's targeted cases preserve real context
+consent and human result review; results remain unavailable until those gates pass.
+
+The Linux layout adapter is product-owned. Isolated worker02 containers using
+only synthetic data generated the original P9 Markdown through the public renderer
+and template merger into six-page DOCX/PDF, with a refreshed TOC and no visible
+field commands. A second synthetic template verified all page-header placeholders
+and Page/NUMPAGES fields. Each page was rendered and inspected. Noto CJK/Carlito
+are installed under their open font licenses; no Windows fonts were copied.
+Layout and source-reading queues are bounded, and engine subprocesses receive no
+product credentials. These are runtime/layout checks, not a completed production
+six-stage, signed desktop or commercial comparison/OCR acceptance claim.
+
+Production Web release still requires final current-source standalone/browser,
+Linux container and live own-product acceptance, protected PR/main gates, a durable
+Bid-only worker02 volume and protected master key, then the existing release
+workflow. The platform, worker01, database/Redis contents and published plans are
+outside this source change. B6.8-B6.10 remain open until their separate acceptance.

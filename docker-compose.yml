@@ -46,6 +46,8 @@ services:
       PORT: "4070"
       REDIS_URL: redis://${PROJECT_NAME:-bidproposal}-redis:6379
       DATABASE_URL: ${DATABASE_URL:-}
+    volumes:
+      - ${DATA_DIR:-./data}/workbench:/data/workbench
     ports:
       - "${APP_PUBLISH_PORT:-4070}:4070"
     depends_on:

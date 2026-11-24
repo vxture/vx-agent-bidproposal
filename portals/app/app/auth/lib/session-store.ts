@@ -56,11 +56,19 @@ export async function putAuthState(
   data: AuthState,
   ttlSeconds = 600,
 ): Promise<void> {
-  await redis().set(k.authstate(cid, state), JSON.stringify(data), "EX", ttlSeconds);
+  await redis().set(
+    k.authstate(cid, state),
+    JSON.stringify(data),
+    "EX",
+    ttlSeconds,
+  );
 }
 
 /** Single-use: get and delete atomically (defeats state replay). */
-export async function takeAuthState(cid: string, state: string): Promise<AuthState | null> {
+export async function takeAuthState(
+  cid: string,
+  state: string,
+): Promise<AuthState | null> {
   const raw = await redis().getdel(k.authstate(cid, state));
   return raw ? (JSON.parse(raw) as AuthState) : null;
 }
@@ -81,9 +89,37 @@ export async function putSession(
   await tx.exec();
 }
 
-export async function getSession(cid: string, rpsid: string): Promise<RpSession | null> {
+export async function getSession(
+  cid: string,
+  rpsid: string,
+): Promise<RpSession | null> {
   const raw = await redis().get(k.sess(cid, rpsid));
   return raw ? (JSON.parse(raw) as RpSession) : null;
+}
+
+/** A completed refresh cannot recreate a session that logout already removed. */
+export async function replaceSessionIfCurrent(
+  cid: string,
+  rpsid: string,
+  previous: RpSession,
+  next: RpSession,
+  ttlSeconds: number,
+): Promise<boolean> {
+  const result = await redis().eval(
+    `if redis.call('GET', KEYS[1]) ~= ARGV[1] then return 0 end
+     redis.call('SET', KEYS[1], ARGV[2], 'EX', ARGV[3])
+     if ARGV[4] ~= '' then redis.call('SADD', KEYS[2], ARGV[5]); redis.call('EXPIRE', KEYS[2], ARGV[3]) end
+     return 1`,
+    2,
+    k.sess(cid, rpsid),
+    k.sididx(cid, next.sid ?? ""),
+    JSON.stringify(previous),
+    JSON.stringify(next),
+    ttlSeconds,
+    next.sid ?? "",
+    rpsid,
+  );
+  return result === 1;
 }
 
 export async function deleteSession(cid: string, rpsid: string): Promise<void> {
@@ -114,20 +150,41 @@ export async function putProfile(
   profile: IdProfile,
   ttlSeconds: number,
 ): Promise<void> {
-  await redis().set(k.profile(cid, rpsid), JSON.stringify(profile), "EX", ttlSeconds);
+  await redis().set(
+    k.profile(cid, rpsid),
+    JSON.stringify(profile),
+    "EX",
+    ttlSeconds,
+  );
 }
 
-export async function getProfile(cid: string, rpsid: string): Promise<IdProfile | null> {
+export async function getProfile(
+  cid: string,
+  rpsid: string,
+): Promise<IdProfile | null> {
   const raw = await redis().get(k.profile(cid, rpsid));
   return raw ? (JSON.parse(raw) as IdProfile) : null;
 }
 
-export async function sessionsForSid(cid: string, sid: string): Promise<string[]> {
+export async function sessionsForSid(
+  cid: string,
+  sid: string,
+): Promise<string[]> {
   return redis().smembers(k.sididx(cid, sid));
 }
 
 /** Back-channel logout replay guard: returns true only the first time for a jti. */
-export async function claimBclogoutJti(cid: string, jti: string, ttlSeconds = 300): Promise<boolean> {
-  const res = await redis().set(k.bclogout(cid, jti), "1", "EX", ttlSeconds, "NX");
+export async function claimBclogoutJti(
+  cid: string,
+  jti: string,
+  ttlSeconds = 300,
+): Promise<boolean> {
+  const res = await redis().set(
+    k.bclogout(cid, jti),
+    "1",
+    "EX",
+    ttlSeconds,
+    "NX",
+  );
   return res === "OK";
 }
