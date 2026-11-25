@@ -55,6 +55,14 @@ export function vendorAssets() {
     legalComments: 'eof',
   });
   assets.push({ name: 'vendor-editor.mjs', data: Buffer.from(editor.outputFiles[0].contents) });
+  // Keep PDF.js's private text-layer variables in its own locked vendor sheet.
+  const pdfRoot = dirname(dirname(require.resolve('pdfjs-dist')));
+  const pdfStyles = readFileSync(join(pdfRoot, 'web/pdf_viewer.css'), 'utf8');
+  const start = pdfStyles.indexOf('.textLayer{'), end = pdfStyles.indexOf('.annotationLayer{', start);
+  if (start < 0 || end <= start) throw new Error('Unsupported PDF.js text-layer stylesheet');
+  assets.push({ name: 'vendor-pdf-text.css', data: Buffer.from(
+    '/* PDF.js text layer. See pdfjs-LICENSE.txt. */\n' + pdfStyles.slice(start, end).replaceAll('\r\n', '\n'),
+  ) });
   return assets;
 }
 
