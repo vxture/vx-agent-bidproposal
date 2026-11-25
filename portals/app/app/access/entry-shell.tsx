@@ -8,20 +8,13 @@
  * @date 2026-11-24
  */
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
-import localFont from "next/font/local";
+import { displayFont, textFont } from "./fonts";
 import { useTheme } from "next-themes";
 import { Globe, House, Moon, Sun } from "@phosphor-icons/react";
 import { BRAND } from "@bidproposal/shared/brand";
 import type { EntryLocale } from "./entry-content";
 import { ProductIdentity } from "./product-identity";
 import "./gate.css";
-
-const displayFont = localFont({ src: "./assets/funnel-display-semibold.woff2", weight: "600", display: "swap", variable: "--bidproposal-entry-display" });
-const textFont = localFont({ src: [
-  { path: "./assets/inter-regular.woff2", weight: "400" },
-  { path: "./assets/inter-medium.woff2", weight: "500" },
-  { path: "./assets/inter-semibold.woff2", weight: "600" },
-], display: "swap", variable: "--bidproposal-entry-text" });
 
 const LocaleContext = createContext<EntryLocale>("zh-CN");
 export function useEntryLocale(): EntryLocale { return useContext(LocaleContext); }

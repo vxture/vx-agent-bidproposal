@@ -48,6 +48,7 @@ const designUi = designSystem
 export default {
   content: [
     "./app/**/*.{ts,tsx}",
+    "../packages/shared/src/**/*.{ts,tsx}",
     // Both are needed: the umbrella's own shell and auth components live in its
     // bundle, every primitive they compose lives in design-ui's.
     ...[designSystem, designUi, entryDir("@vxture/ruyin-workbench-ui")]

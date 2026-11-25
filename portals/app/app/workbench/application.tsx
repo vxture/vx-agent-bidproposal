@@ -9,14 +9,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Button,
-  ShellHeader,
-  ShellIconButton,
   ShellViewport,
   ShellPageContainer,
+  FullscreenProvider,
 } from "@vxture/design-system";
 import {
   Api,
-  ProductHome,
   ProjectWorkflowNav,
   ProjectPanel,
   ProjectFilesSection,
@@ -32,7 +30,18 @@ import { isThrough, type AccessState } from "../access/types";
 import { EntryShell } from "../access/entry-shell";
 import { EntryCard } from "../access/entry-card";
 import { entryKindFor, gateLoginUrl } from "../access/entry-content";
-import { SessionControl } from "../session-control";
+import {
+  ApplicationHeader,
+  ProjectCollection,
+  HomeCompanion,
+  type ProjectCardData,
+} from "@bidproposal/shared/presentation";
+import { ResourceProgress } from "./resources";
+import { Management, ManagementNavigation } from "./management";
+import { displayNameFor } from "../auth/lib/display";
+import { ProductMark } from "../access/product-mark";
+import { displayFont, textFont } from "../access/fonts";
+import "@bidproposal/shared/presentation.css";
 import { BRAND } from "@bidproposal/shared/brand";
 import { ProductIdentity } from "../access/product-identity";
 import "./workbench.css";
@@ -110,6 +119,7 @@ export function WorkbenchApplication() {
     return (
       <EntryShell>
         <EntryCard
+          user={access && "user" in access ? access.user : undefined}
           kind={kind}
           actionHref={kind === "signin" ? gateLoginUrl("/") : undefined}
           onAction={kind === "signin" ? undefined : refresh}
@@ -119,7 +129,9 @@ export function WorkbenchApplication() {
   }
   return (
     <LocaleContext.Provider value="zh-CN">
-      <Workspace access={access} />
+      <FullscreenProvider>
+        <Workspace access={access} />
+      </FullscreenProvider>
     </LocaleContext.Provider>
   );
 }
@@ -141,7 +153,9 @@ function Workspace({ access }: { access: AccessState }) {
     return client;
   }, []);
   const [hash, setHash] = useState("");
-  const [projects, setProjects] = useState<ProjectMeta[]>([]),
+  const [projects, setProjects] = useState<(ProjectMeta & ProjectCardData)[]>(
+      [],
+    ),
     [state, setState] = useState<"loading" | "failed" | "ready">("loading");
   const [items, setItems] = useState(initialNavigation),
     [collapsed, setCollapsed] = useState(false),
@@ -158,8 +172,19 @@ function Workspace({ access }: { access: AccessState }) {
       : "product";
   const section = parts[3] && stages.includes(parts[3]) ? parts[3] : "analysis";
   const library = hash === "#library" || hash === "#library/bidproposal",
-    catalog = hash === "#projects";
-  const current = projects.find((p) => p.id === projectId);
+    catalog = hash === "#projects",
+    management = parts[0] === "#admin",
+    adminPage = ["account", "members"].includes(parts[1] || "")
+      ? parts[1]!
+      : "overview";
+  const [lastProject, setLastProject] = useState<string>();
+  const user = "user" in access ? access.user : undefined;
+  const lastKey = "jadera-last-project:" + (user?.activeWorkspace || "local");
+  useEffect(() => {
+    try {
+      setLastProject(localStorage.getItem(lastKey) || undefined);
+    } catch {}
+  }, [lastKey]);
   const navigate = useCallback((href: string) => {
     window.location.hash = href;
   }, []);
@@ -176,9 +201,11 @@ function Workspace({ access }: { access: AccessState }) {
     const update = () => setHash(window.location.hash);
     update();
     window.addEventListener("hashchange", update);
-    void reload();
     return () => window.removeEventListener("hashchange", update);
-  }, [reload]);
+  }, []);
+  useEffect(() => {
+    void reload();
+  }, [reload, projectId]);
   useEffect(() => {
     setItems(initialNavigation);
   }, [projectId]);
@@ -213,28 +240,71 @@ function Workspace({ access }: { access: AccessState }) {
     window.addEventListener("message", receive);
     return () => window.removeEventListener("message", receive);
   }, [projectId]);
+  useEffect(() => {
+    if (!projectId) return;
+    try {
+      localStorage.setItem(lastKey + ":" + projectId, section);
+    } catch {}
+  }, [projectId, section, lastKey]);
   const open = async (id: string) => {
     await reload();
-    navigate("#ws/" + id + "/product/analysis");
+    setLastProject(id);
+    try {
+      localStorage.setItem(lastKey, id);
+    } catch {}
+    let resume =
+      stages[
+        projects.find((project) => project.id === id)?.record?.stageIndex ?? 0
+      ] || "analysis";
+    try {
+      const saved = localStorage.getItem(lastKey + ":" + id);
+      if (saved && stages.includes(saved)) resume = saved;
+    } catch {}
+    navigate("#ws/" + id + "/product/" + resume);
   };
-  const workspace =
-    access.status === "authenticated"
-      ? access.user.activeWorkspaceName
-      : undefined;
   const footer = (
-    <div className="bid-workbench-account">
-      <SessionControl />
-      {projectId && (
-        <Button
-          variant="ghost"
-          onClick={() => navigate("#ws/" + projectId + "/tasks")}
-        >
-          {"\u4efb\u52a1"}
-          {pending > 0 ? " (" + pending + ")" : ""}
-        </Button>
-      )}
-    </div>
+    <Button
+      variant="ghost"
+      onClick={() => navigate("#ws/" + projectId + "/tasks")}
+    >
+      {"\u4efb\u52a1"}
+      {pending > 0 ? " (" + pending + ")" : ""}
+    </Button>
   );
+  const page = projectId
+    ? "business"
+    : library
+      ? "knowledge"
+      : catalog
+        ? "projects"
+        : management
+          ? "admin"
+          : hash === "#templates"
+            ? "templates"
+            : hash === "#help"
+              ? "help"
+              : "home";
+  const headerNavigate = (target: string) =>
+    navigate(
+      (
+        {
+          home: "#home",
+          projects: "#projects",
+          knowledge: "#library",
+          templates: "#templates",
+          admin: "#admin",
+          help: "#help",
+        } as Record<string, string>
+      )[target] || "#home",
+    );
+  const assistant = () => window.location.assign("/chat");
+  const signOut = () => {
+    const form = document.createElement("form");
+    form.method = "post";
+    form.action = "/auth/logout";
+    document.body.append(form);
+    form.submit();
+  };
   const iframe = projectId ? (
     <iframe
       ref={frame}
@@ -266,32 +336,25 @@ function Workspace({ access }: { access: AccessState }) {
     }
   };
   return (
-    <div className="bid-workbench">
+    <div
+      className={`bid-workbench ${displayFont.variable} ${textFont.variable}`}
+      id="jadera-application"
+    >
       <ShellViewport
         header={
-          <ShellHeader
-            height="sm"
-            leading={
-              <div className="app-ident">
-                <ShellIconButton
-                  icon="arrow-left"
-                  label={"\u8fd4\u56de\u9879\u76ee"}
-                  onClick={() => navigate("#projects")}
-                />
-                <span className="app-ident-product"><ProductIdentity /></span>
-                {current && (
-                  <>
-                    <span className="app-ident-sep">{"\u00b7"}</span>
-                    <span className="app-ident-doc">{current.name}</span>
-                  </>
-                )}
-              </div>
-            }
-            trailing={
-              <span className="text-body-sm text-muted-foreground">
-                {workspace}
-              </span>
-            }
+          <ApplicationHeader
+            brand={<ProductIdentity />}
+            identity={{
+              name: displayNameFor(user, "\u5f53\u524d\u8d26\u53f7"),
+              organization: user?.activeOrgName || undefined,
+              workspace: user?.activeWorkspaceName || undefined,
+              personal: user?.activeOrgType === "personal",
+            }}
+            page={page}
+            projectCount={projects.length}
+            onNavigate={headerNavigate}
+            onSignOut={signOut}
+            onAssistant={assistant}
           />
         }
         sidebar={
@@ -305,26 +368,28 @@ function Workspace({ access }: { access: AccessState }) {
               onNavigate={navigate}
               footer={footer}
             />
-          ) : (
-            <div className="bid-workbench-home-nav">
-              <nav>
-                <Button variant="ghost" onClick={() => navigate("")}>
-                  {"\u4ea7\u54c1\u9996\u9875"}
-                </Button>
-                <Button variant="ghost" onClick={() => navigate("#projects")}>
-                  {"\u6807\u4e66\u9879\u76ee"}
-                </Button>
-                <Button variant="ghost" onClick={() => navigate("#library")}>
-                  {"\u77e5\u8bc6\u8d44\u6599\u5e93"}
-                </Button>
-              </nav>
-              {footer}
-            </div>
-          )
+          ) : management ? (
+            <ManagementNavigation
+              page={adminPage}
+              collapsed={collapsed}
+              onToggle={() => setCollapsed(!collapsed)}
+            />
+          ) : null
         }
-        sidebarMode={collapsed && projectId ? "collapsed" : "expanded"}
+        sidebarMode={
+          !projectId && !management
+            ? "hidden"
+            : collapsed
+              ? "collapsed"
+              : "expanded"
+        }
       >
-        <ShellPageContainer width="wide-2xl" className="workbench-page">
+        <ShellPageContainer
+          width="wide-2xl"
+          className={
+            projectId ? "workbench-page" : "workbench-page jadera-landing-page"
+          }
+        >
           {projectId ? (
             <ProjectPanel
               api={api}
@@ -357,18 +422,75 @@ function Workspace({ access }: { access: AccessState }) {
               src="/workbench/library.html?library=1"
               sandbox="allow-scripts allow-same-origin allow-downloads"
             />
+          ) : management ? (
+            <Management
+              access={access}
+              page={adminPage}
+              onNavigate={navigate}
+            />
+          ) : page === "templates" ? (
+            <main className="jadera-static-page">
+              <h1>{"\u6a21\u677f\u7ba1\u7406"}</h1>
+              <p>
+                {
+                  "\u73b0\u6709\u6a21\u677f\u968f\u6807\u4e66\u9879\u76ee\u4fdd\u7559\u3002\u5728\u7f16\u5199\u89c4\u5212\u4e2d\u9009\u7528\u5df2\u5bfc\u5165\u6a21\u677f\uff0c\u5728\u6210\u679c\u5bfc\u51fa\u4e2d\u6838\u5bf9\u6392\u7248\u7248\u672c\u3002"
+                }
+              </p>
+              <Button onClick={() => navigate("#projects")}>
+                {"\u9009\u62e9\u6807\u4e66\u9879\u76ee"}
+              </Button>
+            </main>
+          ) : page === "help" ? (
+            <main className="jadera-static-page">
+              <h1>{"\u4f7f\u7528\u5e2e\u52a9"}</h1>
+              <p>
+                {
+                  "\u521b\u5efa\u6216\u9009\u62e9\u6807\u4e66\u9879\u76ee\u540e\uff0c\u4f9d\u6b21\u5b8c\u6210\u62db\u6807\u89e3\u8bfb\u3001\u9700\u6c42\u786e\u8ba4\u3001\u7f16\u5199\u89c4\u5212\u3001\u6807\u4e66\u7f16\u5199\u3001\u5ba1\u6838\u4fee\u8ba2\u548c\u6210\u679c\u5bfc\u51fa\u3002"
+                }
+              </p>
+              <Button onClick={() => navigate("#projects")}>
+                {"\u67e5\u770b\u6807\u4e66\u9879\u76ee"}
+              </Button>
+            </main>
           ) : (
-            <ProductHome
-              api={api}
-              product={product}
+            <ProjectCollection
               projects={projects}
-              projectsState={state}
+              state={state}
               catalog={catalog}
-              onCatalog={() => navigate("#projects")}
-              onLibrary={() => navigate("#library")}
+              currentId={lastProject}
               onOpen={(id) => void open(id)}
-              onCreated={open}
-              onRefresh={reload}
+              onCreate={async (name) => {
+                const value = await api.createProject(BRAND.productCode, name);
+                await open(value.id);
+              }}
+              onCatalog={() => navigate("#projects")}
+              onReload={() => void reload()}
+              onContinue={
+                projects.some(
+                  (project) =>
+                    project.id === lastProject && !project.archivedAt,
+                )
+                  ? () => void open(lastProject!)
+                  : undefined
+              }
+              brand={
+                <>
+                  <ProductMark size={20} />
+                  <span>{BRAND.fullName}</span>
+                </>
+              }
+              resources={
+                <ResourceProgress
+                  onKnowledge={() => navigate("#library")}
+                  onTemplates={() => navigate("#templates")}
+                />
+              }
+              companion={
+                <HomeCompanion
+                  imageSrc="/brand/jadera-companion.svg"
+                  onOpen={assistant}
+                />
+              }
             />
           )}
           {projectId && tab !== "product" && <div hidden>{iframe}</div>}

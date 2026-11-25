@@ -1,5 +1,10 @@
 # 70-workplan - Build plan and batch tracker
 
+The accepted B7 visual baseline is now being implemented in
+[180-b7-application-framework.md](180-b7-application-framework.md). The prototype
+itself remains a local review artifact; each implementation batch preserves the
+existing business data and runtime adapters.
+
 The active brand/domain batch is
 [170-jadera-brand-domain.md](170-jadera-brand-domain.md). Jadera is the current
 brand; the commercial code remains `bidproposal` pending platform migration.

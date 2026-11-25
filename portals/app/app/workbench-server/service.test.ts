@@ -207,6 +207,12 @@ test("project documents preserve original revisions, opaque identity and durable
     assert.ok(
       view.tasks.some((task: { id: string }) => task.id === "plan_outline"),
     );
+    const emptyCatalog=await (await call(service,["host","projects"])).json();
+    assert.equal(emptyCatalog.items[0].record,undefined);
+    const recordedAt="2026-11-25T02:10:00.000Z";
+    await call(service,["projects",project.id,"documents","bid_workflow"],"PUT",{
+      revision:0,markdown:'# Bid workflow\n\n'+JSON.stringify({analysis:{startedAt:recordedAt,completedAt:"2026-11-25T02:18:00.000Z"}}),
+    });
     service.close();
     service = make(root);
     const document = await (
@@ -214,6 +220,9 @@ test("project documents preserve original revisions, opaque identity and durable
     ).json();
     assert.equal(document.markdown, "Original chapter");
     assert.equal(document.revision, 1);
+    const reopenedCatalog=await (await call(service,["host","projects"])).json();
+    assert.deepEqual(reopenedCatalog.items[0].record,{stage:"\u62db\u6807\u89e3\u8bfb",stageIndex:0,completed:1,completedStages:[0],recordedAt:"2026-11-25T02:18:00.000Z",complete:false});
+    assert.equal(JSON.stringify(reopenedCatalog).includes(principal.sessionId),false);
     const foreign = make(root, { ...principal, orgId: "org-b" });
     try {
       await assert.rejects(
