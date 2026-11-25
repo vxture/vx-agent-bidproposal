@@ -65,9 +65,99 @@ def encode(root):
     return E.tostring(root, xml_declaration=True, encoding="UTF-8", standalone=True)
 
 
+def mark_headings(body):
+    """Make generated heading levels explicit before any template style mapping."""
+    for paragraph in body.findall(".//w:p", NS):
+        prop = paragraph.find("w:pPr", NS)
+        style = prop.find("w:pStyle", NS) if prop is not None else None
+        ident = style.get("{" + W + "}val", "") if style is not None else ""
+        if not re.fullmatch(r"Heading[1-6]", ident):
+            continue
+        for old in prop.findall("w:numPr", NS) + prop.findall("w:outlineLvl", NS):
+            prop.remove(old)
+        num = E.SubElement(prop, "{" + W + "}numPr")
+        E.SubElement(num, "{" + W + "}numId").set("{" + W + "}val", "0")
+        E.SubElement(prop, "{" + W + "}outlineLvl").set("{" + W + "}val", str(int(ident[-1]) - 1))
+
+
+def default_page_parts(parts, fields):
+    """Add standard-page furniture only when no user template was selected."""
+    document = xml(parts["word/document.xml"])
+    section = document.find("w:body/w:sectPr", NS)
+    if section is None:
+        raise ValueError("Generated document has no page section")
+    rel_name = "word/_rels/document.xml.rels"
+    relationship_ns = "http://schemas.openxmlformats.org/package/2006/relationships"
+    rels = xml(parts[rel_name]) if rel_name in parts else E.Element("{" + relationship_ns + "}Relationships")
+    types = xml(parts["[Content_Types].xml"])
+
+    def paragraph(container):
+        p = E.SubElement(container, "{" + W + "}p")
+        prop = E.SubElement(p, "{" + W + "}pPr")
+        E.SubElement(prop, "{" + W + "}jc").set("{" + W + "}val", "center")
+        return p
+
+    def text(p, value):
+        run = E.SubElement(p, "{" + W + "}r")
+        prop = E.SubElement(run, "{" + W + "}rPr")
+        E.SubElement(prop, "{" + W + "}sz").set("{" + W + "}val", "18")
+        E.SubElement(prop, "{" + W + "}szCs").set("{" + W + "}val", "18")
+        node = E.SubElement(run, "{" + W + "}t")
+        node.set("{http://www.w3.org/XML/1998/namespace}space", "preserve")
+        node.text = value
+
+    def field(p, instruction):
+        node = E.SubElement(p, "{" + W + "}fldSimple")
+        node.set("{" + W + "}instr", instruction)
+        text(node, "1")
+
+    def attach(kind, content):
+        if section.find("w:" + kind + "Reference", NS) is not None:
+            return
+        name = "word/" + kind + "BidDefault.xml"
+        ident = "bidDefault" + kind.title()
+        if name in parts or any(rel.get("Id") == ident for rel in rels):
+            raise ValueError("Default page part conflicts with generated content")
+        parts[name] = encode(content)
+        rel = E.SubElement(rels, "{" + relationship_ns + "}Relationship")
+        rel.set("Id", ident)
+        rel.set("Type", R + "/" + kind)
+        rel.set("Target", name.removeprefix("word/"))
+        override = E.SubElement(types, "{" + E.QName(types).namespace + "}Override")
+        override.set("PartName", "/" + name)
+        override.set("ContentType", "application/vnd.openxmlformats-officedocument.wordprocessingml." + kind + "+xml")
+        ref = E.Element("{" + W + "}" + kind + "Reference")
+        ref.set("{" + W + "}type", "default")
+        ref.set("{" + R + "}id", ident)
+        section.insert(0 if kind == "header" else len(section.findall("w:headerReference", NS)), ref)
+
+    header_text = " \u00b7 ".join(fields[key] for key in ["projectName", "documentName", "documentNumber"] if fields.get(key))
+    if header_text:
+        header = E.Element("{" + W + "}hdr", nsmap={"w": W})
+        text(paragraph(header), header_text)
+        attach("header", header)
+    footer = E.Element("{" + W + "}ftr", nsmap={"w": W})
+    p = paragraph(footer)
+    text(p, "\u7b2c ")
+    field(p, "PAGE")
+    text(p, " \u9875 / \u5171 ")
+    field(p, "NUMPAGES")
+    text(p, " \u9875")
+    attach("footer", footer)
+    # The generated first page is the cover; leave its furniture empty.
+    if section.find("w:titlePg", NS) is None:
+        title = E.Element("{" + W + "}titlePg")
+        grid = section.find("w:docGrid", NS)
+        section.insert(list(section).index(grid) if grid is not None else len(section), title)
+    parts["word/document.xml"] = encode(document)
+    parts[rel_name], parts["[Content_Types].xml"] = encode(rels), encode(types)
+
+
 def merge_document(source, template, fields):
     parts = read_package(source)
     body_xml = xml(parts["word/document.xml"])
+    mark_headings(body_xml)
+    parts["word/document.xml"] = encode(body_xml)
     if template.exists():
         base = read_package(template)
         base_xml = xml(base["word/document.xml"])
@@ -97,16 +187,6 @@ def merge_document(source, template, fields):
             mapping[ident] = match.get("{" + W + "}styleId") if match is not None else ident
             if match is None:
                 styles.append(copy.deepcopy(style))
-        for paragraph in body_xml.findall(".//w:p", NS):
-            prop = paragraph.find("w:pPr", NS)
-            style = prop.find("w:pStyle", NS) if prop is not None else None
-            if style is not None and re.fullmatch(r"Heading[1-6]", style.get("{" + W + "}val", "")):
-                for old in prop.findall("w:numPr", NS):
-                    prop.remove(old)
-                num = E.SubElement(prop, "{" + W + "}numPr")
-                E.SubElement(num, "{" + W + "}numId").set("{" + W + "}val", "0")
-                outline = E.SubElement(prop, "{" + W + "}outlineLvl")
-                outline.set("{" + W + "}val", str(int(style.get("{" + W + "}val")[-1]) - 1))
         for ref in body_xml.xpath("//w:pStyle | //w:rStyle | //w:tblStyle", namespaces=NS):
             ident = ref.get("{" + W + "}val")
             if ident in mapping:
@@ -152,6 +232,8 @@ def merge_document(source, template, fields):
         base["word/_rels/document.xml.rels"], base["[Content_Types].xml"] = encode(rels), encode(content_types)
         base["docProps/core.xml"] = parts["docProps/core.xml"]
         parts = base
+    else:
+        default_page_parts(parts, fields)
     for name in list(parts):
         if not re.match(r"word/(header|footer)[^/]*\.xml$", name):
             continue

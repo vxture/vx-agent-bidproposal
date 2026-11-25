@@ -20,6 +20,7 @@ RUN --mount=type=secret,id=node_auth_token \
     NODE_AUTH_TOKEN="$(cat /run/secrets/node_auth_token 2>/dev/null || true)" \
     pnpm install --frozen-lockfile
 RUN pnpm --filter @bidproposal/app build
+RUN node portals/app/document-engine/layout-fixture.mjs /tmp/bid-layout-regression.docx
 
 # --- runner (Next standalone, non-root, never migrates) ---
 FROM base AS runner
@@ -59,6 +60,9 @@ COPY --from=builder /repo/portals/app/.next/standalone ./
 COPY --from=builder /repo/portals/app/.next/static ./portals/app/.next/static
 COPY --from=builder /repo/portals/app/public ./portals/app/public
 COPY --from=builder /repo/portals/app/document-engine ./portals/app/document-engine
+COPY --from=builder --chown=1001:1001 /tmp/bid-layout-regression.docx /tmp/bid-layout-regression.docx
 USER nextjs
+RUN python3 -I /app/portals/app/document-engine/layout_test.py /tmp/bid-layout-regression.docx \
+    && rm /tmp/bid-layout-regression.docx
 EXPOSE 4070
 CMD ["node", "portals/app/server.js"]

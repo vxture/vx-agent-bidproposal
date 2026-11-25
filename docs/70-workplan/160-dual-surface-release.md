@@ -31,9 +31,9 @@ Do not create sync routes, tables, background jobs or disabled entry points.
 
 ## Corrected batches - 2026-11-25
 
-Current production checkpoint: v0.2.1 / f94b97a7 is deployed through the existing
-protected workflow, run 45505501220. Exact image digest:
-`sha256:661431a269a90e2d4b70a25f400d49d270b823ea4bd5e2881cd2fa228d2b58e9`.
+Current production checkpoint: v0.2.2 / f8f15e63 is deployed through the existing
+protected workflow, run 45512015787. Exact image digest:
+`sha256:dc7043735f50a4f0a6726615fc53c7250ac25ddbc67e90e37313cfab33bfd741`.
 Health/readiness pass, anonymous runtime access returns 401, and original DB/
 Redis container identities are unchanged. The protected runtime key, encrypted
 volume, project originals and library versions are retained. No platform source
@@ -46,9 +46,11 @@ human confirmation, a reviewed two-chapter plan, both generated chapters and
 independent review of both chapters. Review found four honest source/gap issues;
 it did not fabricate a clean compliance result. A source-traceability correction
 produced a separate candidate and retained the first draft. Production layout
-generated a six-page DOCX/PDF snapshot, but browser download acceptance exposed
-an adapter path mismatch and remains a release gate. Isolated renderer/Redis
-tests are not substitutes for actual downloads. Desktop authentication, signed
+generated a six-page DOCX/PDF snapshot. v0.2.2 fixed the Web ticket path and actual
+PDF, DOCX and Markdown downloads passed through the original controls. Full
+page inspection then exposed the default template's empty TOC and missing page
+fields; that rendering correction is still a separate release gate. Isolated
+renderer/Redis tests are not substitutes for actual downloads. Desktop authentication, signed
 installation, comparison/OCR and complete plan-rule acceptance remain open.
 
 The owner identified the missing desktop host chrome in the B6.1 Web preview.
@@ -60,10 +62,10 @@ baseline is [50-desktop-baseline.md](../40-implementation/50-desktop-baseline.md
 | B6.2 | Freeze the complete desktop baseline and remove rejected Web presentation | Source/feature/evidence inventory complete locally: 161 source hashes, eight historical evidence hashes, original sidebar screenshot and D01-D14 page/control inventory. Original development checkouts preserved. Remove horizontal navigation, its build entry and rejected editor refs/preview launchers. No new UI. |
 | B6.3 | Verify runtime differences and migration boundaries | Verification complete; integration gates remain open. Published schema 0.1.0 rejects Bid contract 0.2, core lacks projectDocuments; 26 identity tests pass. Isolated Linux reads MD/DOCX/PDF with matching hashes. LibreOffice conversion fails fidelity: six pages become four and TOC field codes leak. Storage/jobs/review boundaries and runtime-specific recovery recorded in the preflight. No adapter or production change. |
 | B6.4 | Reuse the complete product application presentation | B6.4.1 runtime dependencies reconciled and 0.2.0 packages published/consumed; Bid build now uses the public pinned CLI and real reproducibility checks. PR #314/#315 published the original UI and Node adapters as registry packages 0.2.2; Bid consumes both without private source imports. Preserve desktop project/home/library/settings, six-step sidebar, state/times/duration/progress and human review. No replacement editor/navigation or private cross-repo app imports. |
-| B6.5 | Adapt Web identity, projects and data | Verified Bid identity and workspace checks on every operation, project lifecycle, revision conflicts, upload/version persistence and reload recovery. PR #20 merged the durable encrypted Web host, revision and workspace gates. Synthetic browser/API acceptance passed; final live acceptance pending. |
-| B6.6 | Adapt reading and agent jobs | Same task definitions, input snapshots, verification, candidate adoption and recovery; actual Bid-owned provider calls, no RUYIN execution grant. PR #20 preserves the original task/job runtime and human checkpoints; live six-stage acceptance remains pending. |
-| B6.7 | Deliver preview and actual output files | Confirm server layout route first; then verify template, TOC, headers, pages and MD/DOCX/PDF downloads with retained versions. Six-page Linux layout, canonical reader, SQLCipher/non-root image and scoped ticket checks pass; live export acceptance remains pending. |
-| B6.8 | Verify product plan rules and feature gaps | Same product entitlement/usage for both surfaces; enforce configured limits/defaults. Track independent comparison, storage and proposal limits explicitly. Not started. |
+| B6.5 | Adapt Web identity, projects and data | Real subscribed Bid session, project/original/library-version persistence and reopening across v0.2.0-v0.2.2 passed. Workspace/revision/private-record refusal remains covered by runtime tests. |
+| B6.6 | Adapt reading and agent jobs | Real generation, 15 exact-match source requirements, human confirmation, enterprise fact extraction/matching, two-chapter planning/writing/review and single-chapter rewrite passed. Prior manuscript and stale review history are retained; no RUYIN execution grant. |
+| B6.7 | Deliver preview and actual output files | Live three-format downloads and V1/V2 retention passed. Custom-template Linux layout passed; default-template TOC/header/page correction passed isolated real rendering and awaits release/current production acceptance. |
+| B6.8 | Verify product plan rules and feature gaps | Proposal limits, retained-byte dedup and export gates have regression coverage. Real C2 exposes storage as a quota pool, not storage.bytes.max; correct pool reading and gauge reporting next. Independent comparison/OCR and cross-surface business accounting remain open. |
 | B6.9 | Accept production desktop integration and package | Own-product identity, shared-source desktop regression, signing/trust, install/update and old-project protection using current artifacts. Not started. |
 | B6.10 | Accept and release each surface | Complete login/workspace/project/material/generation/review/export/logout/recovery chain per surface before its reviewed release. No automatic Store change. Not started. |
 
@@ -542,3 +544,34 @@ protected PR/main gates, Bid-only release and actual three-format downloads plus
 page-by-page visual inspection. Keep V1 and subsequent outputs as real historical
 snapshots, mark changed sources/reports stale, and never turn pending proof into
 an automatically cleared finding.
+
+## B6.7 default-template real-render correction, 2026-11-25
+
+v0.2.2 actual downloads passed, but visual inspection of all six production PDF
+pages found an empty contents page and no page fields for the standard A4 path.
+Previous Linux tests selected a user template and did not exercise this path.
+Generated heading styles lack explicit outline levels; the normalizer previously
+set them only inside the template branch. Normalize levels before either path.
+Supply standard header/footer fields only without a user template, preserve its
+own page furniture when selected, and leave the generated cover clear.
+
+The regression fixture is produced by the published document renderer, not a
+handwritten imitation of its OOXML. Four isolated Linux tests include actual
+default and template Writer runs and assert populated TOC titles/page numbers,
+page/total fields and header preservation. Repeat them as non-root during image
+build. The real two-chapter production Markdown also rendered to six pages with
+a populated contents page, recorded header fields and pages 2-6; every page was
+inspected. This candidate still needs PR/main checks, exact-image release and
+actual new production output. Old output versions are preserved, never replaced.
+
+## B6.8 storage contract checkpoint, 2026-11-25
+
+Read-only inspection of the real Bid C2 response confirms `storage.bytes` in
+`quota_pools`, shared effective workspace storage, alongside `proposal.max` and
+`comparison.monthly.max` in `limits`. The current local `storage.bytes.max` read
+therefore falls back rather than honoring the actual pool. Storage snapshots
+must use the existing `PUT /usage/gauge` contract, never `POST /usage/consume`
+or fabricated counter events. Correct pool/admission/reconciliation semantics,
+durable retry and deletion/dedup handling before claiming complete storage
+accounting. Do not create platform schemas, change worker01 or infer independent
+Web/desktop commercial pools. No storage consumption was fabricated by this check.
