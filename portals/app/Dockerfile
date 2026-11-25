@@ -20,7 +20,7 @@ RUN --mount=type=secret,id=node_auth_token \
     NODE_AUTH_TOKEN="$(cat /run/secrets/node_auth_token 2>/dev/null || true)" \
     pnpm install --frozen-lockfile
 RUN pnpm --filter @bidproposal/app build
-RUN node portals/app/document-engine/layout-fixture.mjs /tmp/bid-layout-regression.docx
+RUN node portals/app/document-engine/layout-fixture.mjs
 
 # --- runner (Next standalone, non-root, never migrates) ---
 FROM base AS runner

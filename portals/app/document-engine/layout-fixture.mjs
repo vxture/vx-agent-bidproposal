@@ -6,12 +6,12 @@
  * @date 2026-11-25
  */
 import { writeFileSync } from 'node:fs';
-import { isAbsolute } from 'node:path';
+import { join } from 'node:path';
+import { tmpdir } from 'node:os';
 import { parseDocument, renderDocx } from '@vxture/ruyin-document';
 
-const target = process.argv[2];
-if (!target || !isAbsolute(target))
-  throw new Error('An absolute fixture path is required');
+if (process.argv.length > 2) throw new Error('This build fixture accepts no arguments');
+const target = join(tmpdir(), 'bid-layout-regression.docx');
 const markdown = `Synthetic layout regression
 
 ::ry-pagebreak

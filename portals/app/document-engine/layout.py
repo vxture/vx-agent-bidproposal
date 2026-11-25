@@ -21,6 +21,8 @@ W = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
 R = "http://schemas.openxmlformats.org/officeDocument/2006/relationships"
 NS = {"w": W, "r": R}
 PARSER = E.XMLParser(resolve_entities=False, no_network=True, load_dtd=False)
+DOCUMENT_RELATIONSHIPS = "word/_rels/document.xml.rels"
+CONTENT_TYPES = "[Content_Types].xml"
 
 # --- Strict OOXML preparation --------------------------------------------
 def xml(data):
@@ -86,10 +88,10 @@ def default_page_parts(parts, fields):
     section = document.find("w:body/w:sectPr", NS)
     if section is None:
         raise ValueError("Generated document has no page section")
-    rel_name = "word/_rels/document.xml.rels"
+    rel_name = DOCUMENT_RELATIONSHIPS
     relationship_ns = "http://schemas.openxmlformats.org/package/2006/relationships"
     rels = xml(parts[rel_name]) if rel_name in parts else E.Element("{" + relationship_ns + "}Relationships")
-    types = xml(parts["[Content_Types].xml"])
+    types = xml(parts[CONTENT_TYPES])
 
     def paragraph(container):
         p = E.SubElement(container, "{" + W + "}p")
@@ -150,7 +152,7 @@ def default_page_parts(parts, fields):
         grid = section.find("w:docGrid", NS)
         section.insert(list(section).index(grid) if grid is not None else len(section), title)
     parts["word/document.xml"] = encode(document)
-    parts[rel_name], parts["[Content_Types].xml"] = encode(rels), encode(types)
+    parts[rel_name], parts[CONTENT_TYPES] = encode(rels), encode(types)
 
 
 def merge_document(source, template, fields):
@@ -204,8 +206,8 @@ def merge_document(source, template, fields):
                     node.set("{" + W + "}val", str(value + shift))
             nums.extend(copy.deepcopy(list(generated_nums)))
             base["word/numbering.xml"] = encode(nums)
-        rels = xml(base["word/_rels/document.xml.rels"])
-        for index, rel in enumerate(xml(parts["word/_rels/document.xml.rels"])):
+        rels = xml(base[DOCUMENT_RELATIONSHIPS])
+        for index, rel in enumerate(xml(parts[DOCUMENT_RELATIONSHIPS])):
             kind = rel.get("Type", "")
             if kind.endswith("/hyperlink"):
                 old, new = rel.get("Id"), "bidSourceLink" + str(index)
@@ -217,7 +219,7 @@ def merge_document(source, template, fields):
             elif kind.endswith("/numbering") and not any(r.get("Type", "").endswith("/numbering") for r in rels):
                 rel.set("Id", "bidSourceNumbering")
                 rels.append(copy.deepcopy(rel))
-        content_types = xml(base["[Content_Types].xml"])
+        content_types = xml(base[CONTENT_TYPES])
         if "word/numbering.xml" in base and not any(n.get("PartName") == "/word/numbering.xml" for n in content_types):
             item = E.SubElement(content_types, "{" + E.QName(content_types).namespace + "}Override")
             item.set("PartName", "/word/numbering.xml")
@@ -229,7 +231,7 @@ def merge_document(source, template, fields):
                 target.append(copy.deepcopy(node))
         target.append(section)
         base["word/document.xml"], base["word/styles.xml"] = encode(base_xml), encode(styles)
-        base["word/_rels/document.xml.rels"], base["[Content_Types].xml"] = encode(rels), encode(content_types)
+        base[DOCUMENT_RELATIONSHIPS], base[CONTENT_TYPES] = encode(rels), encode(content_types)
         base["docProps/core.xml"] = parts["docProps/core.xml"]
         parts = base
     else:
