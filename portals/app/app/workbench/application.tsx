@@ -15,9 +15,6 @@ import {
 } from "@vxture/design-system";
 import {
   Api,
-  ProjectWorkflowNav,
-  ProjectPanel,
-  ProjectFilesSection,
   LocaleContext,
   PRODUCT_REVIEW_EVENT,
   productNavigation,
@@ -34,8 +31,13 @@ import {
   ApplicationHeader,
   ProjectCollection,
   HomeCompanion,
+  AssistantDock,
+  WorkflowNavigation,
   type ProjectCardData,
 } from "@bidproposal/shared/presentation";
+import { ProjectWorkspace } from "./project-workspace";
+import { ResourceCollection } from "./resource-collection";
+import { assistantClient } from "./assistant-client";
 import { ResourceProgress } from "./resources";
 import { Management, ManagementNavigation } from "./management";
 import { displayNameFor } from "../auth/lib/display";
@@ -160,6 +162,7 @@ function Workspace({ access }: { access: AccessState }) {
   const [items, setItems] = useState(initialNavigation),
     [collapsed, setCollapsed] = useState(false),
     [pending, setPending] = useState(0);
+  const [assistantOpen, setAssistantOpen] = useState(false);
   const frame = useRef<HTMLIFrameElement>(null);
   const parts = hash.split("/"),
     projectId = parts[0] === "#ws" ? parts[1] : undefined;
@@ -171,7 +174,7 @@ function Workspace({ access }: { access: AccessState }) {
       ? parts[2]
       : "product";
   const section = parts[3] && stages.includes(parts[3]) ? parts[3] : "analysis";
-  const library = hash === "#library" || hash === "#library/bidproposal",
+  const library = parts[0] === "#library" || parts[0] === "#knowledge",
     catalog = hash === "#projects",
     management = parts[0] === "#admin",
     adminPage = ["account", "members"].includes(parts[1] || "")
@@ -274,15 +277,6 @@ function Workspace({ access }: { access: AccessState }) {
     }
     navigate("#ws/" + id + "/product/" + resume);
   };
-  const footer = (
-    <Button
-      variant="ghost"
-      onClick={() => navigate("#ws/" + projectId + "/tasks")}
-    >
-      {"\u4efb\u52a1"}
-      {pending > 0 ? " (" + pending + ")" : ""}
-    </Button>
-  );
   const page = projectId
     ? "business"
     : library
@@ -291,7 +285,7 @@ function Workspace({ access }: { access: AccessState }) {
         ? "projects"
         : management
           ? "admin"
-          : hash === "#templates"
+          : parts[0] === "#templates"
             ? "templates"
             : hash === "#help"
               ? "help"
@@ -309,7 +303,7 @@ function Workspace({ access }: { access: AccessState }) {
         } as Record<string, string>
       )[target] || "#home",
     );
-  const assistant = () => window.location.assign("/chat");
+  const assistant = () => setAssistantOpen((value) => !value);
   const signOut = () => {
     const form = document.createElement("form");
     form.method = "post";
@@ -317,6 +311,45 @@ function Workspace({ access }: { access: AccessState }) {
     document.body.append(form);
     form.submit();
   };
+  const syncFrameTheme = () => {
+    const target = frame.current?.contentDocument?.documentElement;
+    if (!target) return;
+    const values = getComputedStyle(document.documentElement);
+    for (const token of [
+      "background",
+      "foreground",
+      "card",
+      "muted",
+      "muted-foreground",
+      "primary",
+      "primary-text",
+      "primary-foreground",
+      "primary-muted",
+      "border",
+      "radius-md",
+      "body-md-font-size",
+      "title-md-font-size",
+      "space-md",
+      "space-lg",
+    ]) {
+      target.style.setProperty(
+        "--" + token,
+        values.getPropertyValue("--" + token),
+      );
+    }
+    target.classList.toggle(
+      "dark",
+      document.documentElement.classList.contains("dark"),
+    );
+  };
+  useEffect(() => {
+    const observer = new MutationObserver(syncFrameTheme);
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class"],
+    });
+    return () => observer.disconnect();
+  }, []);
   const iframe = projectId ? (
     <iframe
       ref={frame}
@@ -324,12 +357,13 @@ function Workspace({ access }: { access: AccessState }) {
       className="bid-workbench-frame"
       src={"/workbench/index.html?project=" + encodeURIComponent(projectId)}
       sandbox="allow-scripts allow-same-origin allow-downloads"
-      onLoad={() =>
+      onLoad={() => {
+        syncFrameTheme();
         frame.current?.contentWindow?.postMessage(
           { ns: "bid.stage", section },
           window.location.origin,
-        )
-      }
+        );
+      }}
     />
   ) : undefined;
   const upload = async (file: File) => {
@@ -371,14 +405,13 @@ function Workspace({ access }: { access: AccessState }) {
         }
         sidebar={
           projectId ? (
-            <ProjectWorkflowNav
-              items={items}
+            <WorkflowNavigation
+              steps={items}
               projectId={projectId}
-              activeId={tab === "product" ? section : "configuration"}
+              activeId={tab === "product" ? section : tab}
               collapsed={collapsed}
               onToggle={() => setCollapsed(!collapsed)}
-              onNavigate={navigate}
-              footer={footer}
+              pending={pending}
             />
           ) : management ? (
             <ManagementNavigation
@@ -402,110 +435,139 @@ function Workspace({ access }: { access: AccessState }) {
             projectId ? "workbench-page" : "workbench-page jadera-landing-page"
           }
         >
-          {projectId ? (
-            <ProjectPanel
-              api={api}
-              id={projectId}
-              tab={tab}
-              onPending={setPending}
-              productView={iframe}
-              contextView={
-                <ProjectFilesSection
-                  api={api}
-                  projectId={projectId}
-                  grants={[]}
-                  uploadFile={upload}
-                />
-              }
-              exportView={
-                <a
-                  className="bid-workbench-download"
-                  href={"/api/workbench/host/projects/" + projectId + "/export"}
-                  download
-                >
-                  {"\u4e0b\u8f7d\u9879\u76ee\u8bb0\u5f55"}
-                </a>
-              }
-            />
-          ) : library ? (
-            <iframe
-              className="bid-workbench-frame"
-              title={"\u77e5\u8bc6\u8d44\u6599\u5e93"}
-              src="/workbench/library.html?library=1"
-              sandbox="allow-scripts allow-same-origin allow-downloads"
-            />
-          ) : management ? (
-            <Management
-              access={access}
-              page={adminPage}
-              onNavigate={navigate}
-            />
-          ) : page === "templates" ? (
-            <main className="jadera-static-page">
-              <h1>{"\u6a21\u677f\u7ba1\u7406"}</h1>
-              <p>
-                {
-                  "\u73b0\u6709\u6a21\u677f\u968f\u6807\u4e66\u9879\u76ee\u4fdd\u7559\u3002\u5728\u7f16\u5199\u89c4\u5212\u4e2d\u9009\u7528\u5df2\u5bfc\u5165\u6a21\u677f\uff0c\u5728\u6210\u679c\u5bfc\u51fa\u4e2d\u6838\u5bf9\u6392\u7248\u7248\u672c\u3002"
+          <div className="jadera-work-area">
+            {projectId ? (
+              <ProjectWorkspace
+                api={api}
+                id={projectId}
+                name={
+                  projects.find((project) => project.id === projectId)?.name ||
+                  "\u6807\u4e66\u9879\u76ee"
                 }
-              </p>
-              <Button onClick={() => navigate("#projects")}>
-                {"\u9009\u62e9\u6807\u4e66\u9879\u76ee"}
-              </Button>
-            </main>
-          ) : page === "help" ? (
-            <main className="jadera-static-page">
-              <h1>{"\u4f7f\u7528\u5e2e\u52a9"}</h1>
-              <p>
-                {
-                  "\u521b\u5efa\u6216\u9009\u62e9\u6807\u4e66\u9879\u76ee\u540e\uff0c\u4f9d\u6b21\u5b8c\u6210\u62db\u6807\u89e3\u8bfb\u3001\u9700\u6c42\u786e\u8ba4\u3001\u7f16\u5199\u89c4\u5212\u3001\u6807\u4e66\u7f16\u5199\u3001\u5ba1\u6838\u4fee\u8ba2\u548c\u6210\u679c\u5bfc\u51fa\u3002"
+                tab={tab}
+                section={section}
+                iframe={iframe}
+                frame={frame}
+                onPending={setPending}
+                onNavigate={navigate}
+                upload={upload}
+                assistantOpen={assistantOpen}
+                onReview={() => setAssistantOpen(false)}
+              />
+            ) : library || page === "templates" ? (
+              <ResourceCollection
+                templates={page === "templates"}
+                projects={projects}
+                onUse={async (resource, version, pid) => {
+                  const selected = await transport(
+                    "/projects/" + pid + "/library-selection",
+                  );
+                  if (!selected.ok)
+                    throw Error(
+                      "\u9879\u76ee\u8d44\u6599\u672a\u80fd\u8bfb\u53d6\uff0c\u8bf7\u91cd\u8bd5",
+                    );
+                  const snapshot = await selected.json();
+                  const saved = await transport(
+                    "/projects/" + pid + "/library-selection",
+                    {
+                      method: "POST",
+                      headers: { "content-type": "application/json" },
+                      body: JSON.stringify({
+                        id: resource.id,
+                        version,
+                        revision: snapshot.revision,
+                      }),
+                    },
+                  );
+                  if (!saved.ok)
+                    throw Error(
+                      "\u9009\u7528\u672a\u5b8c\u6210\uff0c\u8bf7\u91cd\u65b0\u8bfb\u53d6\u9879\u76ee\u540e\u91cd\u8bd5",
+                    );
+                }}
+                selectedId={parts[1] !== "bidproposal" ? parts[1] : undefined}
+                onSelect={(id) =>
+                  navigate(
+                    (page === "templates" ? "#templates" : "#library") +
+                      (id ? "/" + id : ""),
+                  )
                 }
-              </p>
-              <Button onClick={() => navigate("#projects")}>
-                {"\u67e5\u770b\u6807\u4e66\u9879\u76ee"}
-              </Button>
-            </main>
-          ) : (
-            <ProjectCollection
-              projects={projects}
-              state={state}
-              catalog={catalog}
-              currentId={lastProject}
-              onOpen={(id) => void open(id)}
-              onCreate={async (name) => {
-                const value = await api.createProject(BRAND.productCode, name);
-                await open(value.id);
-              }}
-              onCatalog={() => navigate("#projects")}
-              onReload={() => void reload()}
-              onContinue={
-                projects.some(
-                  (project) =>
-                    project.id === lastProject && !project.archivedAt,
-                )
-                  ? () => void open(lastProject!)
-                  : undefined
-              }
-              brand={
-                <>
-                  <ProductMark size={20} />
-                  <span>{BRAND.fullName}</span>
-                </>
-              }
-              resources={
-                <ResourceProgress
-                  onKnowledge={() => navigate("#library")}
-                  onTemplates={() => navigate("#templates")}
-                />
-              }
-              companion={
-                <HomeCompanion
-                  imageSrc="/brand/jadera-companion.svg"
-                  onOpen={assistant}
-                />
+              />
+            ) : management ? (
+              <Management
+                access={access}
+                page={adminPage}
+                onNavigate={navigate}
+              />
+            ) : page === "help" ? (
+              <main className="jadera-static-page">
+                <h1>{"\u4f7f\u7528\u5e2e\u52a9"}</h1>
+                <p>
+                  {
+                    "\u521b\u5efa\u6216\u9009\u62e9\u6807\u4e66\u9879\u76ee\u540e\uff0c\u4f9d\u6b21\u5b8c\u6210\u62db\u6807\u89e3\u8bfb\u3001\u9700\u6c42\u786e\u8ba4\u3001\u7f16\u5199\u89c4\u5212\u3001\u6807\u4e66\u7f16\u5199\u3001\u5ba1\u6838\u4fee\u8ba2\u548c\u6210\u679c\u5bfc\u51fa\u3002"
+                  }
+                </p>
+                <Button onClick={() => navigate("#projects")}>
+                  {"\u67e5\u770b\u6807\u4e66\u9879\u76ee"}
+                </Button>
+              </main>
+            ) : (
+              <ProjectCollection
+                projects={projects}
+                state={state}
+                catalog={catalog}
+                currentId={lastProject}
+                onOpen={(id) => void open(id)}
+                onCreate={async (name) => {
+                  const value = await api.createProject(
+                    BRAND.productCode,
+                    name,
+                  );
+                  await open(value.id);
+                }}
+                onCatalog={() => navigate("#projects")}
+                onReload={() => void reload()}
+                onContinue={
+                  projects.some(
+                    (project) =>
+                      project.id === lastProject && !project.archivedAt,
+                  )
+                    ? () => void open(lastProject!)
+                    : undefined
+                }
+                brand={
+                  <>
+                    <ProductMark size={20} />
+                    <span>{BRAND.fullName}</span>
+                  </>
+                }
+                resources={
+                  <ResourceProgress
+                    onKnowledge={(id) =>
+                      navigate("#library" + (id ? "/" + id : ""))
+                    }
+                    onTemplates={(id) =>
+                      navigate("#templates" + (id ? "/" + id : ""))
+                    }
+                  />
+                }
+                companion={
+                  <HomeCompanion
+                    imageSrc="/brand/jadera-companion.svg"
+                    onOpen={assistant}
+                  />
+                }
+              />
+            )}
+            <AssistantDock
+              open={assistantOpen}
+              onClose={() => setAssistantOpen(false)}
+              client={assistantClient}
+              projectId={projectId}
+              projectName={
+                projects.find((project) => project.id === projectId)?.name
               }
             />
-          )}
-          {projectId && tab !== "product" && <div hidden>{iframe}</div>}
+          </div>
         </ShellPageContainer>
       </ShellViewport>
     </div>

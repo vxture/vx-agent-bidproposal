@@ -43,6 +43,7 @@ import { getBidPlanPolicy } from "../entitlement/bid-plan-policy";
 import type { Entitlement } from "../entitlement/types";
 import { runtimeFailure } from "./runtime-errors";
 import { StorageAccounting } from "./storage-accounting";
+import { AssistantSessions } from "./assistant";
 import { admitStorage, storageBudget } from "./storage-policy";
 import type { GaugeReporter } from "../usage/lib/gauge";
 
@@ -74,6 +75,7 @@ export class BidRuntime {
   readonly readings: DocumentReadings;
   readonly renders: DocumentRenders;
   readonly library: ProductLibrary;
+  readonly assistant: AssistantSessions;
   readonly documents: JobDocuments;
   private readonly accounting: StorageAccounting;
   private readonly storageAccess: Options["storageAccess"];
@@ -297,6 +299,49 @@ export class BidRuntime {
       },
     );
     this.library = new ProductLibrary(this.storage, options.reader);
+    this.assistant = new AssistantSessions(
+      this.storage.openLibraryStore(this.workspaceId, "bidproposal").store,
+      async (messages, principal, projectId) => {
+        const context = [];
+        if (projectId) {
+          const view = await this.checkProject(projectId);
+          context.push({
+            type: "project",
+            name: view.meta.name,
+            content: { name: view.meta.name },
+            origin: { kind: "caller" as const },
+          });
+        }
+        const caller = await authorizeExecution(principal);
+        const result = await getTurnResolver().turn(
+          validateTurnRequest({
+            taskId: "assistant-" + randomUUID(),
+            projectId,
+            objective:
+              "Assist the user with preparing a source-grounded bid proposal.",
+            constraints: [
+              "Reply in the user's language. Distinguish facts from suggestions.",
+              "Do not claim to have edited documents, approved requirements, run scoring or exported files. These actions require their existing project workflow.",
+              "Only the explicitly supplied project name and conversation are available. Ask the user for needed source excerpts; do not invent enterprise qualifications.",
+            ],
+            context,
+            messages: messages
+              .slice(-20)
+              .map(({ role, content }) => ({ role, content })),
+            tools: [],
+          }),
+          "bid_assistant",
+          caller,
+        );
+        if (result.kind !== "content")
+          throw new WorkbenchError(
+            502,
+            "ASSISTANT_RESPONSE",
+            "Assistant returned an unsupported response",
+          );
+        return result.content;
+      },
+    );
     this.ready = this.recover();
   }
 
