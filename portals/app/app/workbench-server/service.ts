@@ -42,6 +42,9 @@ import { getTurnResolver, validateTurnRequest } from "../capability/turn";
 import { getBidPlanPolicy } from "../entitlement/bid-plan-policy";
 import type { Entitlement } from "../entitlement/types";
 import { runtimeFailure } from "./runtime-errors";
+import { StorageAccounting } from "./storage-accounting";
+import { admitStorage, storageBudget } from "./storage-policy";
+import type { GaugeReporter } from "../usage/lib/gauge";
 
 // --- Durable host composition --------------------------------------------
 interface Options {
@@ -56,6 +59,8 @@ interface Options {
     fields?: LayoutFields,
   ) => Promise<LayoutOutput>;
   gateway?: AIGatewayPort;
+  storageAccess: (principal: Principal) => Promise<Entitlement>;
+  reportStorage: GaugeReporter;
 }
 const internalAuth = "runtime_auth_";
 const validId = (id: string) => /^[A-Za-z0-9_-]{1,100}$/.test(id);
@@ -69,6 +74,9 @@ export class BidRuntime {
   readonly renders: DocumentRenders;
   readonly library: ProductLibrary;
   readonly documents: JobDocuments;
+  private readonly accounting: StorageAccounting;
+  private readonly storageAccess: Options["storageAccess"];
+  private closed = false;
   private readonly principal = new AsyncLocalStorage<Principal>();
   private readonly cancelled = new Set<string>();
   private readonly namespace: string;
@@ -91,6 +99,12 @@ export class BidRuntime {
       serverKeys(root, this.namespace, options.masterHex),
     );
     this.storage.selfCheck();
+    this.storageAccess = options.storageAccess;
+    this.accounting = new StorageAccounting(
+      this.storage.openLibraryStore(this.workspaceId, "bidproposal").store,
+      this.workspaceId,
+      options.reportStorage,
+    );
     const wrap = (pid: string, store: ProjectStore): ProjectStore =>
       new Proxy(store, {
         get: (target, property) => {
@@ -171,10 +185,16 @@ export class BidRuntime {
     this.documents = {
       get: (pid, product, id) =>
         this.storage.openHostStore(pid)?.getProductDocument(product, id),
-      put: (pid, product, id, markdown, revision) =>
-        this.storage
+      put: (pid, product, id, markdown, revision) => {
+        const saved = this.storage
           .openHostStore(pid)
-          ?.putProductDocument(product, id, markdown, revision),
+          ?.putProductDocument(product, id, markdown, revision);
+        if (saved && id.startsWith("runtime_output_"))
+          void this.serial(() => this.observeStorage()).catch(() =>
+            console.warn("Bid storage observation is pending reconciliation"),
+          );
+        return saved;
+      },
       list: (pid, product, prefix) =>
         this.storage
           .openHostStore(pid)
@@ -253,21 +273,19 @@ export class BidRuntime {
               internalAuth + "render_" + job.id,
             );
           if (!budget) throw Error("Render storage admission is unavailable");
-          const limit = (JSON.parse(budget.markdown) as { limit: number })
-            .limit;
+          const pinned = (
+            JSON.parse(budget.markdown) as { principal?: Principal }
+          ).principal;
+          if (!pinned || namespaceFor(pinned) !== this.namespace)
+            throw Error("Render identity is unavailable; submit a new version");
           const content = await this.retainedContent();
+          const before = sumBytes(content);
           for (const bytes of [output.docx, output.pdf])
             content.set(
               createHash("sha256").update(bytes).digest("hex"),
               bytes.length,
             );
-          if (
-            limit !== -1 &&
-            [...content.values()].reduce((a, b) => a + b, 0) > limit
-          )
-            throw Error(
-              "The workspace storage limit cannot retain this export",
-            );
+          await this.admit(pinned, before, sumBytes(content), true);
           this.renderReservations.set(job.id, {
             pid: project.id,
             hashes: new Map(
@@ -290,6 +308,7 @@ export class BidRuntime {
     await this.library.readings.recoverAll();
     await this.tasks.recoverAll();
     await this.jobs.recoverAll();
+    await this.observeStorage();
   }
   async run<T>(
     access: WorkbenchAccess,
@@ -350,7 +369,9 @@ export class BidRuntime {
   }
 
   // --- Project files and documents ---------------------------------------
-  private async retainedContent(): Promise<Map<string, number>> {
+  private async retainedContent(
+    includeReservations = true,
+  ): Promise<Map<string, number>> {
     const content = new Map<string, number>();
     for (const scope of this.storage.listLibraryScopes())
       for (const file of this.storage
@@ -389,50 +410,94 @@ export class BidRuntime {
         this.renderReservations.delete(id);
         continue;
       }
-      for (const [hash, bytes] of reserved.hashes) content.set(hash, bytes);
+      if (includeReservations)
+        for (const [hash, bytes] of reserved.hashes) content.set(hash, bytes);
     }
     return content;
   }
   async storageBytes(): Promise<number> {
-    return [...(await this.retainedContent()).values()].reduce(
-      (a, b) => a + b,
-      0,
-    );
+    return sumBytes(await this.retainedContent(false));
+  }
+  private async observeStorage(): Promise<void> {
+    if (!this.closed) this.accounting.observe(await this.storageBytes());
+  }
+  /** Reconcile actual inventory before reading shared remaining capacity afresh. */
+  private async admit(
+    principal: Principal,
+    before: number,
+    proposed: number,
+    paid = false,
+  ): Promise<void> {
+    if (this.closed || namespaceFor(principal) !== this.namespace)
+      throw new WorkbenchError(
+        403,
+        "SCOPE_CHANGED",
+        "Original workspace unavailable",
+      );
+    const actual = await this.storageBytes();
+    this.accounting.observe(actual);
+    await this.accounting.flush();
+    const entitlement = await this.storageAccess(principal);
+    if (
+      entitlement.workspace_id !== this.workspaceId ||
+      entitlement.product !== "bidproposal"
+    )
+      throw new WorkbenchError(
+        403,
+        "SCOPE_CHANGED",
+        "Original workspace unavailable",
+      );
+    if (paid && (!entitlement.tier || entitlement.tier === "free"))
+      throw new WorkbenchError(
+        403,
+        "PLAN_REQUIRED",
+        "This operation requires a paid plan",
+      );
+    admitStorage(storageBudget(entitlement), actual, before, proposed);
+  }
+  /** Explicit flush is also used by the product's operational reconciliation checks. */
+  async flushStorage(): Promise<void> {
+    await this.ready;
+    return this.serial(async () => {
+      await this.observeStorage();
+      await this.accounting.flush();
+    });
   }
   async storageMutation<T>(
     bytes: Buffer,
-    limit: number,
+    principal: Principal,
     operation: () => Promise<T>,
   ): Promise<T> {
     return this.serial(async () => {
       const content = await this.retainedContent();
+      const before = sumBytes(content);
       content.set(
         createHash("sha256").update(bytes).digest("hex"),
         bytes.length,
       );
-      if (
-        limit !== -1 &&
-        [...content.values()].reduce((a, b) => a + b, 0) > limit
-      )
-        throw new WorkbenchError(
-          403,
-          "STORAGE_LIMIT",
-          "The workspace storage limit has been reached",
-        );
-      return operation();
+      await this.admit(principal, before, sumBytes(content));
+      const result = await operation();
+      await this.observeStorage();
+      return result;
     });
   }
-  async createRender(pid: string, body: { id: string }, limit: number) {
+  async createRender(pid: string, body: { id: string }, principal: Principal) {
     await this.checkProject(pid, true);
     if (!/^[a-f0-9-]{36}$/.test(body.id))
       throw new WorkbenchError(400, "INVALID_INPUT", "Invalid render ID");
     const key = internalAuth + "render_" + body.id,
       old = this.documents.get(pid, "bidproposal", key);
     if (!old)
-      this.documents.put(pid, "bidproposal", key, JSON.stringify({ limit }), 0);
+      this.documents.put(
+        pid,
+        "bidproposal",
+        key,
+        JSON.stringify({ principal }),
+        0,
+      );
     return this.renders.create(pid, "bidproposal", body);
   }
-  async upload(id: string, name: string, bytes: Buffer, storageLimit: number) {
+  async upload(id: string, name: string, bytes: Buffer, principal: Principal) {
     return this.serial(async () => {
       await this.checkProject(id, true);
       if (
@@ -452,16 +517,9 @@ export class BidRuntime {
         area = this.storage.openFileStore(id)!;
       const hash = createHash("sha256").update(bytes).digest("hex");
       const content = await this.retainedContent();
+      const before = sumBytes(content);
       content.set(hash, bytes.length);
-      if (
-        storageLimit !== -1 &&
-        [...content.values()].reduce((a, b) => a + b, 0) > storageLimit
-      )
-        throw new WorkbenchError(
-          403,
-          "STORAGE_LIMIT",
-          "The workspace storage limit has been reached",
-        );
+      await this.admit(principal, before, sumBytes(content));
       const stored = await area.putBytes(bytes),
         file = {
           ...stored,
@@ -471,8 +529,24 @@ export class BidRuntime {
           addedAt: new Date().toISOString(),
         };
       store.addFile(file);
+      await this.observeStorage();
       this.events.publish({ kind: "project", projectId: id });
       return file;
+    });
+  }
+  async removeFile(pid: string, id: string) {
+    return this.serial(async () => {
+      await this.checkProject(pid, true);
+      const store = this.storage.openHostStore(pid)!,
+        file = store.getFile(id);
+      if (!file)
+        throw new WorkbenchError(404, "NOT_FOUND", "Source unavailable");
+      const removed = store.removeFile(id);
+      if (!removed.stillReferenced)
+        this.storage.openFileStore(pid)!.remove(file.hash);
+      await this.observeStorage();
+      this.events.publish({ kind: "project", projectId: pid });
+      return { removed: id };
     });
   }
   async document(
@@ -598,10 +672,16 @@ export class BidRuntime {
     return this.library.scope(this.workspaceId, "bidproposal");
   }
   close() {
+    this.closed = true;
+    this.accounting.close();
     this.jobs.close();
     this.readings.close();
     this.renders.close();
     this.library.close();
     this.storage.closeAll();
   }
+}
+
+function sumBytes(content: Map<string, number>): number {
+  return [...content.values()].reduce((a, b) => a + b, 0);
 }

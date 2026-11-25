@@ -137,10 +137,10 @@ export async function authorizeWorkbench(
   };
 }
 /** Refresh only the task's original RP session; never substitute a later visitor. */
-export async function authorizeExecution(
+export async function authorizePinnedAccess(
   pinned: Principal,
   ports: { session?: typeof getAuthContext; coverage?: typeof coverage } = {},
-): Promise<CapabilityCaller> {
+): Promise<WorkbenchAccess> {
   const cfg = getOidcConfig();
   const context = await (ports.session ?? getAuthContext)(
     cfg,
@@ -173,6 +173,14 @@ export async function authorizeExecution(
     workspaceId: current.workspaceId,
     mint: { subjectToken: context.accessToken },
   };
-  await (ports.coverage ?? coverage)(caller);
-  return caller;
+  const entitlement = await (ports.coverage ?? coverage)(caller);
+  return { principal: pinned, caller, entitlement };
+}
+
+/** Keep inference and storage on the same original-session authorization path. */
+export async function authorizeExecution(
+  pinned: Principal,
+  ports: Parameters<typeof authorizePinnedAccess>[1] = {},
+): Promise<CapabilityCaller> {
+  return (await authorizePinnedAccess(pinned, ports)).caller;
 }

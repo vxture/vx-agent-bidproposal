@@ -22,6 +22,7 @@ import { BidRuntime } from "./service";
 import { dispatch } from "./dispatch";
 import { runtimeContract } from "./contract";
 import { EMPTY_ENTITLEMENT } from "../entitlement/types";
+import type { StorageObservation } from "../usage/lib/gauge";
 
 const principal: Principal = {
   sessionId: "opaque-own-product-session",
@@ -40,6 +41,8 @@ function access(p = principal): WorkbenchAccess {
     },
     entitlement: {
       ...EMPTY_ENTITLEMENT,
+      limits: {},
+      quota_pools: [],
       workspace_id: p.workspaceId,
       product: "bidproposal",
       tier: "starter",
@@ -52,11 +55,21 @@ function make(
   p = principal,
   masterHex = "ab".repeat(32),
   layout?: ConstructorParameters<typeof BidRuntime>[0]["layout"],
+  ports: Partial<
+    Pick<
+      ConstructorParameters<typeof BidRuntime>[0],
+      "storageAccess" | "reportStorage"
+    >
+  > = {},
 ) {
   return new BidRuntime({
     root,
     masterHex,
     principal: p,
+    storageAccess: ports.storageAccess ?? (async () => access(p).entitlement),
+    reportStorage:
+      ports.reportStorage ??
+      (async (observation) => ({ ...observation, applied: true })),
     contract: runtimeContract(),
     reader: async (bytes, _format, start, unit) => {
       start({ engine: { name: "test-reader" }, total: 1 });
@@ -221,8 +234,14 @@ test("project documents preserve original revisions, opaque identity and durable
   }
 });
 test("proposal and retained-file limits serialize concurrent requests and respect explicit zero", async () => {
+  let limit = 0;
   const root = mkdtempSync(join(tmpdir(), "bid-runtime-quota-")),
-    service = make(root);
+    service = make(root, principal, "ab".repeat(32), undefined, {
+      storageAccess: async () => ({
+        ...access().entitlement,
+        limits: { "storage.bytes.max": limit },
+      }),
+    });
   try {
     const a = access();
     a.entitlement.limits["proposal.max"] = 1;
@@ -233,14 +252,20 @@ test("proposal and retained-file limits serialize concurrent requests and respec
     assert.equal(results.filter((r) => r.status === "fulfilled").length, 1);
     const pid = (await service.runtime.listProjects())[0]!.id;
     await assert.rejects(
-      service.upload(pid, "source.md", Buffer.from("abc"), 0),
+      service.upload(pid, "source.md", Buffer.from("abc"), principal),
       /storage limit/,
     );
-    const file = await service.upload(pid, "source.md", Buffer.from("abc"), 3);
-    await service.upload(pid, "same.md", Buffer.from("abc"), 3);
+    limit = 3;
+    const file = await service.upload(
+      pid,
+      "source.md",
+      Buffer.from("abc"),
+      principal,
+    );
+    await service.upload(pid, "same.md", Buffer.from("abc"), principal);
     assert.equal(await service.storageBytes(), 3);
     await assert.rejects(
-      service.upload(pid, "new.md", Buffer.from("d"), 3),
+      service.upload(pid, "new.md", Buffer.from("d"), principal),
       /storage limit/,
     );
     const response = await call(service, [
@@ -252,7 +277,7 @@ test("proposal and retained-file limits serialize concurrent requests and respec
     ]);
     assert.equal(await response.text(), "abc");
     await assert.rejects(
-      service.upload(pid, "../../escape.md", Buffer.from("x"), 100),
+      service.upload(pid, "../../escape.md", Buffer.from("x"), principal),
       /Select a/,
     );
     await assert.rejects(
@@ -388,13 +413,25 @@ test("runtime retains real consent, human verification and durable original task
 });
 
 test("saved export bytes count toward storage once and download tickets stay scoped and single use", async () => {
+  let limit = 1;
   const root = mkdtempSync(join(tmpdir(), "bid-runtime-render-")),
-    service = make(root, principal, "ab".repeat(32), async (bytes) => ({
-      docx: Buffer.from(bytes),
-      pdf: Buffer.from("%PDF-synthetic-quota-test"),
-      pages: 1,
-      engine: "Synthetic test engine",
-    }));
+    service = make(
+      root,
+      principal,
+      "ab".repeat(32),
+      async (bytes) => ({
+        docx: Buffer.from(bytes),
+        pdf: Buffer.from("%PDF-synthetic-quota-test"),
+        pages: 1,
+        engine: "Synthetic test engine",
+      }),
+      {
+        storageAccess: async () => ({
+          ...access().entitlement,
+          limits: { "storage.bytes.max": limit },
+        }),
+      },
+    );
   try {
     const a = access(),
       project = await service.run(a, () =>
@@ -410,7 +447,7 @@ test("saved export bytes count toward storage once and download tickets stay sco
       title: "Synthetic",
       source: { id: "bid_manuscript", revision: 1 },
     };
-    await service.createRender(pid, request, 1);
+    await service.createRender(pid, request, principal);
     for (
       let i = 0;
       i < 100 &&
@@ -430,7 +467,8 @@ test("saved export bytes count toward storage once and download tickets stay sco
     );
     assert.equal(await service.storageBytes(), 0);
     const accepted = { ...request, id: "22222222-2222-4222-8222-222222222222" };
-    await service.createRender(pid, accepted, 1000000);
+    limit = 1000000;
+    await service.createRender(pid, accepted, principal);
     for (
       let i = 0;
       i < 100 &&
@@ -480,6 +518,198 @@ test("saved export bytes count toward storage once and download tickets stay sco
       /paid plan/,
     );
   } finally {
+    service.close();
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+// --- Shared capacity and actual durable inventory -------------------------
+test("fresh shared gauge capacity includes other products; deletion and retry survive encrypted reopen", async () => {
+  const root = mkdtempSync(join(tmpdir(), "bid-runtime-gauge-"));
+  const observations: StorageObservation[] = [];
+  let reported = 0,
+    external = 7,
+    offline = false;
+  const ports = {
+    storageAccess: async (pinned: Principal) => {
+      assert.equal(pinned.sessionId, principal.sessionId);
+      assert.equal(observations.at(-1)?.value, String(reported));
+      return {
+        ...access().entitlement,
+        quota_pools: [
+          {
+            metric: "storage.bytes",
+            limit: 10,
+            remaining: 10 - reported - external,
+            priority: 1,
+          },
+        ],
+      };
+    },
+    reportStorage: async (value: StorageObservation) => {
+      if (offline) throw Error("offline");
+      observations.push(value);
+      reported = Number(value.value);
+      return { ...value, applied: true };
+    },
+  };
+  let service = make(root, principal, "ab".repeat(32), undefined, ports);
+  try {
+    const project = await call(service, ["host", "projects"], "POST", {
+      name: "Shared gauge",
+    });
+    const pid = (await project.json()).id;
+    const file = await service.upload(
+      pid,
+      "one.md",
+      Buffer.from("abc"),
+      principal,
+    );
+    await service.flushStorage();
+    assert.equal(reported, 3);
+    await assert.rejects(
+      service.upload(pid, "two.md", Buffer.from("d"), principal),
+      /storage limit/,
+    );
+    assert.equal(service.storage.openHostStore(pid)!.listFiles().length, 1);
+    external = 20;
+    const duplicate = await service.upload(
+      pid,
+      "duplicate.md",
+      Buffer.from("abc"),
+      principal,
+    );
+    assert.equal(await service.storageBytes(), 3);
+    await service.removeFile(pid, file.id);
+    await service.flushStorage();
+    assert.equal(reported, 3);
+    offline = true;
+    await service.removeFile(pid, duplicate.id);
+    assert.equal(await service.storageBytes(), 0);
+    await assert.rejects(service.flushStorage(), /temporarily unavailable/);
+    service.close();
+    offline = false;
+    service = make(root, principal, "ab".repeat(32), undefined, ports);
+    await service.flushStorage();
+    assert.equal(reported, 0);
+    assert.ok(observations.at(-1)!.observed_at > observations[0]!.observed_at);
+    const exported = await (
+      await call(service, ["host", "projects", pid, "export"])
+    ).text();
+    assert.doesNotMatch(
+      exported,
+      /runtime_auth_storage_accounting|opaque-own-product-session/,
+    );
+    await assert.rejects(
+      call(service, [
+        "projects",
+        pid,
+        "documents",
+        "runtime_auth_storage_accounting",
+      ]),
+      /unavailable/,
+    );
+  } finally {
+    service.close();
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+test("source/library duplicates count once and temporary parsing content is excluded", async () => {
+  const root = mkdtempSync(join(tmpdir(), "bid-runtime-library-gauge-")),
+    service = make(root);
+  try {
+    const project = await call(service, ["host", "projects"], "POST", {
+      name: "Dedup library",
+    });
+    const pid = (await project.json()).id;
+    await service.upload(pid, "source.md", Buffer.from("abc"), principal);
+    await call(service, ["host", "library"], "POST", {
+      name: "reference.md",
+      category: "reference",
+      base64: Buffer.from("abc").toString("base64"),
+    });
+    assert.equal(await service.storageBytes(), 3);
+    await service.flushStorage();
+    const files = service.storage.openHostStore(pid)!.listFiles();
+    await service.removeFile(pid, files[0]!.id);
+    assert.equal(await service.storageBytes(), 3);
+  } finally {
+    service.close();
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+test("export finalization rechecks the pinned session and refuses a plan revoked during layout", async () => {
+  const root = mkdtempSync(join(tmpdir(), "bid-runtime-render-reauth-"));
+  let release!: () => void,
+    started!: () => void,
+    paidPlan = true,
+    checked = 0;
+  const ready = new Promise<void>((done) => {
+    started = done;
+  });
+  const held = new Promise<void>((done) => {
+    release = done;
+  });
+  const service = make(
+    root,
+    principal,
+    "ab".repeat(32),
+    async () => {
+      started();
+      await held;
+      return {
+        docx: Buffer.from("docx"),
+        pdf: Buffer.from("pdf"),
+        pages: 1,
+        engine: "test",
+      };
+    },
+    {
+      storageAccess: async (pinned) => {
+        assert.deepEqual(pinned, principal);
+        checked++;
+        return { ...access().entitlement, tier: paidPlan ? "starter" : "free" };
+      },
+    },
+  );
+  try {
+    const project = await call(service, ["host", "projects"], "POST", {
+      name: "Pinned export",
+    });
+    const pid = (await project.json()).id,
+      id = "33333333-3333-4333-8333-333333333333";
+    await service.document(pid, "bid_manuscript", {
+      markdown: "# Synthetic",
+      revision: 0,
+    });
+    await service.createRender(
+      pid,
+      {
+        id,
+        title: "Synthetic",
+        source: { id: "bid_manuscript", revision: 1 },
+      } as { id: string },
+      principal,
+    );
+    await ready;
+    paidPlan = false;
+    release();
+    for (
+      let n = 0;
+      n < 100 &&
+      service.renders.get(pid, "bidproposal", id)?.state !== "failed";
+      n++
+    )
+      await new Promise((done) => setTimeout(done, 10));
+    assert.equal(checked, 1);
+    assert.equal(service.renders.get(pid, "bidproposal", id)!.state, "failed");
+    assert.equal(
+      service.documents.get(pid, "bidproposal", "runtime_output_" + id),
+      undefined,
+    );
+    assert.equal(await service.storageBytes(), 0);
+  } finally {
+    release();
     service.close();
     rmSync(root, { recursive: true, force: true });
   }

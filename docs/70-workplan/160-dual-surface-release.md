@@ -31,9 +31,9 @@ Do not create sync routes, tables, background jobs or disabled entry points.
 
 ## Corrected batches - 2026-11-25
 
-Current production checkpoint: v0.2.2 / f8f15e63 is deployed through the existing
-protected workflow, run 45512015787. Exact image digest:
-`sha256:dc7043735f50a4f0a6726615fc53c7250ac25ddbc67e90e37313cfab33bfd741`.
+Current production checkpoint: v0.2.3 / 80bd95f5 is deployed through the existing
+protected workflow, run 45517891140. Exact image digest:
+`sha256:de69aedb0bf1f679428c05020a46ad5482224cdb24b4b2c67ec2abe01bd3ee51`.
 Health/readiness pass, anonymous runtime access returns 401, and original DB/
 Redis container identities are unchanged. The protected runtime key, encrypted
 volume, project originals and library versions are retained. No platform source
@@ -49,7 +49,8 @@ produced a separate candidate and retained the first draft. Production layout
 generated a six-page DOCX/PDF snapshot. v0.2.2 fixed the Web ticket path and actual
 PDF, DOCX and Markdown downloads passed through the original controls. Full
 page inspection then exposed the default template's empty TOC and missing page
-fields; that rendering correction is still a separate release gate. Isolated
+fields; v0.2.3 corrected both and the newly generated V3 passed all six production
+PDF pages and DOCX field checks. V1/V2 remain original snapshots. Isolated
 renderer/Redis tests are not substitutes for actual downloads. Desktop authentication, signed
 installation, comparison/OCR and complete plan-rule acceptance remain open.
 
@@ -64,7 +65,7 @@ baseline is [50-desktop-baseline.md](../40-implementation/50-desktop-baseline.md
 | B6.4 | Reuse the complete product application presentation | B6.4.1 runtime dependencies reconciled and 0.2.0 packages published/consumed; Bid build now uses the public pinned CLI and real reproducibility checks. PR #314/#315 published the original UI and Node adapters as registry packages 0.2.2; Bid consumes both without private source imports. Preserve desktop project/home/library/settings, six-step sidebar, state/times/duration/progress and human review. No replacement editor/navigation or private cross-repo app imports. |
 | B6.5 | Adapt Web identity, projects and data | Real subscribed Bid session, project/original/library-version persistence and reopening across v0.2.0-v0.2.2 passed. Workspace/revision/private-record refusal remains covered by runtime tests. |
 | B6.6 | Adapt reading and agent jobs | Real generation, 15 exact-match source requirements, human confirmation, enterprise fact extraction/matching, two-chapter planning/writing/review and single-chapter rewrite passed. Prior manuscript and stale review history are retained; no RUYIN execution grant. |
-| B6.7 | Deliver preview and actual output files | Live three-format downloads and V1/V2 retention passed. Custom-template Linux layout passed; default-template TOC/header/page correction passed isolated real rendering and awaits release/current production acceptance. |
+| B6.7 | Deliver preview and actual output files | v0.2.3 actual V3 three-format downloads, populated TOC, header/page fields and all six production pages passed. Cover is clear; original V1/V2 retained. Custom-template Linux regression also passes. |
 | B6.8 | Verify product plan rules and feature gaps | Proposal limits, retained-byte dedup and export gates have regression coverage. Real C2 exposes storage as a quota pool, not storage.bytes.max; correct pool reading and gauge reporting next. Independent comparison/OCR and cross-surface business accounting remain open. |
 | B6.9 | Accept production desktop integration and package | Own-product identity, shared-source desktop regression, signing/trust, install/update and old-project protection using current artifacts. Not started. |
 | B6.10 | Accept and release each surface | Complete login/workspace/project/material/generation/review/export/logout/recovery chain per surface before its reviewed release. No automatic Store change. Not started. |
@@ -575,3 +576,40 @@ or fabricated counter events. Correct pool/admission/reconciliation semantics,
 durable retry and deletion/dedup handling before claiming complete storage
 accounting. Do not create platform schemas, change worker01 or infer independent
 Web/desktop commercial pools. No storage consumption was fabricated by this check.
+
+### B6.8 retained-storage candidate
+
+Under the owner's full implementation/release authorization, limit this batch
+to the product's `workbench-server` service, dispatch, identity and host, new
+storage policy/accounting modules and tests, and `usage/lib/gauge.ts` plus its
+tests. Update these existing release/memory guides. No platform, worker01, DDL,
+credentials, runtime master key, package dependency or UI redesign changes.
+
+The actual shared `storage.bytes` C2 gauge view takes precedence over a local
+per-tier default. Reconcile Bid's absolute current inventory before a fresh C2
+read, then admit only additional deduplicated bytes plus local pending export
+reservations against remaining workspace space. Explicit zero/unlimited and
+invalid present values are handled conservatively. Already retained content is
+not deleted when the shared pool is exhausted, and zero-addition duplicates
+remain usable. Capacity is not inferred from a pool's enforcement label.
+
+Only retained project/library originals and saved DOCX/PDF output bytes count,
+deduplicated by SHA-256 within the workspace. Parsing intermediates and render
+reservations never become reported storage. File deletion and library imports
+are serialized with uploads/exports. Background export finalization refreshes
+the pinned original Bid session and rechecks C2/member access and paid export
+coverage; persisted old admission values are not authority.
+
+`PUT /usage/gauge` uses the existing Bid confidential S2S client. The private
+`runtime_auth_storage_accounting` document in the existing encrypted library
+container retains current/acknowledged observations, monotonic observation times
+and pending delivery across restart. Exact receipt matching, superseding-receipt
+reconciliation, bounded single-flight retry/backoff and closed-store protection
+are covered. No invented counter event or repeated Atlas AI token report.
+
+Limits: the existing platform gauge protocol has no atomic shared reservation.
+Other products may write between C2 read and local retention. This batch closes
+the local serialization and actual-inventory accounting gap, not that platform
+race. It does not add desktop synchronization; desktop identity, signing, and
+independent comparison/OCR remain separate open gates. Local tests/types/build
+pass; protected CI, exact-image release and real gauge acceptance follow.
