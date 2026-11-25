@@ -12,6 +12,7 @@ import {
   attachmentDisposition,
 } from "@vxture/ruyin-node-runtime";
 import type { BidRuntime } from "./service";
+import { projectRecord } from "@bidproposal/shared/project-records";
 import { WorkbenchError, type WorkbenchAccess } from "./identity";
 
 // --- Explicit request and response boundary -------------------------------
@@ -191,7 +192,13 @@ export async function dispatch(
   if (segments[0] === "projects" && segments.length === 1) {
     if (method === "GET")
       return json({
-        items: await service.runtime.listProjects(),
+        items: (await service.runtime.listProjects()).map((project) => ({
+          ...project,
+          record: projectRecord(
+            service.documents.get(project.id, "bidproposal", "bid_workflow")
+              ?.markdown,
+          ),
+        })),
         elsewhere: 0,
       });
     if (method === "POST") {
