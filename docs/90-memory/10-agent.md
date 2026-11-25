@@ -1,5 +1,12 @@
 # Agent entry point
 
+Active 2026-11-26: batch 200 corrects Web workflow design and adds continuous
+source/manuscript/PDF reading plus locally bundled Tiptap chapter editing.
+The owner requires Web acceptance/deployment first, substantial-phase testing,
+and autonomous completion while retaining all demonstration data. Desktop
+workflow extraction is stashed in the separate runtime checkout and must stay
+parked until Web acceptance. Read batch 200 for current evidence/release state.
+
 Native resource follow-up, 2026-11-26: read batch 190. Candidate 1.18.0 replaces
 only the desktop library entry with the same DS resource collection as Web.
 The scoped native adapter, real encrypted library/version/reopen checks, 427

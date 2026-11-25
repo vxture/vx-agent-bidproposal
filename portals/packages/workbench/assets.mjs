@@ -9,6 +9,7 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 import { dirname, extname, join } from 'node:path';
+import { buildSync } from 'esbuild';
 
 const require = createRequire(import.meta.url);
 const textAssets = new Set(['.mjs', '.js', '.css', '.html', '.json', '.svg']);
@@ -39,10 +40,22 @@ export function applicationAssets() {
 
 /** Resolve declared packages locally; do not fetch anything during packaging. */
 export function vendorAssets() {
-  return vendor.map(([name, dependency, path]) => {
+  const assets = vendor.map(([name, dependency, path]) => {
     const root = dirname(dirname(require.resolve(dependency)));
     return { name, data: readFileSync(join(root, path)) };
   });
+  const editor = buildSync({
+    entryPoints: [fileURLToPath(new URL('./editor-entry.mjs', import.meta.url))],
+    bundle: true,
+    platform: 'browser',
+    format: 'esm',
+    target: 'es2022',
+    write: false,
+    minify: true,
+    legalComments: 'eof',
+  });
+  assets.push({ name: 'vendor-editor.mjs', data: Buffer.from(editor.outputFiles[0].contents) });
+  return assets;
 }
 
 /** Only the environment entry and its transport differ between outputs. */
