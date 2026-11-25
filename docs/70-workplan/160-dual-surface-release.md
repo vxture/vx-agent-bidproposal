@@ -31,9 +31,9 @@ Do not create sync routes, tables, background jobs or disabled entry points.
 
 ## Corrected batches - 2026-11-25
 
-Current production checkpoint: v0.2.4 / 01908073 is deployed through the existing
-protected workflow, run 45526254239. Exact image digest:
-`sha256:f693a9529449c7983c38cc200fcd4c80789b3d9b25ed961a5634bcf518bf5af6`.
+Current production checkpoint: v0.2.6 / dc1afd85 is deployed through the existing
+protected workflow, run 45532562551. Exact image digest:
+`sha256:654fb6d19031305324a113047a9094f9c8b734ec66bf84f8e8350ffdc2ebc8ad`.
 Health/readiness pass, anonymous runtime access returns 401, and original DB/
 Redis container identities are unchanged. The protected runtime key, encrypted
 volume, project originals and library versions are retained. No platform source
@@ -65,10 +65,10 @@ baseline is [50-desktop-baseline.md](../40-implementation/50-desktop-baseline.md
 | B6.4 | Reuse the complete product application presentation | B6.4.1 runtime dependencies reconciled and 0.2.0 packages published/consumed; Bid build now uses the public pinned CLI and real reproducibility checks. PR #314/#315 published the original UI and Node adapters as registry packages 0.2.2; Bid consumes both without private source imports. Preserve desktop project/home/library/settings, six-step sidebar, state/times/duration/progress and human review. No replacement editor/navigation or private cross-repo app imports. |
 | B6.5 | Adapt Web identity, projects and data | Real subscribed Bid session, project/original/library-version persistence and reopening across v0.2.0-v0.2.2 passed. Workspace/revision/private-record refusal remains covered by runtime tests. |
 | B6.6 | Adapt reading and agent jobs | Real generation, 15 exact-match source requirements, human confirmation, enterprise fact extraction/matching, two-chapter planning/writing/review and single-chapter rewrite passed. Prior manuscript and stale review history are retained; no RUYIN execution grant. |
-| B6.7 | Deliver preview and actual output files | v0.2.3 actual V3 three-format downloads, populated TOC, header/page fields and all six production pages passed. Cover is clear; original V1/V2 retained. Custom-template Linux regression also passes. |
-| B6.8 | Verify product plan rules and feature gaps | v0.2.4 shared gauge admission and durable reporting passed actual inventory/C2 reconciliation and final-session/C2 export checks. Proposal, dedup and paid-export gates retain coverage. Independent comparison/OCR and cross-surface business accounting remain open. |
-| B6.9 | Accept production desktop integration and package | Own-product identity, shared-source desktop regression, signing/trust, install/update and old-project protection using current artifacts. Not started. |
-| B6.10 | Accept and release each surface | Complete login/workspace/project/material/generation/review/export/logout/recovery chain per surface before its reviewed release. No automatic Store change. Not started. |
+| B6.7 | Deliver preview and actual output files | Actual V5/V6 three-format downloads are byte-identical, contain populated TOC and default header/page fields, and retain V1-V4. Long wrapped cover-title spacing remains a targeted layout follow-up below. |
+| B6.8 | Verify product plan rules and feature gaps | v0.2.6 shared gauge admission, durable reporting and repeated-output dedup passed actual inventory/C2 reconciliation and final-session/C2 export checks. Proposal and paid-export gates retain coverage. Independent comparison/OCR and cross-surface business accounting remain open. |
+| B6.9 | Accept production desktop integration and package | Shared-source regression and byte-reproducible unsigned 1.17.3 packaging passed. Own-product identity, publisher signing/trust and actual install/update remain blocked by the prerequisites below. |
+| B6.10 | Accept and release each surface | The Web writing chain, restored workflow times, project/library recovery and repeated downloads passed through v0.2.6. Desktop acceptance and independent comparison/OCR remain open. No Store change. |
 
 Batch completion is scoped. B6.1 is source extraction, not complete Web
 migration; historical local acceptance is not current production acceptance.
@@ -693,3 +693,28 @@ comparison counts; failures/retries/views must not count again. Scanned-PDF OCR
 still needs a bounded product reader/provider implementation and paid/Free
 acceptance. Neither feature is silently advertised as completed by the six
 writing stages. Cloud synchronization remains intentionally absent.
+
+### B6.7/B6.10 v0.2.6 live acceptance and wrapped-cover correction
+
+Protected run 45532562551 deployed dc1afd85 with an app-only Compose preview.
+Original DB/Redis identities, runtime volume and byte-identical operator config
+including the master key are unchanged. The original subscribed synthetic
+project recovered all six workflow stages and V1-V4. V5/V6 have distinct actual
+job records, with workflow start/end values exactly matching render creation/
+completion, including after reopening the project. No page-view time is used.
+
+Actual V5/V6 browser downloads are byte-identical: PDF 168,286 bytes, DOCX
+17,999 bytes and Markdown 10,659 bytes. Retained unique storage changed from
+723,169 to 909,454 bytes for V5; V6 added zero. The acknowledged gauge matched
+909,454 bytes and shared C2 remaining stayed 141,219,811,532 bytes across V5/V6.
+Old outputs and the seven material gaps/six review suggestions are retained.
+This synthetic software acceptance is not a clean business-compliance verdict.
+
+Full-page inspection found that the 24 pt cover title still inherited the
+body's fixed line spacing when it wrapped. The focused follow-up only changes
+`document-engine/layout.py`, its actual Writer regression and this tracker.
+Use proportional cover spacing while preserving title size, body formatting,
+page furniture, original templates and saved old output. A long CJK cover from
+the published renderer's real fixture fails the old engine and passes the fix;
+all five isolated, non-root, network-disabled Writer regressions pass. Actual
+new production output and exact-source release checks remain required.
