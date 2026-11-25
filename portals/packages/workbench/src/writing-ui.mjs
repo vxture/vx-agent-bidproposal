@@ -627,6 +627,8 @@ export async function mountWriting(bridge, workflow, { onDraftSaved = async () =
         ? '\u7ee7\u7eed\u7f16\u5199'
         : '\u5f00\u59cb\u5206\u7ae0\u7f16\u5199';
     pause.disabled = busy || !run.value || run.value.paused;
+    start.hidden = run.complete;
+    pause.hidden = !run.value || run.value.paused || run.complete;
     refresh.disabled = busy;
     rewrite.disabled = busy || !!editBase || !!sourceError || !chapter?.body || !!active || !!candidate;
     instruction.disabled = busy || !!sourceError;
