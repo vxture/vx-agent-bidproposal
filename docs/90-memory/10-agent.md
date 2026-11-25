@@ -16,8 +16,17 @@ reload. The new origin https://jadera.ruyin.work/ now serves v0.2.7, uses the
 product-only worker02 origin, and recovered the original subscribed workspace,
 six stages and six-page saved output. That one-time worker01 permission is
 exhausted; platform source and further worker01 changes remain excluded.
-Read `docs/70-workplan/170-jadera-brand-domain.md` before the brand release;
-the dated v0.2.7 evidence below remains the production baseline.
+Release checkpoint: protected run 45605077737 deployed v0.2.9 / 0089245b
+after exact PR/main CI and Sonar passed for PR #30 and #31. Exact image digest
+is sha256:8e69bccd38ba33184c6557e833b1828ba4b75bf4b6887dea57af946d960a22cf.
+Only the product app was recreated; current Jadera origin settings, master key,
+DB/Redis IDs and encrypted volume are unchanged. Actual browser acceptance
+shows the 32px pen-nib mark and equal 18px Chinese name/descriptor, preserves
+the customer session and restores the original six completed stages and saved
+six-page output. v0.2.8 was cancelled before deployment. Read batch 170 for the
+current state; the dated v0.2.7 evidence below is its preserved business baseline.
+The separate B7 local layout/AI panel prototype remains outside this production
+release. Desktop candidate 1.17.4 remains unsigned; code migration is still open.
 
 Current checkpoint, 2026-11-25: the complete shared Web workbench is live at
 https://bidproposal.ruyin.work/, v0.2.7 / 8a1d9014 (PR #28). Its durable encrypted
