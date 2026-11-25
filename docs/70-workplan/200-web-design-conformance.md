@@ -100,3 +100,38 @@ v0.3.6 is the corrected release candidate. The demonstration software project
 already retains a real 18-item extraction, all source quotes matched, followed
 by 15 eligible and three operator-review items. Do not mislabel those findings
 as a completed compliance judgment.
+
+## Live Web acceptance 2026-11-26
+
+v0.3.6 / `05ce0bea` is deployed at https://jadera.ruyin.work/. Protected run
+45699629981 succeeded after exact PR/main checks and Sonar. The verified image
+digest is `sha256:38bea50e46ab6cc23ced5b5e573df3b29e75bae88a039219d9ab80f3265ad4bd`
+in both registries. Isolated image startup, authenticated route boundaries and
+the app-only Compose preview passed before production approval. No gate was
+removed. v0.3.3-v0.3.5 were cancelled before deployment.
+
+The release phase has 436 passing tests: 315 App, 114 shared business and seven
+adapter tests. All required main checks and types pass. Long-document browser
+acceptance jumps through a real 48-page PDF: only three nearby canvases remain
+at page 40, and returning to page one restores its text layer. Zoom and page
+jump work without replacing the saved PDF. Editor typing/undo/redo/save/history
+passed in the isolated fixture; actual production editor typing and dirty-route
+protection passed with the original chapter edit cancelled afterward.
+
+Actual production acceptance confirms the retained six-page output with a
+selectable text layer, continuous scrolling and page-three jump. The six flow
+icon centers move 0px between expanded and collapsed states. The original
+101 business documents, eight output snapshots, 14 task instances, two original
+file references and runtime metadata remain byte-identical to the preserved
+baseline. Environment/master key and DB/Redis container IDs are unchanged.
+Encrypted rollback inputs are retained at
+`/srv/md0/bidproposal/backups/jadera-b7-v036-20261125T205628Z`.
+
+The software demonstration retains real extraction and source verification,
+three explicit operator interpretations of synthetic requirements, 18 saved
+confirmed requirements, and an accepted ten-chapter technical outline. Actual
+source-review form saves now display success and change the persisted candidate
+state. These are demonstration interpretations, not procurement commitments.
+The original completed project remains untouched. No native installation,
+identity workaround, shared runtime publication or cloud synchronization was
+performed; desktop adaptation must next consume the accepted shared Web source.
