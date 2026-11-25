@@ -5,11 +5,14 @@ Start here if you are an AI agent working in this repo.
 ## What this repo is
 
 Current checkpoint, 2026-11-25: the complete shared Web workbench is live at
-https://bidproposal.ruyin.work/, v0.2.1 / f94b97a7 (PR #22). Its durable encrypted
+https://bidproposal.ruyin.work/, v0.2.2 / f8f15e63 (PR #23). Its durable encrypted
 projects, uploaded originals, versioned library and background jobs survived the
 v0.2.0 upgrade. Real own-product generation and source verification produced 15
 source-matched requirements; human confirmation and the two-chapter planning
-checkpoint passed. Full chapter/review/export acceptance is still in progress.
+checkpoint passed. Actual chapters, review, rewrite, history and three-format
+downloads passed. Default-template TOC/page fields failed visual QA; the isolated
+fix is the next release gate. Real C2 storage uses a pool, not the current local
+storage.bytes.max default; durable gauge reporting remains the following batch.
 Published RUYIN UI/Node adapters 0.2.2 are consumed from the registry. The package
 and layout prerequisites described below were historical B6.3 observations;
 they no longer block Web delivery. Desktop product identity/signing and the

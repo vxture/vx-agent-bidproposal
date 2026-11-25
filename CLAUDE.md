@@ -10,7 +10,7 @@ governance base that every product repo copied from here inherits unchanged.
 a separately packaged RUYIN desktop surface. Its complete original project UI,
 six-stage sidebar and business panels are shared, with environment adapters for
 identity, files, durable storage, jobs and document layout. The Web application
-is live at https://bidproposal.ruyin.work/ on worker02, currently v0.2.1.
+is live at https://bidproposal.ruyin.work/ on worker02, currently v0.2.2.
 It uses its own product session, C2/member checks and confidential provider
 credentials. RUYIN remains a zero-secret host; its session is not Bid identity.
 Desktop product authentication and signed install/update acceptance remain open.
