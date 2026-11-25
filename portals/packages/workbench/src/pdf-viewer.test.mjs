@@ -31,3 +31,17 @@ test('scroll pruning frees previously observed distant canvases while preserving
     else globalThis.window = previousWindow;
   }
 });
+
+test('fast page jumps discard queued pages which are no longer near the viewport', () => {
+  const row = { generation: 1, loading: true,
+    node: { getBoundingClientRect: () => ({ top: 20000, bottom: 21000 }) } };
+  const viewer = {
+    generation: 1, active: 0, queue: [row],
+    container: { getBoundingClientRect: () => ({ top: 0, bottom: 800 }) },
+    render() { throw new Error('Obsolete page should not render'); },
+  };
+  ContinuousPdfViewer.prototype.pump.call(viewer);
+  assert.equal(viewer.active, 0);
+  assert.equal(viewer.queue.length, 0);
+  assert.equal(row.loading, false, 'returning to this page must be able to enqueue it again');
+});

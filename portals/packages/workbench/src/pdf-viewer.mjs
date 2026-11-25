@@ -113,6 +113,11 @@ export class ContinuousPdfViewer {
     while (this.active < 2 && this.queue.length) {
       const row = this.queue.shift();
       if (row.generation !== this.generation) continue;
+      const rect = row.node.getBoundingClientRect(), bounds = this.container.getBoundingClientRect();
+      if (rect.bottom < bounds.top - 650 || rect.top > bounds.bottom + 650) {
+        row.loading = false;
+        continue;
+      }
       this.active++;
       void this.render(row).catch((error) => {
         if (row.generation !== this.generation || error.name === 'RenderingCancelledException') return;
@@ -124,6 +129,7 @@ export class ContinuousPdfViewer {
       }).finally(() => {
         row.loading = false;
         this.active--;
+        this.releaseDistant(this.container.getBoundingClientRect().top);
         this.pump();
       });
     }
