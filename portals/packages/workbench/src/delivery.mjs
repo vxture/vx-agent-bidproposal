@@ -50,8 +50,7 @@ export function assemble(plan, draft, title) {
     throw new Error('\u6210\u679c\u540d\u79f0\u9700\u8981 1-120 \u5b57');
   const ordered = plan.outline.map((c) => {
     const d = draft.find((d) => d.id === c.id);
-    if (!d?.body.trim())
-      throw new Error('\u7ae0\u8282\u5c1a\u672a\u5b8c\u6210\uff1a' + c.title);
+    if (!d?.body.trim()) throw new Error('\u7ae0\u8282\u5c1a\u672a\u5b8c\u6210\uff1a' + c.title);
     return { ...d, title: c.title };
   });
   // Keep fenced code intact; reserve heading level one for approved chapters.
@@ -68,10 +67,7 @@ export function assemble(plan, draft, title) {
         }
         return fence
           ? line
-          : line.replace(
-              /^(#{1,6})(\s+)/,
-              (_, h, s) => (h.length === 1 ? '##' : h) + s,
-            );
+          : line.replace(/^(#{1,6})(\s+)/, (_, h, s) => (h.length === 1 ? '##' : h) + s);
       })
       .join('\n');
   };
@@ -93,11 +89,7 @@ export function assemble(plan, draft, title) {
     throw new Error('\u5408\u7a3f\u8d85\u8fc7 1 MiB');
   return {
     markdown,
-    chapters: ordered.map((c) => ({
-      id: c.id,
-      title: c.title,
-      characters: c.body.length,
-    })),
+    chapters: ordered.map((c) => ({ id: c.id, title: c.title, characters: c.body.length })),
   };
 }
 export class DeliverySession {
@@ -141,9 +133,7 @@ export class DeliverySession {
         '\u9700\u6c42\u5df2\u53d8\u66f4\u6216\u5c1a\u672a\u5168\u90e8\u786e\u8ba4',
       );
     const writing = this.writing
-      ? JSON.parse(
-          this.writing.markdown.slice('# Bid writing progress\n\n'.length),
-        )
+      ? JSON.parse(this.writing.markdown.slice('# Bid writing progress\n\n'.length))
       : null;
     const pending = writing?.items.filter((i) => i.state !== 'done') || [];
     if (pending.length)
@@ -154,12 +144,10 @@ export class DeliverySession {
     const gaps = writing?.items.flatMap((i) => i.materialGaps || []) || [];
     if (gaps.length)
       this.warnings.push(
-        gaps.length +
-          ' \u9879\u4f01\u4e1a\u8d44\u6599\u7f3a\u53e3\u9700\u8865\u9f50',
+        gaps.length + ' \u9879\u4f01\u4e1a\u8d44\u6599\u7f3a\u53e3\u9700\u8865\u9f50',
       );
     const review = this.review ? JSON.parse(this.review.markdown) : null;
-    if (!review)
-      this.warnings.push('\u5c1a\u672a\u5f00\u59cb\u667a\u80fd\u5ba1\u6838');
+    if (!review) this.warnings.push('\u5c1a\u672a\u5f00\u59cb\u667a\u80fd\u5ba1\u6838');
     else {
       const current = {
           bid_plan: this.plan.revision,
@@ -174,9 +162,7 @@ export class DeliverySession {
         review.spec.sources.some((s) => current[s.id] !== s.revision) ||
         (audit &&
           (audit.asOf !== reviewDate() ||
-            Object.entries(audit.binding || {}).some(
-              ([id, rev]) => current[id] !== rev,
-            )))
+            Object.entries(audit.binding || {}).some(([id, rev]) => current[id] !== rev)))
       )
         this.warnings.push(
           '\u6b63\u6587\u6216\u4f9d\u636e\u5df2\u66f4\u65b0\uff0c\u73b0\u6709\u5ba1\u6838\u62a5\u544a\u5df2\u8fc7\u671f',
@@ -184,16 +170,11 @@ export class DeliverySession {
       else {
         const r = await this.bridge.request('GET', '/jobs/' + review.spec.id);
         if (!r.ok || r.body.state !== 'completed')
-          this.warnings.push(
-            '\u667a\u80fd\u5ba1\u6838\u5c1a\u672a\u5b8c\u6210',
-          );
+          this.warnings.push('\u667a\u80fd\u5ba1\u6838\u5c1a\u672a\u5b8c\u6210');
       }
     }
     if (review) {
-      const response = await this.bridge.request(
-        'GET',
-        '/jobs/' + review.spec.id,
-      );
+      const response = await this.bridge.request('GET', '/jobs/' + review.spec.id);
       if (response.ok && response.body.state === 'completed') {
         const audit = new ReviewSession(this.bridge);
         audit.request.value = review;
@@ -205,12 +186,8 @@ export class DeliverySession {
           this.warnings.push(
             '\u5ba1\u6838\u62a5\u544a\u672a\u901a\u8fc7\u7ed3\u679c\u6216\u6765\u6e90\u6821\u9a8c\uff0c\u8bf7\u56de\u5230\u5ba1\u6838\u4fee\u8ba2\u91cd\u8bd5',
           );
-        const decisions = JSON.parse(
-            (await this.doc('bid_review_decisions'))?.markdown || '{}',
-          ),
-          count = audit.findings.filter(
-            (f) => decisions[f.id]?.state !== 'dismissed',
-          ).length;
+        const decisions = JSON.parse((await this.doc('bid_review_decisions'))?.markdown || '{}'),
+          count = audit.findings.filter((f) => decisions[f.id]?.state !== 'dismissed').length;
         if (count)
           this.warnings.push(
             count +
@@ -254,18 +231,14 @@ export class DeliverySession {
       documentNumber: '',
       ...this.settings.fields,
     };
-    this.files = checked(
-      await this.bridge.request('GET', '/files'),
-    ).items.filter((f) => /\.docx$/i.test(f.name));
+    this.files = checked(await this.bridge.request('GET', '/files')).items.filter((f) =>
+      /\.docx$/i.test(f.name),
+    );
     await this.sync();
     return this;
   }
   async saveSettings() {
-    const r = await this.put(
-      'bid_delivery_settings',
-      this.settings,
-      this.settingsRevision,
-    );
+    const r = await this.put('bid_delivery_settings', this.settings, this.settingsRevision);
     this.settingsRevision = r.revision;
   }
   async sync() {
@@ -281,10 +254,7 @@ export class DeliverySession {
     if (!this.selected || !this.jobs.some((j) => j.id === this.selected))
       this.selected = this.jobs[0]?.id || null;
     this.manifest = this.selected
-      ? JSON.parse(
-          (await this.doc('bid_delivery_manifest_' + this.selected))
-            ?.markdown || 'null',
-        )
+      ? JSON.parse((await this.doc('bid_delivery_manifest_' + this.selected))?.markdown || 'null')
       : null;
     return this.job;
   }
@@ -294,9 +264,7 @@ export class DeliverySession {
   get stale() {
     return (
       !!this.manifest &&
-      Object.entries(this.manifest.revisions).some(
-        ([k, v]) => this.revisions()[k] !== v,
-      )
+      Object.entries(this.manifest.revisions).some(([k, v]) => this.revisions()[k] !== v)
     );
   }
   get settingsChanged() {
@@ -307,22 +275,16 @@ export class DeliverySession {
         JSON.stringify(job.template || null) !==
           JSON.stringify(
             this.settings.template
-              ? {
-                  fileId: this.settings.template.id,
-                  hash: this.settings.template.hash,
-                }
+              ? { fileId: this.settings.template.id, hash: this.settings.template.hash }
               : null,
           ) ||
-        JSON.stringify(job.fields || null) !==
-          JSON.stringify(this.settings.fields || null))
+        JSON.stringify(job.fields || null) !== JSON.stringify(this.settings.fields || null))
     );
   }
   async create() {
     await this.sources();
     if (this.jobs.some((j) => ['queued', 'running'].includes(j.state)))
-      throw new Error(
-        '\u5f53\u524d\u5408\u7a3f\u6b63\u5728\u6392\u7248\uff0c\u8bf7\u7a0d\u5019',
-      );
+      throw new Error('\u5f53\u524d\u5408\u7a3f\u6b63\u5728\u6392\u7248\uff0c\u8bf7\u7a0d\u5019');
     const settings = structuredClone(this.settings),
       fields = settings.fields;
     for (const [key, max] of Object.entries({
@@ -340,11 +302,7 @@ export class DeliverySession {
           '\u8bf7\u8865\u9f50\u9875\u7709\u9879\u76ee\u540d\u79f0\u548c\u6587\u4ef6\u540d\u79f0\uff0c\u4f7f\u7528\u5355\u884c\u6587\u5b57',
         );
     for (const key of Object.keys(fields)) fields[key] = fields[key].trim();
-    const content = assemble(
-        this.plan.value,
-        this.draft.chapters,
-        settings.title,
-      ),
+    const content = assemble(this.plan.value, this.draft.chapters, settings.title),
       id = crypto.randomUUID(),
       manifest = {
         revisions: this.revisions(),
@@ -355,25 +313,14 @@ export class DeliverySession {
         fields,
       };
     await this.saveSettings();
-    const source = await this.put(
-      'bid_delivery_source_' + id,
-      content.markdown,
-    );
+    const source = await this.put('bid_delivery_source_' + id, content.markdown);
     await this.put('bid_delivery_manifest_' + id, manifest);
     const input = {
       id,
       title: settings.title,
-      source: {
-        id: source.id || 'bid_delivery_source_' + id,
-        revision: source.revision,
-      },
+      source: { id: source.id || 'bid_delivery_source_' + id, revision: source.revision },
       ...(settings.template
-        ? {
-            template: {
-              fileId: settings.template.id,
-              hash: settings.template.hash,
-            },
-          }
+        ? { template: { fileId: settings.template.id, hash: settings.template.hash } }
         : {}),
       fields,
     };
@@ -386,15 +333,10 @@ export class DeliverySession {
   }
   async file(format) {
     const value = checked(
-      await this.bridge.request(
-        'GET',
-        '/renders/' + this.selected + '/files/' + format,
-      ),
+      await this.bridge.request('GET', '/renders/' + this.selected + '/files/' + format),
     );
     const bytes = Uint8Array.from(atob(value.base64), (c) => c.charCodeAt(0));
-    const hash = [
-      ...new Uint8Array(await crypto.subtle.digest('SHA-256', bytes)),
-    ]
+    const hash = [...new Uint8Array(await crypto.subtle.digest('SHA-256', bytes))]
       .map((b) => b.toString(16).padStart(2, '0'))
       .join('');
     if (hash !== value.sha256 || bytes.length !== value.size)
