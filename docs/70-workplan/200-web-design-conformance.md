@@ -75,7 +75,8 @@ context-overlay breakpoint: narrow windows start with the DS rail and closed
 context. Explicit toggles remain available, and breakpoint changes adapt the
 layout. A shared hydration-safe media hook preserves a single presentation
 source. v0.3.4 was also cancelled before deployment while this was corrected;
-v0.3.5 is the final release candidate for this Web phase.
+v0.3.5 passed exact main checks, but was cancelled before deployment when actual
+source-review testing exposed the Web frame's missing form permission.
 
 The shared component fixture at 580px confirms a 48px DS rail, 532px main column
 and initially hidden context; at 1367px the expanded workflow and context leave
@@ -83,3 +84,19 @@ and initially hidden context; at 1367px the expanded workflow and context leave
 omit redundant introduction text and completed action buttons, keeping the
 manuscript visible earlier. Actual signed-in post-deployment checks remain the
 final acceptance, rather than treating this fixture as customer-data evidence.
+
+## Native form submission in the Web frame
+
+The actual source-review save button did not execute its form handler: the
+first-party workbench iframe allowed scripts, same origin and downloads but
+omitted `allow-forms`. A same-browser A/B reproduction confirmed that the old
+sandbox never reached the submit handler, while the identical form with
+`allow-forms` saved successfully. Add only this standard form permission; keep
+the existing authentication, origin checks and other sandbox restrictions.
+This is required for source review and other native forms, not a database fix.
+The outer Web application also owns the dirty-document before-unload guard,
+so unsaved protection does not depend on modal permission inside the sandbox.
+v0.3.6 is the corrected release candidate. The demonstration software project
+already retains a real 18-item extraction, all source quotes matched, followed
+by 15 eligible and three operator-review items. Do not mislabel those findings
+as a completed compliance judgment.

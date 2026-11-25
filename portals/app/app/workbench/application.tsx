@@ -276,8 +276,17 @@ function Workspace({ access }: { access: AccessState }) {
       setHash(acceptedHash);
     };
     update();
+    const protectUnsaved = (event: BeforeUnloadEvent) => {
+      if (frame.current?.contentDocument?.documentElement.dataset.unsaved !== "true") return;
+      event.preventDefault();
+      event.returnValue = "";
+    };
     window.addEventListener("hashchange", update);
-    return () => window.removeEventListener("hashchange", update);
+    window.addEventListener("beforeunload", protectUnsaved);
+    return () => {
+      window.removeEventListener("hashchange", update);
+      window.removeEventListener("beforeunload", protectUnsaved);
+    };
   }, []);
   useEffect(() => {
     void reload();
@@ -460,7 +469,7 @@ function Workspace({ access }: { access: AccessState }) {
       title={product.name}
       className="bid-workbench-frame"
       src={"/workbench/index.html?project=" + encodeURIComponent(projectId)}
-      sandbox="allow-scripts allow-same-origin allow-downloads"
+      sandbox="allow-scripts allow-same-origin allow-downloads allow-forms"
       onLoad={() => {
         syncFrameTheme();
         frame.current?.contentWindow?.postMessage(
