@@ -1,6 +1,6 @@
 # configs/edge - public-edge vhost source
 
-The public origin for Bid is `https://bidproposal.ruyin.work`. The existing
+The target public origin for Jadera is `https://jadera.ruyin.work`. The existing
 shared edge terminates TLS for `*.ruyin.work` and proxies to the approved
 product runtime using the Opera registration.
 
@@ -16,8 +16,14 @@ product runtime using the Opera registration.
 2. Use the existing Bid record in Opera. Only after the upstream is ready,
    set it and use the existing edge synchronization workflow. A separate
    Nginx vhost is not required.
-3. Verify that `https://bidproposal.ruyin.work/api/health` reports
+3. Verify that `https://jadera.ruyin.work/api/health` reports
    `product=bidproposal` and the released Git SHA.
 
 The upstream must agree with the product's published port; DNS alone
 does not establish the application route.
+
+The existing published product record, OIDC client, subscription keys, database,
+volumes and worker02 stack remain under `bidproposal` during the brand/domain
+cutover. Use that same product record in Opera; do not create a second product
+or duplicate paid subscriptions. A platform-supported code migration to
+`jadera` is a separate step. Do not edit platform code or worker01 files.

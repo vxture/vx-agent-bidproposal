@@ -6,16 +6,19 @@
 // on any non-prod stack. `scripts/init/rename-product.mjs` rewrites these two
 // values when a new product repo is copied from bidproposal.
 //
-// productCode is PLUMBING (the platform key, owner-registered, rigid);
-// displayName is BRAND (what a human sees, exemplar content). They diverge on
-// purpose: the code stays `bidproposal`, the product is named Bidproposal - the
-// arena is literally a storm of amber embers converging on you. The rename
-// script reads the current displayName from this file, so a copy starts as
-// its Title-Cased code and takes its own brand from here on.
+// Jadera is the current brand and requested target code. The registered
+// productCode is temporarily retained until the platform supports an in-place
+// code migration preserving the existing product ID, plans and subscriptions.
+// Do not silently use the new code against an unchanged commercial catalog.
 export const BRAND = {
   productCode: "bidproposal",
-  displayName: "Bidproposal",
-  defaultLocale: "en",
+  targetProductCode: "jadera",
+  displayName: "Jadera",
+  chineseName: "\u745c\u7ae0",
+  fullName: "\u745c\u7ae0 \u00b7 \u6295\u6807\u65b9\u6848\u667a\u80fd\u4f53",
+  origin: "https://jadera.ruyin.work",
+  logo: "/brand/jadera-logo.svg",
+  defaultLocale: "zh-CN",
 } as const;
 
 export type Brand = typeof BRAND;

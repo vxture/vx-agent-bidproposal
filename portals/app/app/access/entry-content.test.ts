@@ -46,7 +46,7 @@ test("access gates do not infer buying permission from account or workspace role
 });
 
 test("login preserves a safe target and always returns through a fresh gate check", () => {
-  const login = new URL(gateLoginUrl("/proposal/123?tab=outline"), "https://bidproposal.ruyin.work");
+  const login = new URL(gateLoginUrl("/proposal/123?tab=outline"), "https://jadera.ruyin.work");
   assert.equal(login.pathname, "/auth/login");
   const gate = new URL(login.searchParams.get("returnTo")!, login.origin);
   assert.equal(gate.pathname, "/gate");

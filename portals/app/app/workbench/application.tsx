@@ -33,6 +33,8 @@ import { EntryShell } from "../access/entry-shell";
 import { EntryCard } from "../access/entry-card";
 import { entryKindFor, gateLoginUrl } from "../access/entry-content";
 import { SessionControl } from "../session-control";
+import { BRAND } from "@bidproposal/shared/brand";
+import { ProductMark } from "../access/product-mark";
 import "./workbench.css";
 
 // --- Original presentation with explicit Web transport --------------------
@@ -58,16 +60,16 @@ const initialNavigation: ProductNavItem[] = stages.map((id, index) => ({
   state: "pending",
 }));
 const product: ProductInfo = {
-  id: "bidproposal",
-  name: "\u6807\u4e66\u65b9\u6848\u667a\u80fd\u4f53",
-  version: "1.17.2",
+  id: BRAND.productCode,
+  name: BRAND.fullName,
+  version: "1.17.4",
   installed: true,
   state: "active",
   entitled: true,
   availability: "available",
   subscription: null,
   commercialIntent: null,
-  versions: ["1.17.2"],
+  versions: ["1.17.4"],
   managed: true,
   supply: "package",
 };
@@ -276,7 +278,7 @@ function Workspace({ access }: { access: AccessState }) {
                   label={"\u8fd4\u56de\u9879\u76ee"}
                   onClick={() => navigate("#projects")}
                 />
-                <span className="app-ident-product">{product.name}</span>
+                <span className="app-ident-product" title={BRAND.fullName}><ProductMark />{BRAND.displayName}</span>
                 {current && (
                   <>
                     <span className="app-ident-sep">{"\u00b7"}</span>

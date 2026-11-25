@@ -10,9 +10,10 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import localFont from "next/font/local";
 import { useTheme } from "next-themes";
-import { FileText, Globe, House, Moon, Sun } from "@phosphor-icons/react";
+import { Globe, House, Moon, Sun } from "@phosphor-icons/react";
 import { BRAND } from "@bidproposal/shared/brand";
 import type { EntryLocale } from "./entry-content";
+import { ProductMark } from "./product-mark";
 import "./gate.css";
 
 const displayFont = localFont({ src: "./assets/funnel-display-semibold.woff2", weight: "600", display: "swap", variable: "--bidproposal-entry-display" });
@@ -87,8 +88,8 @@ export function EntryShell({ children }: Readonly<{ children: ReactNode }>) {
               <PlatformMark /><span>Ruyin</span>
             </a>
             <span className="bid-entry-divider" aria-hidden="true" />
-            <a className="bid-entry-product" href="/" aria-label={zh ? "Bidproposal \u9996\u9875" : "Bidproposal home"}>
-              <FileText size={24} weight="duotone" aria-hidden="true" /><span>{BRAND.displayName}</span>
+            <a className="bid-entry-product" href="/" aria-label={zh ? `${BRAND.chineseName} \u9996\u9875` : `${BRAND.displayName} home`} title={BRAND.fullName}>
+              <ProductMark /><span>{BRAND.displayName}</span>
             </a>
           </div>
           <fieldset className="bid-entry-tools" aria-label={zh ? "\u663e\u793a\u4e0e\u8bed\u8a00" : "Display and language"}>

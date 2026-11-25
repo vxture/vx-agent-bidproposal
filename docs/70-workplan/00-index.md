@@ -1,5 +1,9 @@
 # 70-workplan - Build plan and batch tracker
 
+The active brand/domain batch is
+[170-jadera-brand-domain.md](170-jadera-brand-domain.md). Jadera is the current
+brand; the commercial code remains `bidproposal` pending platform migration.
+
 Current Bid work follows [160-dual-surface-release.md](160-dual-surface-release.md)
 and the [complete desktop baseline](../40-implementation/50-desktop-baseline.md).
 B6.2 freezes the original host plus product application before Web migration.

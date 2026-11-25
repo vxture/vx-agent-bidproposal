@@ -4,8 +4,9 @@ import { AppTheme } from "./ds";
 import "./globals.css";
 
 export const metadata = {
-  title: BRAND.displayName,
-  description: `${BRAND.displayName} - a Vxture product`,
+  title: `${BRAND.displayName} - ${BRAND.fullName}`,
+  description: BRAND.fullName,
+  icons: { icon: BRAND.logo, apple: "/brand/jadera-logo-256.png" },
 };
 
 /**

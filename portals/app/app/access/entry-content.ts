@@ -6,6 +6,7 @@
  * @date 2026-11-24
  */
 import { safeReturnTo } from "../auth/lib/return-to";
+import { BRAND } from "@bidproposal/shared/brand";
 import type { AccessState } from "./types";
 
 export type EntryLocale = "zh-CN" | "en";
@@ -20,8 +21,8 @@ type EntryText = readonly [title: string, note: string, action: string];
 
 const ENTRY_TEXT: Record<EntryKind, Record<EntryLocale, EntryText>> = {
   signin: {
-    "zh-CN": ["\u6807\u4e66\u65b9\u6848\u667a\u80fd\u4f53","\u4f7f\u7528\u5e73\u53f0\u8d26\u53f7\u5b89\u5168\u767b\u5f55","\u7ee7\u7eed\u767b\u5f55"],
-    en: ["Proposal Writing Agent","Sign in securely with your platform account","Continue to sign in"],
+    "zh-CN": [BRAND.fullName,"\u4f7f\u7528\u5e73\u53f0\u8d26\u53f7\u5b89\u5168\u767b\u5f55","\u7ee7\u7eed\u767b\u5f55"],
+    en: [`${BRAND.displayName} - Proposal Intelligence Agent`,"Sign in securely with your platform account","Continue to sign in"],
   },
   checking: {
     "zh-CN": ["\u6b63\u5728\u786e\u8ba4\u4f7f\u7528\u6743\u9650","\u4f7f\u7528\u5e73\u53f0\u8d26\u53f7\u5b89\u5168\u767b\u5f55","\u6838\u9a8c\u4e2d\u2026"],

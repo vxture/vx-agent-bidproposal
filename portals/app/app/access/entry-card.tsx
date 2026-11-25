@@ -9,6 +9,7 @@
  */
 import { ArrowRight, ShieldCheck, SpinnerGap, User } from "@phosphor-icons/react";
 import { Button } from "../ds";
+import { BRAND } from "@bidproposal/shared/brand";
 import { displayNameFor } from "../auth/lib/display";
 import type { AccessUser } from "./types";
 import { ENTRY_COPY, type EntryKind } from "./entry-content";
@@ -62,7 +63,7 @@ export function EntryCard({ kind, user, actionHref, onAction }: Readonly<{
   const identityNote = user ? org || workspace || signedIn : unifiedNote;
   return <section className="bid-entry-card" aria-labelledby="bid-entry-title" aria-busy={pending}>
     <header className="bid-entry-heading" aria-live="polite" aria-atomic="true">
-      <p>WELCOME TO BIDPROPOSAL</p>
+      <p>WELCOME TO {BRAND.displayName.toUpperCase()}</p>
       <h1 id="bid-entry-title" tabIndex={-1}>{copy.title}</h1>
     </header>
     <div className="bid-entry-art-position"><DocumentMotif kind={kind} /></div>

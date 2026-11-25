@@ -61,6 +61,18 @@
 .bid-workbench .workbench-page {
   height: 100%;
 }
+.bid-workbench .app-ident-product {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  white-space: nowrap;
+}
+.bid-workbench .app-ident-product > svg {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  color: var(--primary);
+}
 .bid-workbench .proj:has(.bid-workbench-frame) {
   min-height: 100%;
 }
