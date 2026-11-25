@@ -61,3 +61,9 @@ The isolated browser fixture verifies real editor typing/undo/redo/save and
 preserved history, continuous source units, and a 48-page real PDF with text
 layers and lazy canvases. This fixture is not authenticated production evidence.
 Live Web acceptance and protected release are recorded below when complete.
+
+Long-document follow-up: scroll pruning also checks pages which crossed the lazy
+observer margin earlier; an observer alone does not keep reporting those pages.
+Visible pages, active rendering and text selections are retained. A focused
+regression covers this case. v0.3.3 was cancelled during image construction,
+before any production deployment; the corrected Web release is v0.3.4.

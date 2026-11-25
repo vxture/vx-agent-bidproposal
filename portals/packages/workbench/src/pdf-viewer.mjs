@@ -23,13 +23,9 @@ export class ContinuousPdfViewer {
         if (entry.isIntersecting && !row.ready && !row.loading) {
           row.loading = true;
           this.queue.push(row);
-        } else if (!entry.isIntersecting && row.ready &&
-          Math.abs(entry.boundingClientRect.top - this.container.getBoundingClientRect().top) > 3000) {
-          row.canvas.width = row.canvas.height = 0;
-          row.node.replaceChildren();
-          row.ready = false;
         }
       }
+      this.releaseDistant(this.container.getBoundingClientRect().top);
       this.pump();
     }, { root: container, rootMargin: '650px 0px' });
     container.tabIndex = 0;
@@ -39,15 +35,31 @@ export class ContinuousPdfViewer {
       this.scrollFrame = requestAnimationFrame(() => {
         this.scrollFrame = null;
         const top = container.getBoundingClientRect().top;
-        for (const [number, row] of this.pages) {
-          if (row.node.getBoundingClientRect().bottom > top + 60) {
-            this.current = number;
-            this.onPage(number, this.pdf?.numPages || 0);
-            break;
-          }
+        let low = 1, high = this.pages.size;
+        while (low < high) {
+          const middle = Math.floor((low + high) / 2);
+          if (this.pages.get(middle).node.getBoundingClientRect().bottom > top + 60) high = middle;
+          else low = middle + 1;
         }
+        if (this.pages.has(low)) {
+          this.current = low;
+          this.onPage(low, this.pdf?.numPages || 0);
+        }
+        // An observer emits only on boundary crossings. Pages already outside
+        // its margin still need eviction as scrolling carries them farther away.
+        this.releaseDistant(top);
       });
     });
+  }
+  releaseDistant(top) {
+    const selection = window.getSelection();
+    for (const row of this.pages.values()) {
+      if (!row.ready || Math.abs(row.node.getBoundingClientRect().top - top) <= 3000) continue;
+      if (selection && !selection.isCollapsed && selection.containsNode(row.node, true)) continue;
+      row.canvas.width = row.canvas.height = 0;
+      row.node.replaceChildren();
+      row.ready = false;
+    }
   }
   reset() {
     this.generation++;
@@ -101,6 +113,11 @@ export class ContinuousPdfViewer {
     while (this.active < 2 && this.queue.length) {
       const row = this.queue.shift();
       if (row.generation !== this.generation) continue;
+      const rect = row.node.getBoundingClientRect(), bounds = this.container.getBoundingClientRect();
+      if (rect.bottom < bounds.top - 650 || rect.top > bounds.bottom + 650) {
+        row.loading = false;
+        continue;
+      }
       this.active++;
       void this.render(row).catch((error) => {
         if (row.generation !== this.generation || error.name === 'RenderingCancelledException') return;
@@ -112,6 +129,7 @@ export class ContinuousPdfViewer {
       }).finally(() => {
         row.loading = false;
         this.active--;
+        this.releaseDistant(this.container.getBoundingClientRect().top);
         this.pump();
       });
     }
