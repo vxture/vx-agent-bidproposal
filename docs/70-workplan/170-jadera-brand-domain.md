@@ -94,7 +94,24 @@ Release v0.2.8 was cancelled before protected deployment so this title refinemen
 can ship together with the brand in one product recreation. Production remains
 v0.2.7 at the working Jadera origin. No rollback of the accepted domain is needed.
 
-Configuration is saved and independently read back. Original v0.2.7 health and
-readiness are healthy. Product brand source is a local candidate, not yet a
-release. The domain is live; commercial-code migration remains a platform gate.
-Do not describe catalog configuration as deployment of the new product UI.
+Protected release run 45605077737 deployed v0.2.9 / 0089245b after PR #30 and #31
+and both exact main revisions passed all required checks and Sonar. The approved
+image digest is `sha256:8e69bccd38ba33184c6557e833b1828ba4b75bf4b6887dea57af946d960a22cf`.
+The ACR mirror matched the exact CI/GHCR digest and supplied the stalled GHCR
+layer. Approved PNG bytes, production provenance and the real app-only Compose
+preview passed before protected deployment was approved under the owner's
+current completion authorization. No required review rule was changed.
+
+Public health/readiness now identify v0.2.9 / 0089245b. The existing customer
+session reopens the original project and six completed stages with saved
+six-page output. Its live product mark measures 32px; Chinese name and descriptor
+both measure 18px, separated by 8px. Original DB/Redis IDs, encrypted volume and
+byte-identical current origin environment/master key remain unchanged. The
+product release backup is
+`/srv/md0/bidproposal/backups/jadera-brand-v028-20261125T110733Z`; the folder was
+prepared before cancellation of v0.2.8 and reused for the accepted v0.2.9 image.
+
+The domain and product branding are live. Commercial-code migration and signed
+desktop identity/install remain open. The 1.17.4 candidate is reproducible and
+unsigned. B7's complete homepage/administration/workflow/assistant prototype is
+still local review material, not part of this production branding change.
