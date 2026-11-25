@@ -460,7 +460,7 @@ function Workspace({ access }: { access: AccessState }) {
       title={product.name}
       className="bid-workbench-frame"
       src={"/workbench/index.html?project=" + encodeURIComponent(projectId)}
-      sandbox="allow-scripts allow-same-origin allow-downloads"
+      sandbox="allow-scripts allow-same-origin allow-downloads allow-forms"
       onLoad={() => {
         syncFrameTheme();
         frame.current?.contentWindow?.postMessage(
