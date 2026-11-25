@@ -46,8 +46,21 @@ export class ContinuousPdfViewer {
             break;
           }
         }
+        // An observer emits only on boundary crossings. Pages already outside
+        // its margin still need eviction as scrolling carries them farther away.
+        this.releaseDistant(top);
       });
     });
+  }
+  releaseDistant(top) {
+    const selection = window.getSelection();
+    for (const row of this.pages.values()) {
+      if (!row.ready || Math.abs(row.node.getBoundingClientRect().top - top) <= 3000) continue;
+      if (selection && !selection.isCollapsed && selection.containsNode(row.node, true)) continue;
+      row.canvas.width = row.canvas.height = 0;
+      row.node.replaceChildren();
+      row.ready = false;
+    }
   }
   reset() {
     this.generation++;
