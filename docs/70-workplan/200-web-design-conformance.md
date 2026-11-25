@@ -135,3 +135,10 @@ state. These are demonstration interpretations, not procurement commitments.
 The original completed project remains untouched. No native installation,
 identity workaround, shared runtime publication or cloud synchronization was
 performed; desktop adaptation must next consume the accepted shared Web source.
+
+The software first chapter was generated through the real background model and
+verification/human-review path. After adoption, a real Tiptap supplement was saved
+and its previous body appeared as history version one. The supplement clarifies
+the synthetic twelve-week schedule; existing unmet evidence remains explicit.
+The batch is paused at one saved chapter out of ten so no remaining generation
+is left unattended. Original project editor acceptance used cancellation only.

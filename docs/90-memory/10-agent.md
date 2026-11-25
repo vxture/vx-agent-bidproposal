@@ -7,6 +7,8 @@ local Tiptap chapter supplementation and the corrected Web form sandbox.
 editor/dirty-route behavior and source-review form saves pass. Original 101
 documents/eight outputs/14 tasks/two originals remain unchanged. Software demo
 now retains 18 confirmed requirements and an accepted technical outline.
+Its first real generated chapter and a saved rich-text human supplement/history
+are retained; remaining chapter scheduling is paused (one of ten saved).
 Keep the desktop extraction parked and consume accepted shared Web source next.
 
 Active 2026-11-26: batch 200 corrects Web workflow design and adds continuous
