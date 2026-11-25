@@ -23,13 +23,9 @@ export class ContinuousPdfViewer {
         if (entry.isIntersecting && !row.ready && !row.loading) {
           row.loading = true;
           this.queue.push(row);
-        } else if (!entry.isIntersecting && row.ready &&
-          Math.abs(entry.boundingClientRect.top - this.container.getBoundingClientRect().top) > 3000) {
-          row.canvas.width = row.canvas.height = 0;
-          row.node.replaceChildren();
-          row.ready = false;
         }
       }
+      this.releaseDistant(this.container.getBoundingClientRect().top);
       this.pump();
     }, { root: container, rootMargin: '650px 0px' });
     container.tabIndex = 0;
