@@ -422,6 +422,7 @@ function Workspace({ access }: { access: AccessState }) {
       "space-xl",
       "space-2xl",
       "space-3xl",
+      "space-control-md",
       "radius-sm",
       "accent",
       "ring",

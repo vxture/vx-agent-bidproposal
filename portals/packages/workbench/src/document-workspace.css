@@ -8,7 +8,7 @@ body.host-navigation {
 body.host-navigation [hidden] { display: none !important; }
 body.host-navigation :is(button, input, select, textarea) { font-family: inherit; }
 body.host-navigation :is(button, select, input) {
-  min-height: var(--control-md, 32px);
+  min-height: var(--space-control-md, 32px);
   border-radius: var(--radius-sm, 6px);
   font-size: var(--bidproposal-doc-small);
   padding: var(--space-2xs, 4px) var(--space-sm, 12px);
