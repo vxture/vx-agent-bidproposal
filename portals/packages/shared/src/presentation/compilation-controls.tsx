@@ -139,6 +139,7 @@ export function CompilationSelector({
   onSelect,
   onCreate,
   onRetry,
+  readOnly = false,
 }: {
   data?: CompilationList;
   selectedId: string;
@@ -155,6 +156,7 @@ export function CompilationSelector({
     revision: number;
   }) => Promise<void>;
   onRetry?: (id: string) => Promise<void>;
+  readOnly?: boolean;
 }) {
   const [open, setOpen] = useState(false),
     [create, setCreate] = useState(false),
@@ -195,7 +197,7 @@ export function CompilationSelector({
           <Button
             variant="ghost"
             className="jadera-version-create"
-            disabled={!data || loading}
+            disabled={!data || loading || readOnly}
             onClick={() => {
               setLabel(
                 "V" + String((data?.items.length ?? 0) + 1).padStart(2, "0"),
@@ -223,7 +225,9 @@ export function CompilationSelector({
                 key={item.id}
                 variant="ghost"
                 className="jadera-version-option"
-                disabled={busy || (item.state !== "ready" && !onRetry)}
+                disabled={
+                  busy || (item.state !== "ready" && (!onRetry || readOnly))
+                }
                 aria-current={item.id === selectedId ? "true" : undefined}
                 onClick={async () => {
                   if (item.state === "creating" && onRetry) {
@@ -355,11 +359,13 @@ export function CompilationRequirements({
   onReload,
   onSave,
   versionLabel,
+  readOnly = false,
 }: {
   snapshot?: CompilationBrief;
   loading: boolean;
   failed: boolean;
   versionLabel?: string;
+  readOnly?: boolean;
   onReload: () => void;
   onSave: (value: WritingRequirements, revision: number) => Promise<void>;
 }) {
@@ -392,6 +398,7 @@ export function CompilationRequirements({
         <form
           onSubmit={async (e) => {
             e.preventDefault();
+            if (readOnly) return;
             setBusy(true);
             setError("");
             setSaved(false);
@@ -415,9 +422,16 @@ export function CompilationRequirements({
               requirementsComplete(draft) +
               "/5 \u00b7 \u4fdd\u5b58\u540e\u5c06\u66f4\u65b0\u672c\u7248\u7f16\u5199\u89c4\u5212\uff0c\u5df2\u6709\u89c4\u5212\u9700\u91cd\u65b0\u786e\u8ba4\u3002"}
           </p>
+          {readOnly && (
+            <p className="jadera-requirements-note">
+              {
+                "\u9879\u76ee\u5df2\u5f52\u6863\uff0c\u5f53\u524d\u4e3a\u53ea\u8bfb\u3002\u53ef\u4ece\u9879\u76ee\u64cd\u4f5c\u4e2d\u6062\u590d\u540e\u7ee7\u7eed\u7f16\u5236\u3002"
+              }
+            </p>
+          )}
           <RequirementsFields
             value={draft}
-            disabled={busy}
+            disabled={busy || readOnly}
             onChange={(next) => {
               setValue(next);
               setSaved(false);
@@ -430,7 +444,7 @@ export function CompilationRequirements({
             </p>
           )}
           <div className="jadera-requirements-actions">
-            <Button type="submit" disabled={busy}>
+            <Button type="submit" disabled={busy || readOnly}>
               {busy
                 ? "\u4fdd\u5b58\u4e2d\u2026"
                 : "\u4fdd\u5b58\u7f16\u5236\u8981\u6c42"}

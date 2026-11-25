@@ -26,6 +26,12 @@
 .bid-workbench .workbench-page {
   height: 100%;
 }
+.jadera-project-operation-error {
+  flex: none;
+  padding: var(--space-xs) var(--space-md);
+  font-size: var(--body-sm-font-size);
+  color: var(--destructive-text);
+}
 .bid-workbench .app-ident-product {
   display: inline-flex;
   align-items: center;

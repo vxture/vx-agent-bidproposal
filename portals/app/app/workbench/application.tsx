@@ -179,6 +179,9 @@ function Workspace({ access }: { access: AccessState }) {
     (item) => item.id === projectId,
   )?.label;
   const logicalProjectId = compilation.data?.rootId ?? projectId;
+  const projectArchived = !!projects.find(
+    (project) => project.id === logicalProjectId,
+  )?.archivedAt;
   const projectName =
     compilation.data?.projectName ||
     projects.find((project) => project.id === logicalProjectId)?.name;
@@ -491,6 +494,7 @@ function Workspace({ access }: { access: AccessState }) {
                   data={compilation.data}
                   selectedId={projectId}
                   collapsed={collapsed}
+                  readOnly={projectArchived}
                   loading={compilation.loading}
                   failed={compilation.failed}
                   onReload={() => void compilation.reload()}
@@ -555,6 +559,8 @@ function Workspace({ access }: { access: AccessState }) {
                 assistantOpen={assistantOpen}
                 onReview={() => setAssistantOpen(false)}
                 versionLabel={versionLabel}
+                archived={projectArchived}
+                onProjectChanged={reload}
                 requirementsView={
                   <CompilationRequirements
                     key={projectId}
@@ -562,6 +568,7 @@ function Workspace({ access }: { access: AccessState }) {
                     loading={compilation.loading}
                     failed={compilation.failed}
                     versionLabel={versionLabel}
+                    readOnly={projectArchived}
                     onReload={() => void compilation.reload()}
                     onSave={async (value, revision) => {
                       await compilation.save(value, revision);
