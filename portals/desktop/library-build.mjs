@@ -34,7 +34,7 @@ export async function libraryAssets() {
   return [
     { name: 'library.mjs', data: result.outputFiles[0].contents },
     { name: 'library.css', data: Buffer.from(css.css) },
-    { name: 'library-request.mjs', data: readFileSync(join(here, 'src/library-request.mjs')) },
+    { name: 'library-request.mjs', data: Buffer.from(readFileSync(join(here, 'src/library-request.mjs'), 'utf8').replaceAll('\r\n', '\n')) },
     { name: 'library.html', data: Buffer.from('<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Jadera</title><link rel="stylesheet" href="library.css"></head><body><div id="library-root"></div><script type="module" src="library.mjs"></script></body></html>') },
   ];
 }
