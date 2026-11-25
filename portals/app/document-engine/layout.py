@@ -307,6 +307,10 @@ def layout(root):
         if first.supportsService("com.sun.star.text.Paragraph") and first.String.strip():
             first.CharHeight = 24
             first.CharHeightAsian = 24
+            # Wrapped cover lines must scale with their 24 pt type, not body spacing.
+            spacing = uno.createUnoStruct("com.sun.star.style.LineSpacing")
+            spacing.Mode, spacing.Height = 0, 115
+            first.ParaLineSpacing = spacing
             first.ParaAdjust = 3
             first.ParaTopMargin = 5292
             first.ParaBottomMargin = 847

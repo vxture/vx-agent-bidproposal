@@ -60,6 +60,31 @@ class LayoutRegression(unittest.TestCase):
                 archive.writestr(name, data)
 
     # --- Actual non-interactive Writer rendering -------------------------
+    def test_actual_wrapped_cover_does_not_inherit_fixed_body_line_height(self):
+        title = "\u5408\u6210\u56ed\u533a\u5de1\u68c0\u670d\u52a1\u7efc\u5408\u6807\u8f6f\u4ef6\u9a8c\u6536\u8349\u7a3f" * 3
+        with tempfile.TemporaryDirectory(prefix="bid-layout-cover-") as directory:
+            root = Path(directory)
+            parts = engine.read_package(FIXTURE)
+            document = engine.xml(parts["word/document.xml"])
+            first = document.find("w:body/w:p", engine.NS)
+            nodes = first.findall(".//w:t", engine.NS)
+            self.assertTrue(nodes)
+            nodes[0].text = title
+            for node in nodes[1:]:
+                node.text = ""
+            parts["word/document.xml"] = engine.encode(document)
+            self.write(root / "input.docx", parts)
+            engine.layout(root)
+            result = engine.read_package(root / "output.docx")
+            cover = engine.xml(result["word/document.xml"]).find("w:body/w:p", engine.NS)
+            self.assertEqual("".join(cover.xpath(".//w:t/text()", namespaces=engine.NS)), title)
+            spacing = cover.find("w:pPr/w:spacing", engine.NS)
+            self.assertIsNotNone(spacing)
+            self.assertEqual(spacing.get("{" + engine.W + "}lineRule"), "auto")
+            self.assertGreaterEqual(int(spacing.get("{" + engine.W + "}line")), 264)
+            sizes = cover.xpath(".//w:rPr/w:sz/@w:val", namespaces=engine.NS)
+            self.assertIn("48", sizes)
+
     def test_actual_default_and_template_toc_have_text_and_real_pages(self):
         for custom in [False, True]:
             with self.subTest(custom_template=custom), tempfile.TemporaryDirectory(prefix="bid-layout-engine-") as directory:
