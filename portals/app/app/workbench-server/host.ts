@@ -8,7 +8,13 @@
 import { isAbsolute, join } from "node:path";
 import { localSourceReader } from "@vxture/ruyin-node-runtime";
 import { BidRuntime } from "./service";
-import { namespaceFor, WorkbenchError, type Principal } from "./identity";
+import {
+  namespaceFor,
+  authorizePinnedAccess,
+  WorkbenchError,
+  type Principal,
+} from "./identity";
+import { makePlatformGauge } from "../usage/lib/gauge";
 import { runtimeContract } from "./contract";
 import { limitReaders } from "./reader-limit";
 import { serverLayout } from "./layout-engine";
@@ -27,7 +33,8 @@ const reader = limitReaders(
 export function runtimeFor(principal: Principal): BidRuntime {
   const root = process.env.BID_RUNTIME_DATA_DIR,
     key = process.env.BID_RUNTIME_MASTER_KEY;
-  if (!root || !isAbsolute(root) || !key)
+  const platformBase = process.env.PLATFORM_API_URL;
+  if (!root || !isAbsolute(root) || !key || !platformBase)
     throw new WorkbenchError(
       503,
       "RUNTIME_NOT_CONFIGURED",
@@ -64,6 +71,9 @@ export function runtimeFor(principal: Principal): BidRuntime {
     contract: runtimeContract(),
     reader,
     layout: serverLayout,
+    storageAccess: async (pinned) =>
+      (await authorizePinnedAccess(pinned)).entitlement,
+    reportStorage: makePlatformGauge(platformBase),
   });
   hosts.set(namespace, { service, usedAt: Date.now() });
   return service;

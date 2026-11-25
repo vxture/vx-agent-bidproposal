@@ -80,20 +80,6 @@ export function json(value: unknown, status = 200): Response {
 const missing = (): never => {
   throw new WorkbenchError(404, "NOT_FOUND", "Resource unavailable");
 };
-export function storageLimit(access: WorkbenchAccess): number {
-  const configured = access.entitlement.limits["storage.bytes.max"];
-  if (configured !== undefined)
-    return Number.isSafeInteger(configured) && configured >= -1
-      ? configured
-      : 0;
-  return {
-    free: 100 * 1024 ** 2,
-    starter: 1024 ** 3,
-    pro: 3 * 1024 ** 3,
-    business: 10 * 1024 ** 3,
-    enterprise: 0,
-  }[access.entitlement.tier ?? "enterprise"];
-}
 function paid(access: WorkbenchAccess): void {
   if (!access.entitlement.tier || access.entitlement.tier === "free")
     throw new WorkbenchError(
@@ -531,7 +517,7 @@ async function filesRequest(context: ProjectRequest): Promise<Response> {
           pid,
           text(body, "name"),
           Buffer.from(base64, "base64"),
-          storageLimit(access),
+          access.principal,
         ),
         201,
       );
@@ -554,10 +540,7 @@ async function filesRequest(context: ProjectRequest): Promise<Response> {
           },
         );
       if (method === "DELETE") {
-        const removed = store.removeFile(file.id);
-        if (!removed.stillReferenced)
-          service.storage.openFileStore(pid)!.remove(file.hash);
-        return json({ removed: file.id });
+        return json(await service.removeFile(pid, file.id));
       }
     }
   }
@@ -778,7 +761,7 @@ async function rendersRequest(context: ProjectRequest): Promise<Response> {
         await service.createRender(
           pid,
           { ...body, id: text(body, "id") },
-          storageLimit(access),
+          access.principal,
         ),
         202,
       );
@@ -826,7 +809,7 @@ async function library(
         "Invalid upload encoding or size",
       );
     return json(
-      await service.storageMutation(bytes, storageLimit(access), () =>
+      await service.storageMutation(bytes, access.principal, () =>
         service.library.import(scope, body),
       ),
       201,
