@@ -7,6 +7,11 @@ The owner's demonstration account retains three projects and real versioned
 demo resources. The prototype remains a local design reference; original business
 data and runtime adapters are preserved. Native identity/chrome/signing remain open.
 
+The next native resource presentation stage is recorded in
+[190-native-resource-surface.md](190-native-resource-surface.md). It connects the
+same accepted resource cards and collection to the existing scoped local library
+bridge without changing the live Web release or the user's installed product.
+
 The active brand/domain batch is
 [170-jadera-brand-domain.md](170-jadera-brand-domain.md). Jadera is the current
 brand; the commercial code remains `bidproposal` pending platform migration.

@@ -1,5 +1,14 @@
 # Agent entry point
 
+Native resource follow-up, 2026-11-26: read batch 190. Candidate 1.18.0 replaces
+only the desktop library entry with the same DS resource collection as Web.
+The scoped native adapter, real encrypted library/version/reopen checks, 427
+phase tests, workspace types and byte-reproducible unsigned packaging pass.
+All original six-stage assets remain byte-identical. Browser Card/List, original
+blocks and saved v2 display pass; its cross-origin file-picker automation is
+unverified, not accepted. This candidate does not change live Web v0.3.2 or the
+user's installed product, and does not close native host/identity/signing gates.
+
 Start here if you are an AI agent working in this repo.
 
 Current checkpoint, 2026-11-26 (Asia/Shanghai): Jadera B7 Web v0.3.2 / e699b598

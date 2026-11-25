@@ -1,18 +1,33 @@
 {
   "name": "@bidproposal/desktop",
-  "version": "1.17.4",
+  "version": "1.18.0",
   "private": true,
   "type": "module",
   "scripts": {
     "build": "node build.mjs",
     "verify": "node verify.mjs",
     "test": "node --test src/*.test.mjs",
-    "type-check": "node --check build.mjs && node --check verify.mjs && node --check src/bridge.mjs && node --check src/environment.mjs"
+    "type-check": "tsc --noEmit && node --check build.mjs && node --check library-build.mjs && node --check verify.mjs && node --check src/bridge.mjs && node --check src/environment.mjs && node --check src/library-request.mjs"
   },
   "dependencies": {
-    "@bidproposal/workbench": "workspace:*"
+    "@bidproposal/workbench": "workspace:*",
+    "@bidproposal/shared": "workspace:*",
+    "@phosphor-icons/react": "^2.1.10",
+    "@vxture/design-system": "12.26.1",
+    "next-themes": "^0.4.6",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
   },
   "devDependencies": {
-    "@vxture/ruyin-cli": "0.2.0"
+    "@vxture/ruyin-cli": "0.2.0",
+    "@tailwindcss/postcss": "4.3.3",
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "esbuild": "0.28.1",
+    "postcss": "^8.5.26",
+    "tailwindcss": "4.3.3",
+    "tailwindcss-animate": "^1.0.7",
+    "typescript": "^5.7.0"
   }
 }

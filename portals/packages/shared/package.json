@@ -15,7 +15,6 @@
   "peerDependencies": {
     "@phosphor-icons/react": "^2.1.10",
     "@vxture/design-system": "12.26.1",
-    "next": "^15.5.29",
     "react": "^19.0.0"
   },
   "scripts": {

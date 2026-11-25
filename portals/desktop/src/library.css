@@ -1,0 +1,16 @@
+@import "@vxture/design-system/styles/globals.css";
+@import "@vxture/design-system/styles/brands/vxture.css";
+@import "@bidproposal/shared/presentation.css";
+@config "../tailwind.config.mjs";
+
+html, body, #library-root { height: 100%; margin: 0; }
+body { background: var(--background); color: var(--foreground); font-family: var(--font-sans); }
+.jadera-native-library { height: 100%; display: flex; flex-direction: column; }
+.jadera-native-library > nav {
+  display: flex;
+  gap: var(--space-xs);
+  padding: var(--space-xs) var(--space-lg);
+  border-bottom: var(--border-width-thin) solid var(--border);
+  flex: none;
+}
+.jadera-native-library > main { flex: 1; min-height: 0; }

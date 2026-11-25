@@ -12,6 +12,7 @@ import { createHash } from 'node:crypto';
 import { writeZip, packProduct } from '@vxture/ruyin-cli';
 import { collectAssets } from '@bidproposal/workbench/assets';
 import { businessContract } from '@bidproposal/workbench/contract';
+import { libraryAssets } from './library-build.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const version = JSON.parse(readFileSync(join(here, 'package.json'), 'utf8')).version;
@@ -22,9 +23,13 @@ const environment = readText(join(here, 'src/environment.mjs')).replace(
   "'@bidproposal/workbench/runtime'",
   "'./runtime.mjs'",
 );
-const assets = collectAssets(environment, [
+const shared = collectAssets(environment, [
   { name: 'bridge.mjs', data: Buffer.from(readText(join(here, 'src/bridge.mjs'))) },
 ]);
+const assets = [
+  ...shared.filter(asset => asset.name !== 'library.html'),
+  ...await libraryAssets(),
+];
 const ui = writeZip(assets);
 const digest = createHash('sha256').update(ui).digest('hex');
 let contract = businessContract(readText(join(here, '../app/contract/ruyin.product.yaml')));

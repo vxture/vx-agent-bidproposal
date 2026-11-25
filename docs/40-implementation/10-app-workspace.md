@@ -91,6 +91,12 @@ pnpm --filter @bidproposal/desktop verify
 ```
 
 It produces an explicitly unsigned candidate, not a released installation.
+Native candidate 1.18.0 bundles the same DS resource collection used by Web:
+knowledge/template cards, Card/List controls, imports and original versions.
+Only the library entry changes; the six-stage project content remains identical.
+The native collection uses the existing library-scoped postMessage bridge and
+contains no Web API path or product credential. Its CSS is compiled from the
+published DS and accepted shared styles, with no runtime CDN dependency.
 No RUYIN checkout path is required. Verification runs two real builds and checks
 the actual package/UI hashes and byte equality; the existing CI build job runs
 it before the Web artifact. Production signing and trusted installation remain
