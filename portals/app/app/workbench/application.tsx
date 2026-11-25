@@ -179,11 +179,15 @@ function Workspace({ access }: { access: AccessState }) {
       : "overview";
   const [lastProject, setLastProject] = useState<string>();
   const user = "user" in access ? access.user : undefined;
-  const lastKey = "jadera-last-project:" + (user?.activeWorkspace || "local");
+  const lastKey =
+    "jadera-last-project:" +
+    [user?.sub, user?.activeOrg, user?.activeWorkspace].join(":");
   useEffect(() => {
     try {
       setLastProject(localStorage.getItem(lastKey) || undefined);
-    } catch {}
+    } catch {
+      // Remembering a view is optional when browser storage is unavailable.
+    }
   }, [lastKey]);
   const navigate = useCallback((href: string) => {
     window.location.hash = href;
@@ -241,17 +245,23 @@ function Workspace({ access }: { access: AccessState }) {
     return () => window.removeEventListener("message", receive);
   }, [projectId]);
   useEffect(() => {
-    if (!projectId) return;
+    if (!projectId || tab !== "product") return;
+    setLastProject(projectId);
     try {
+      localStorage.setItem(lastKey, projectId);
       localStorage.setItem(lastKey + ":" + projectId, section);
-    } catch {}
-  }, [projectId, section, lastKey]);
+    } catch {
+      // Project persistence does not depend on local view preferences.
+    }
+  }, [projectId, tab, section, lastKey]);
   const open = async (id: string) => {
     await reload();
     setLastProject(id);
     try {
       localStorage.setItem(lastKey, id);
-    } catch {}
+    } catch {
+      // Continue to the project even when browser storage is unavailable.
+    }
     let resume =
       stages[
         projects.find((project) => project.id === id)?.record?.stageIndex ?? 0
@@ -259,7 +269,9 @@ function Workspace({ access }: { access: AccessState }) {
     try {
       const saved = localStorage.getItem(lastKey + ":" + id);
       if (saved && stages.includes(saved)) resume = saved;
-    } catch {}
+    } catch {
+      // The recorded stage remains the fallback for this project.
+    }
     navigate("#ws/" + id + "/product/" + resume);
   };
   const footer = (

@@ -171,9 +171,10 @@ export function ProjectCollection({
                   ? !!project.archivedAt
                   : !project.archivedAt)
               : !project.archivedAt) &&
-            project.name
-              .toLocaleLowerCase()
-              .includes(query.trim().toLocaleLowerCase()),
+            (!catalog ||
+              project.name
+                .toLocaleLowerCase()
+                .includes(query.trim().toLocaleLowerCase())),
         )
         .sort((a, b) =>
           (b.record?.recordedAt || b.createdAt).localeCompare(
