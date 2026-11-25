@@ -34,7 +34,7 @@ import { EntryCard } from "../access/entry-card";
 import { entryKindFor, gateLoginUrl } from "../access/entry-content";
 import { SessionControl } from "../session-control";
 import { BRAND } from "@bidproposal/shared/brand";
-import { ProductMark } from "../access/product-mark";
+import { ProductIdentity } from "../access/product-identity";
 import "./workbench.css";
 
 // --- Original presentation with explicit Web transport --------------------
@@ -278,7 +278,7 @@ function Workspace({ access }: { access: AccessState }) {
                   label={"\u8fd4\u56de\u9879\u76ee"}
                   onClick={() => navigate("#projects")}
                 />
-                <span className="app-ident-product" title={BRAND.fullName}><ProductMark />{BRAND.displayName}</span>
+                <span className="app-ident-product"><ProductIdentity /></span>
                 {current && (
                   <>
                     <span className="app-ident-sep">{"\u00b7"}</span>

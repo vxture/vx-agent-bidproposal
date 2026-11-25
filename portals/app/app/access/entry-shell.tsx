@@ -13,7 +13,7 @@ import { useTheme } from "next-themes";
 import { Globe, House, Moon, Sun } from "@phosphor-icons/react";
 import { BRAND } from "@bidproposal/shared/brand";
 import type { EntryLocale } from "./entry-content";
-import { ProductMark } from "./product-mark";
+import { ProductIdentity } from "./product-identity";
 import "./gate.css";
 
 const displayFont = localFont({ src: "./assets/funnel-display-semibold.woff2", weight: "600", display: "swap", variable: "--bidproposal-entry-display" });
@@ -89,7 +89,7 @@ export function EntryShell({ children }: Readonly<{ children: ReactNode }>) {
             </a>
             <span className="bid-entry-divider" aria-hidden="true" />
             <a className="bid-entry-product" href="/" aria-label={zh ? `${BRAND.chineseName} \u9996\u9875` : `${BRAND.displayName} home`} title={BRAND.fullName}>
-              <ProductMark /><span>{BRAND.displayName}</span>
+              <ProductIdentity />
             </a>
           </div>
           <fieldset className="bid-entry-tools" aria-label={zh ? "\u663e\u793a\u4e0e\u8bed\u8a00" : "Display and language"}>
