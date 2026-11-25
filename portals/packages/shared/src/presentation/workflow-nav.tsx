@@ -23,7 +23,12 @@ const labels = {
   complete: "\u5df2\u5b8c\u6210",
   blocked: "\u5f85\u5904\u7406",
 };
-const Context = createContext<{ steps: WorkflowStep[]; collapsed: boolean }>({
+const Context = createContext<{
+  steps: WorkflowStep[];
+  collapsed: boolean;
+  versionSelector?: ReactNode;
+  completeness?: number;
+}>({
   steps: [],
   collapsed: false,
 });
@@ -50,13 +55,33 @@ function WorkflowLink({
   children,
   ...props
 }: AnchorHTMLAttributes<HTMLAnchorElement>) {
-  const { steps, collapsed } = useContext(Context),
+  const { steps, collapsed, versionSelector, completeness } =
+      useContext(Context),
     index = steps.findIndex((step) => href?.endsWith("/" + step.id)),
     step = steps[index];
+  if (href?.endsWith("/versions") && versionSelector)
+    return <>{versionSelector}</>;
   if (!step)
     return (
       <a href={href} {...props}>
         {children}
+        {href?.endsWith("/overview") &&
+          !collapsed &&
+          completeness !== undefined && (
+            <span
+              className="jadera-settings-complete"
+              title={
+                "\u57fa\u672c\u7f16\u5236\u8981\u6c42 " + completeness + "/5"
+              }
+            >
+              <span
+                style={{
+                  background: `conic-gradient(var(--primary) ${completeness * 72}deg, var(--muted) 0)`,
+                }}
+              />
+              {completeness}/5
+            </span>
+          )}
       </a>
     );
   const parts = Children.map(children, (child, childIndex) => {
@@ -130,6 +155,8 @@ export function WorkflowNavigation({
   collapsed,
   onToggle,
   pending,
+  versionSelector,
+  completeness,
 }: {
   steps: WorkflowStep[];
   projectId: string;
@@ -137,6 +164,8 @@ export function WorkflowNavigation({
   collapsed: boolean;
   onToggle: () => void;
   pending: number;
+  versionSelector?: ReactNode;
+  completeness?: number;
 }) {
   const completed = steps.filter((step) => step.state === "complete").length,
     current = steps.find((step) => step.id === activeId);
@@ -157,14 +186,31 @@ export function WorkflowNavigation({
     "download",
   ] as const;
   return (
-    <Context.Provider value={{ steps, collapsed }}>
-      <div className="jadera-workflow-navigation" data-collapsed={collapsed}>
+    <Context.Provider
+      value={{ steps, collapsed, versionSelector, completeness }}
+    >
+      <div
+        className={
+          "jadera-workflow-navigation " +
+          (versionSelector ? "with-versions" : "")
+        }
+        data-collapsed={collapsed}
+      >
         <ShellSidebarNav
           domainName={"\u9879\u76ee\u6d41\u7a0b"}
           sections={[
             {
               title: "\u7f16\u5236\u6d41\u7a0b",
               items: [
+                ...(versionSelector
+                  ? [
+                      {
+                        href: "#ws/" + projectId + "/versions",
+                        label: "\u7f16\u5236\u7248\u672c",
+                        icon: "stack" as const,
+                      },
+                    ]
+                  : []),
                 {
                   href: "#ws/" + projectId + "/overview",
                   label: "\u7f16\u5236\u8981\u6c42",

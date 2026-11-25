@@ -33,9 +33,13 @@ import {
   HomeCompanion,
   AssistantDock,
   WorkflowNavigation,
+  CompilationSelector,
+  CompilationRequirements,
   type ProjectCardData,
 } from "@bidproposal/shared/presentation";
 import { ProjectWorkspace } from "./project-workspace";
+import { compilationRequest, useCompilations } from "./compilation-client";
+import { requirementsComplete } from "@bidproposal/shared/compilations";
 import { ResourceCollection } from "./resource-collection";
 import { assistantClient } from "./assistant-client";
 import { ResourceProgress } from "./resources";
@@ -101,6 +105,10 @@ const transport: typeof fetch = (input, init) => {
     redirect: "error",
   });
 };
+const loadCompilations = (id: string) =>
+  compilationRequest<
+    import("@bidproposal/shared/compilations").CompilationList
+  >(id, "compilations");
 
 export function WorkbenchApplication() {
   const [access, setAccess] = useState<AccessState | null>(null),
@@ -166,6 +174,15 @@ function Workspace({ access }: { access: AccessState }) {
   const frame = useRef<HTMLIFrameElement>(null);
   const parts = hash.split("/"),
     projectId = parts[0] === "#ws" ? parts[1] : undefined;
+  const compilation = useCompilations(projectId);
+  const versionLabel = compilation.data?.items.find(
+    (item) => item.id === projectId,
+  )?.label;
+  const logicalProjectId = compilation.data?.rootId ?? projectId;
+  const projectName =
+    compilation.data?.projectName ||
+    projects.find((project) => project.id === logicalProjectId)?.name;
+  const [planRefresh, setPlanRefresh] = useState(0);
   const tab: TabId =
     parts[2] === "context" ||
     parts[2] === "tasks" ||
@@ -198,12 +215,41 @@ function Workspace({ access }: { access: AccessState }) {
   const reload = useCallback(async () => {
     try {
       const response = await api.projects();
-      setProjects(response.items);
+      setProjects(
+        response.items.map((raw) => {
+          const project = raw as ProjectMeta &
+            ProjectCardData & {
+              compilationRecords?: {
+                id: string;
+                label: string;
+                record?: ProjectCardData["record"];
+              }[];
+            };
+          let selected = project.id;
+          try {
+            selected =
+              localStorage.getItem(lastKey + ":version:" + project.id) ||
+              project.id;
+          } catch {
+            /* Use the original version if view storage is unavailable. */
+          }
+          const version = project.compilationRecords?.find(
+            (item) => item.id === selected,
+          );
+          return version
+            ? {
+                ...project,
+                record: version.record,
+                versionLabel: version.label,
+              }
+            : project;
+        }),
+      );
       setState("ready");
     } catch {
       setState("failed");
     }
-  }, [api]);
+  }, [api, lastKey]);
   useEffect(() => {
     const update = () => setHash(window.location.hash);
     update();
@@ -249,14 +295,16 @@ function Workspace({ access }: { access: AccessState }) {
   }, [projectId]);
   useEffect(() => {
     if (!projectId || tab !== "product") return;
-    setLastProject(projectId);
+    if (!logicalProjectId) return;
+    setLastProject(logicalProjectId);
     try {
-      localStorage.setItem(lastKey, projectId);
+      localStorage.setItem(lastKey, logicalProjectId);
+      localStorage.setItem(lastKey + ":version:" + logicalProjectId, projectId);
       localStorage.setItem(lastKey + ":" + projectId, section);
     } catch {
       // Project persistence does not depend on local view preferences.
     }
-  }, [projectId, tab, section, lastKey]);
+  }, [projectId, logicalProjectId, tab, section, lastKey]);
   const open = async (id: string) => {
     await reload();
     setLastProject(id);
@@ -275,7 +323,26 @@ function Workspace({ access }: { access: AccessState }) {
     } catch {
       // The recorded stage remains the fallback for this project.
     }
-    navigate("#ws/" + id + "/product/" + resume);
+    let selectedId = id;
+    try {
+      const saved = localStorage.getItem(lastKey + ":version:" + id);
+      if (saved && saved !== id) {
+        const versions = await compilationRequest<
+          import("@bidproposal/shared/compilations").CompilationList
+        >(id, "compilations");
+        if (
+          versions.items.some(
+            (item) => item.id === saved && item.state === "ready",
+          )
+        )
+          selectedId = saved;
+      }
+      const stage = localStorage.getItem(lastKey + ":" + selectedId);
+      if (stage && stages.includes(stage)) resume = stage;
+    } catch {
+      /* The original project stays available if a saved version cannot be resolved. */
+    }
+    navigate("#ws/" + selectedId + "/product/" + resume);
   };
   const page = projectId
     ? "business"
@@ -352,6 +419,7 @@ function Workspace({ access }: { access: AccessState }) {
   }, []);
   const iframe = projectId ? (
     <iframe
+      key={projectId + ":" + planRefresh}
       ref={frame}
       title={product.name}
       className="bid-workbench-frame"
@@ -412,6 +480,41 @@ function Workspace({ access }: { access: AccessState }) {
               collapsed={collapsed}
               onToggle={() => setCollapsed(!collapsed)}
               pending={pending}
+              completeness={
+                compilation.brief
+                  ? requirementsComplete(compilation.brief.value)
+                  : undefined
+              }
+              versionSelector={
+                <CompilationSelector
+                  key={projectId}
+                  data={compilation.data}
+                  selectedId={projectId}
+                  collapsed={collapsed}
+                  loading={compilation.loading}
+                  failed={compilation.failed}
+                  onReload={() => void compilation.reload()}
+                  onSelect={(id) => navigate("#ws/" + id + "/product/analysis")}
+                  onRetry={async (id) => {
+                    const result = await compilationRequest<{
+                      selectedId: string;
+                    }>(projectId, "compilations", {
+                      method: "POST",
+                      body: JSON.stringify({ retryId: id }),
+                    });
+                    navigate("#ws/" + result.selectedId + "/overview");
+                  }}
+                  onCreate={async (input) => {
+                    const result = await compilationRequest<{
+                      selectedId: string;
+                    }>(projectId, "compilations", {
+                      method: "POST",
+                      body: JSON.stringify(input),
+                    });
+                    navigate("#ws/" + result.selectedId + "/overview");
+                  }}
+                />
+              }
             />
           ) : management ? (
             <ManagementNavigation
@@ -438,12 +541,10 @@ function Workspace({ access }: { access: AccessState }) {
           <div className="jadera-work-area">
             {projectId ? (
               <ProjectWorkspace
+                key={projectId}
                 api={api}
                 id={projectId}
-                name={
-                  projects.find((project) => project.id === projectId)?.name ||
-                  "\u6807\u4e66\u9879\u76ee"
-                }
+                name={projectName || "\u6807\u4e66\u9879\u76ee"}
                 tab={tab}
                 section={section}
                 iframe={iframe}
@@ -453,9 +554,25 @@ function Workspace({ access }: { access: AccessState }) {
                 upload={upload}
                 assistantOpen={assistantOpen}
                 onReview={() => setAssistantOpen(false)}
+                versionLabel={versionLabel}
+                requirementsView={
+                  <CompilationRequirements
+                    key={projectId}
+                    snapshot={compilation.brief}
+                    loading={compilation.loading}
+                    failed={compilation.failed}
+                    versionLabel={versionLabel}
+                    onReload={() => void compilation.reload()}
+                    onSave={async (value, revision) => {
+                      await compilation.save(value, revision);
+                      setPlanRefresh((count) => count + 1);
+                    }}
+                  />
+                }
               />
             ) : library || page === "templates" ? (
               <ResourceCollection
+                loadCompilations={loadCompilations}
                 templates={page === "templates"}
                 projects={projects}
                 onUse={async (resource, version, pid) => {
@@ -563,9 +680,7 @@ function Workspace({ access }: { access: AccessState }) {
               onClose={() => setAssistantOpen(false)}
               client={assistantClient}
               projectId={projectId}
-              projectName={
-                projects.find((project) => project.id === projectId)?.name
-              }
+              projectName={projectName}
             />
           </div>
         </ShellPageContainer>

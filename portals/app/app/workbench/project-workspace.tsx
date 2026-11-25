@@ -29,6 +29,8 @@ export function ProjectWorkspace({
   upload,
   assistantOpen,
   onReview,
+  requirementsView,
+  versionLabel,
 }: {
   api: Api;
   id: string;
@@ -42,6 +44,8 @@ export function ProjectWorkspace({
   upload: (file: File) => Promise<void>;
   assistantOpen: boolean;
   onReview: () => void;
+  requirementsView?: ReactNode;
+  versionLabel?: string;
 }) {
   const [contextOpen, setContextOpen] = useState(true),
     [rightTab, setRightTab] = useState("tasks"),
@@ -119,6 +123,9 @@ export function ProjectWorkspace({
           </Button>
           <Icon name="chevron-right" size="xs" />
           <strong>{name}</strong>
+          {versionLabel && (
+            <span className="jadera-context-version">{versionLabel}</span>
+          )}
           <div>
             <Button
               variant="ghost"
@@ -141,9 +148,16 @@ export function ProjectWorkspace({
           >
             {iframe}
           </div>
-          {tab !== "product" && (
-            <ProjectPanel api={api} id={id} tab={tab} exportView={exportView} />
-          )}
+          {tab === "overview" && requirementsView
+            ? requirementsView
+            : tab !== "product" && (
+                <ProjectPanel
+                  api={api}
+                  id={id}
+                  tab={tab}
+                  exportView={exportView}
+                />
+              )}
         </div>
         <div className="jadera-content-scroll-cue">
           {scrollable && !atBottom ? (

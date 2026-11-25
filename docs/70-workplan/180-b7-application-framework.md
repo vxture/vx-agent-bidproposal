@@ -119,3 +119,50 @@ DS dock title height, list filtering, version detail and failed library state.
 The phase test set passed: 307 App tests, 107 shared business tests and 3 desktop
 bridge tests, plus type-check, static guardrails and desktop artifact verification.
 Temporary rendering fixtures were removed before commit.
+
+## B7.4 candidate
+
+The version selector replaces the workflow group heading and uses DS popover,
+button, dialog, form controls and typography. The original project is V01 with
+its original identifier and data. Each additional compilation has a reserved
+opaque runtime container, grouped by an encrypted workspace library record.
+Its documents, tasks, human checkpoints, jobs, workflow records and retained
+outputs remain isolated by the existing runtime. Versions are not extra logical
+proposals in the project directory or proposal-count limit; all retained files
+and outputs still participate in storage reconciliation. A project supports up
+to 20 compilation versions. Source reads never create a version or rewrite V01.
+
+Creation reserves the container ID before initializing it, uses a request ID
+for a lost-response retry, checks the group revision for new requests and
+recovers interrupted initialization on reopen. A pending version is unavailable
+for business edits and exposes retry from the selector. Existing immutable
+library selections can be reused by explicit choice, without copying approvals
+or generated content. Tender originals must be selected or uploaded in the new
+version; they are not silently copied from arbitrary project files.
+
+Compilation requirements write the actual `bid_plan` document with its existing
+revision and Markdown/JSON contract. Editing preserves the outline and source
+metadata, clears its approval and requires re-confirmation. Active work in that
+version blocks requirements changes. Project mutations serialize across sibling
+versions so a logical archive cannot race another version's task admission.
+Archiving checks every version for pending work, and the root lifecycle gates
+all child writes. Restore keeps original identifiers and history. Individual
+project-record downloads include the selected compilation and group metadata;
+they remain selected-version records, not a combined backup of every version.
+
+Home resumes the last selected version and shows its recorded progress.
+Knowledge/template selection explicitly chooses a target compilation. The
+56px dock headers, original business panels, resource card artwork and all
+previously accepted layout remain unchanged. Version presentation and data types
+are shared for either host; native host wiring, own-product identity and signed
+installation are still separate B7.5 acceptance gates, not completed by imports.
+
+Phase checks passed: 311 App tests, 107 shared business tests and 3 desktop bridge
+tests; all workspace type checks and static guardrails. New persistence tests
+cover original-project preservation, isolated documents/requirements, optimistic
+conflicts, idempotency, interrupted container recovery, fixed library versions,
+storage deduplication, logical proposal count, archive/restore and active-task
+guards. Browser checks covered 1920x1080 and 390px, version creation/selection,
+saved requirements, a small completion ring and workflow icon anchors (maximum
+expanded/collapsed center difference below 0.06px). Synthetic local rendering
+fixtures were removed before commit. No production deployment is claimed.

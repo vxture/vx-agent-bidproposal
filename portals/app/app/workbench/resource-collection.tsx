@@ -56,12 +56,16 @@ export function ResourceCollection({
   request = libraryRequest,
   projects = [],
   onUse,
+  loadCompilations,
 }: {
   templates: boolean;
   selectedId?: string;
   onSelect: (id?: string) => void;
   request?: typeof libraryRequest;
   projects?: { id: string; name: string; archivedAt?: string }[];
+  loadCompilations?: (
+    id: string,
+  ) => Promise<import("@bidproposal/shared/compilations").CompilationList>;
   onUse?: (
     resource: ResourceData,
     version: number,
@@ -88,6 +92,30 @@ export function ResourceCollection({
   const [using, setUsing] = useState(false),
     [useProject, setUseProject] = useState(""),
     [notice, setNotice] = useState("");
+  const [useVersion, setUseVersion] = useState(""),
+    [useVersions, setUseVersions] = useState<
+      { id: string; label: string; state: string }[]
+    >([]),
+    [versionsFailed, setVersionsFailed] = useState(false);
+  useEffect(() => {
+    let active = true;
+    setUseVersions([]);
+    setUseVersion("");
+    setVersionsFailed(false);
+    if (useProject && loadCompilations)
+      void loadCompilations(useProject)
+        .then((list) => {
+          if (!active) return;
+          setUseVersions(list.items);
+          setUseVersion(list.rootId);
+        })
+        .catch(() => {
+          if (active) setVersionsFailed(true);
+        });
+    return () => {
+      active = false;
+    };
+  }, [useProject, loadCompilations]);
   const load = useCallback(async () => {
     try {
       const value = await request();
@@ -524,9 +552,34 @@ export function ResourceCollection({
                       </option>
                     ))}
                 </NativeSelect>
+                {loadCompilations && useProject && (
+                  <NativeSelect
+                    aria-label={"\u9009\u62e9\u7f16\u5236\u7248\u672c"}
+                    value={useVersion}
+                    onChange={(e) => setUseVersion(e.target.value)}
+                  >
+                    {!useVersions.length && (
+                      <option value="">
+                        {versionsFailed
+                          ? "\u7248\u672c\u8bfb\u53d6\u5931\u8d25\uff0c\u8bf7\u91cd\u9009\u9879\u76ee"
+                          : "\u8bfb\u53d6\u7248\u672c\u2026"}
+                      </option>
+                    )}
+                    {useVersions.map((item) => (
+                      <option
+                        key={item.id}
+                        value={item.id}
+                        disabled={item.state !== "ready"}
+                      >
+                        {item.label}
+                      </option>
+                    ))}
+                  </NativeSelect>
+                )}
                 <Button
                   disabled={
                     !useProject ||
+                    (!!loadCompilations && !useVersion) ||
                     using ||
                     current?.reading?.state !== "completed"
                   }
@@ -535,7 +588,11 @@ export function ResourceCollection({
                     setUsing(true);
                     setNotice("");
                     try {
-                      await onUse(selected, current.version, useProject);
+                      await onUse(
+                        selected,
+                        current.version,
+                        loadCompilations ? useVersion : useProject,
+                      );
                       setNotice(
                         "\u5df2\u56fa\u5b9a\u6b64\u7248\u672c\u5230\u9879\u76ee\uff0c\u53ef\u5728\u7f16\u5199\u89c4\u5212\u548c\u6210\u679c\u5bfc\u51fa\u4e2d\u9009\u7528\u3002",
                       );

@@ -33,6 +33,7 @@ export interface ProjectCardData {
   workspaceId?: string;
   productId: string;
   record?: ProjectRecord;
+  versionLabel?: string;
 }
 const date = (value: string) => {
   const parsed = Date.parse(value);
@@ -73,7 +74,7 @@ function ProjectCard({
       >
         <span className="jadera-project-card-top">
           <Icon name="file-text" size="sm" />
-          <span>{"\u6807\u4e66\u9879\u76ee"}</span>
+          <span>{project.versionLabel || "\u6807\u4e66\u9879\u76ee"}</span>
           {current && <small>{"\u5f53\u524d\u9879\u76ee"}</small>}
         </span>
         <strong title={project.name}>{project.name}</strong>

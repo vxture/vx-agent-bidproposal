@@ -6,3 +6,4 @@ export { ResourceVisualCard } from "./resource-card";
 export { AssistantDock } from "./assistant-dock";
 export type { AssistantClient } from "./assistant-dock";
 export { WorkflowNavigation } from "./workflow-nav";
+export { CompilationSelector, CompilationRequirements } from "./compilation-controls";
