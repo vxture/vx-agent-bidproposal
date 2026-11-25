@@ -20,3 +20,6 @@
   color: var(--muted-foreground);
   white-space: nowrap;
 }
+@media (max-width: 640px) {
+  .bid-entry-brands .bid-entry-platform > span { display: none; }
+}
