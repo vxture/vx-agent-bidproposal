@@ -5,29 +5,38 @@ Start here if you are an AI agent working in this repo.
 ## What this repo is
 
 Current checkpoint, 2026-11-25: the complete shared Web workbench is live at
-https://bidproposal.ruyin.work/, v0.2.4 / 01908073 (PR #25). Its durable encrypted
+https://bidproposal.ruyin.work/, v0.2.7 / 8a1d9014 (PR #28). Its durable encrypted
 projects, uploaded originals, versioned library and background jobs survived the
 v0.2.0 upgrade. Real own-product generation and source verification produced 15
 source-matched requirements; human confirmation and the two-chapter planning
 checkpoint passed. Actual chapters, review, rewrite, history and three-format
 downloads passed. Actual V3 production output passed all six pages: populated
 contents, cover without furniture, and correct headers/page fields on pages 2-6.
-V1-V4 were retained. Real C2 storage uses a shared gauge pool. Production now
+V1-V8 were retained. Real C2 storage uses a shared gauge pool. Production now
 reads its remaining capacity, reconciles actual retained bytes through C3 gauge,
 persists retry/acknowledgment in the existing encrypted library, and rechecks
 the original session/C2 before export retention. It does not provide atomic
 cross-product storage reservation. Live gauge acceptance passed: original
 536,883 bytes matched the acknowledgment and shared remaining changed by exactly
 that amount; V4 added 186,286 bytes to 723,169, again matching both sides. Actual
-V4 three-format downloads and all six pages passed. A fast repeated-export UI
-timing race was found afterward; b75e654 (PR #26) fixes shared workflow
-projection using actual render timestamps. Its un-deployed v0.2.5 workflow was
-cancelled during a prolonged image-push step so the next candidate can include
-identical-export retention in one app restart. That candidate reuses only
-same-project completed bytes with a matching private input/renderer fingerprint;
-it still checks the original session and current paid/storage coverage. It does
-not change or retroactively trust old un-fingerprinted output. Actual new-version
-production timing/repeated-download/gauge acceptance remains the release gate.
+V4 three-format downloads and all six pages passed. PR #26 fixes repeated-export
+workflow timing using actual render timestamps; PR #27 reuses verified identical
+output without retaining extra bytes. Both shipped in v0.2.6, whose V5/V6 actual
+downloads, time persistence and zero-added-storage acceptance passed. v0.2.5 was
+cancelled before deployment and is not a production release. PR #28 fixes wrapped
+24 pt cover titles inheriting the fixed body line height. Its long-CJK regression
+fails the old engine; all five real Writer tests and 413 app/shared/desktop tests
+pass. Exact PR/main CI, Sonar and secret scanning passed for every merged batch.
+Protected release run 45536267253 deployed v0.2.7; exact image digest is
+sha256:3e4a2249ab438a1ef129f8e11371bf32bb8568d9fc215991864c32721227c113.
+Actual V7/V8 three-format downloads are byte-identical, all six production pages
+were inspected, and start/end times exactly match the real jobs after reopening.
+V7 retained inventory is 1,095,743 bytes with an exact gauge acknowledgment;
+V8 adds zero bytes and shared C2 remaining stays 141,219,625,243 bytes. Renderer
+policy changes invalidate reuse; prior outputs remain original snapshots.
+Original DB/Redis identities, operator environment/master key and encrypted
+volume are unchanged. Seven material gaps and six review suggestions remain;
+software acceptance must not be described as a clean compliance judgment.
 Published RUYIN UI/Node adapters 0.2.2 are consumed from the registry. The package
 and layout prerequisites described below were historical B6.3 observations;
 they no longer block Web delivery. Desktop product identity/signing and the
@@ -41,9 +50,9 @@ Writing Agent). The repo is that product's **cloud capability surface** for the
 RUYIN desktop runtime (ADR-001 of this repo; vxture-ruyin ADR-009 / ADR-020):
 four endpoints under `portals/app/app/api/products/[product]/`. It was copied
 from the `vx-agent-vxtpl` template on 2026-09-05 and renamed. Initial API
-release `v0.1.0` is deployed on worker02, with Bid's own product client and
-signing configuration. Public routing and real-user acceptance remain pending;
-the Web workspace and signed desktop release are not complete. Read
+release `v0.1.0` was deployed on worker02, with Bid's own product client and
+signing configuration. At that initial checkpoint public routing, real-user
+acceptance, Web workspace and signed desktop release were pending. Read
 `docs/70-workplan/160-dual-surface-release.md` for the current checkpoint.
 Template text about `bidproposal.vxture.com` is historical, not a live endpoint.
 The owner forbids platform source and worker01 configuration changes. Product
@@ -56,7 +65,7 @@ independently designed editor and horizontal navigation preview were rejected
 and removed. Do not treat the shared product iframe pages as the entire app.
 Cloud synchronization is reserved, with no implementation or public UI now.
 
-B6.3 runtime checks are in `docs/40-implementation/60-runtime-adaptation-preflight.md`.
+Historical B6.3 checks are in `docs/40-implementation/60-runtime-adaptation-preflight.md`.
 The published 0.1.0 schema rejects Bid's current 0.2 contract; the published core
 lacks projectDocuments. RUYIN host UI is not a public package. Do not import its
 private apps across repositories or implement another replacement UI. Linux
@@ -64,7 +73,7 @@ offline reading passed with the same locked parser; plain LibreOffice conversion
 failed fidelity (six Word pages became four, with visible TOC field code).
 Own-product identity tests pass, but Workbench credentials are not Bid identity
 and the desktop handoff remains unfinished. Verification is complete; these
-integration dependencies remain open. Production is still API/entry v0.1.4.
+integration dependencies remained open at B6.3. Production then was API/entry v0.1.4.
 Remote RUYIN main also has 0.2.0 manifests but lacks projectDocuments,
 project_document and the original workflow sidebar. Do not publish that main
 as a solution without reconciling the fixed original delivery baseline first.

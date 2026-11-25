@@ -20,9 +20,9 @@ closed, unmerged. The owner authorized removing the rejected pages on
 2026-11-25; its local/remote branch and preview launchers have been removed.
 It was not
 released, its domain DDL was not applied, and it must not be used as the next
-deployment plan. The production baseline remains v0.1.4 / 7aa548b. Start the
-corrected implementation from that merged baseline, preserving the existing
-dirty desktop candidate checkout.
+deployment plan. The corrected implementation started from v0.1.4 / 7aa548b,
+preserving the existing dirty desktop candidate checkout. Read the current
+production checkpoint below rather than treating that starting point as live.
 
 Cross-environment cloud synchronization is reserved, not implemented in this
 release, and must not appear in any public UI or copy. Browser/server project
@@ -31,9 +31,9 @@ Do not create sync routes, tables, background jobs or disabled entry points.
 
 ## Corrected batches - 2026-11-25
 
-Current production checkpoint: v0.2.6 / dc1afd85 is deployed through the existing
-protected workflow, run 45532562551. Exact image digest:
-`sha256:654fb6d19031305324a113047a9094f9c8b734ec66bf84f8e8350ffdc2ebc8ad`.
+Current production checkpoint: v0.2.7 / 8a1d9014 is deployed through the existing
+protected workflow, run 45536267253. Exact image digest:
+`sha256:3e4a2249ab438a1ef129f8e11371bf32bb8568d9fc215991864c32721227c113`.
 Health/readiness pass, anonymous runtime access returns 401, and original DB/
 Redis container identities are unchanged. The protected runtime key, encrypted
 volume, project originals and library versions are retained. No platform source
@@ -65,10 +65,10 @@ baseline is [50-desktop-baseline.md](../40-implementation/50-desktop-baseline.md
 | B6.4 | Reuse the complete product application presentation | B6.4.1 runtime dependencies reconciled and 0.2.0 packages published/consumed; Bid build now uses the public pinned CLI and real reproducibility checks. PR #314/#315 published the original UI and Node adapters as registry packages 0.2.2; Bid consumes both without private source imports. Preserve desktop project/home/library/settings, six-step sidebar, state/times/duration/progress and human review. No replacement editor/navigation or private cross-repo app imports. |
 | B6.5 | Adapt Web identity, projects and data | Real subscribed Bid session, project/original/library-version persistence and reopening across v0.2.0-v0.2.2 passed. Workspace/revision/private-record refusal remains covered by runtime tests. |
 | B6.6 | Adapt reading and agent jobs | Real generation, 15 exact-match source requirements, human confirmation, enterprise fact extraction/matching, two-chapter planning/writing/review and single-chapter rewrite passed. Prior manuscript and stale review history are retained; no RUYIN execution grant. |
-| B6.7 | Deliver preview and actual output files | Actual V5/V6 three-format downloads are byte-identical, contain populated TOC and default header/page fields, and retain V1-V4. Long wrapped cover-title spacing remains a targeted layout follow-up below. |
-| B6.8 | Verify product plan rules and feature gaps | v0.2.6 shared gauge admission, durable reporting and repeated-output dedup passed actual inventory/C2 reconciliation and final-session/C2 export checks. Proposal and paid-export gates retain coverage. Independent comparison/OCR and cross-surface business accounting remain open. |
+| B6.7 | Deliver preview and actual output files | v0.2.7 actual V7/V8 three-format downloads are byte-identical. All six pages, proportional cover-title spacing, populated TOC, header and page fields passed. V1-V6 retained; custom-template regression also passes. |
+| B6.8 | Verify product plan rules and feature gaps | Shared gauge admission, durable reporting and repeated-output dedup passed actual inventory/C2 reconciliation through v0.2.7. V8 adds zero storage; final-session/C2 export checks remain. Proposal and paid-export gates retain coverage. Independent comparison/OCR and cross-surface business accounting remain open. |
 | B6.9 | Accept production desktop integration and package | Shared-source regression and byte-reproducible unsigned 1.17.3 packaging passed. Own-product identity, publisher signing/trust and actual install/update remain blocked by the prerequisites below. |
-| B6.10 | Accept and release each surface | The Web writing chain, restored workflow times, project/library recovery and repeated downloads passed through v0.2.6. Desktop acceptance and independent comparison/OCR remain open. No Store change. |
+| B6.10 | Accept and release each surface | The Web writing chain, restored workflow times, project/library recovery and repeated downloads passed through v0.2.7. Desktop acceptance and independent comparison/OCR remain open. No Store change. |
 
 Batch completion is scoped. B6.1 is source extraction, not complete Web
 migration; historical local acceptance is not current production acceptance.
@@ -718,3 +718,44 @@ page furniture, original templates and saved old output. A long CJK cover from
 the published renderer's real fixture fails the old engine and passes the fix;
 all five isolated, non-root, network-disabled Writer regressions pass. Actual
 new production output and exact-source release checks remain required.
+
+### B6.7/B6.10 v0.2.7 final Web acceptance, 2026-11-25
+
+PR #28 merged as 8a1d9014 after exact PR/main CI, Sonar and secret scanning.
+The protected production environment was approved by the owner in GitHub;
+run 45536267253 completed successfully. Both existing registry mirrors identify
+exactly sha256:3e4a2249ab438a1ef129f8e11371bf32bb8568d9fc215991864c32721227c113.
+The saved Compose dry-run allows only app recreation; original DB/Redis remain
+Running. The non-root image/resource/policy checks pass. Bid backup:
+`/srv/md0/bidproposal/backups/web-v027-20261125T025445Z`. Health/readiness,
+anonymous 401 protection, original DB/Redis IDs, encrypted volume and
+byte-identical environment/master-key preservation all pass after deployment.
+No platform source or worker01 configuration changed.
+
+The original subscribed synthetic project retained all six stages, original
+source/library versions and V1-V6. Actual V7/V8 are byte-identical across PDF,
+DOCX and Markdown. New policy V7 adds 186,289 logical bytes to 1,095,743;
+V8 adds zero. The exact private inventory/gauge acknowledgment stays 1,095,743
+and shared C2 remaining stays 141,219,625,243 bytes. Latest workflow start/end
+values equal real render creation/completion, including after reopening. All
+six actual PDF pages were inspected: cover lines no longer collide, the cover
+has no header/page furniture, the contents are populated, and pages 2-6 retain
+headers and page fields. Seven material gaps/six review suggestions are retained;
+six completed software stages do not assert business or legal compliance.
+
+This completes the shared Web writing/export compatibility and production
+acceptance stage. B6.8 remains open for independent comparison/OCR and full
+plan-matrix acceptance. B6.9/native B6.10 remain open for own-product desktop
+identity and formal publisher trust/install/update. Platform issue #198 was
+rechecked and is open; do not relay a Workbench session as Bid identity. The
+reproducible unsigned 1.17.3 candidate is not a production signed installation.
+C2 comparison max lacks a monthly subscription anchor; never invent a calendar
+reset or charge failed/repeated views. OCR has no accepted bounded provider yet.
+Cloud synchronization is intentionally excluded and absent from public UI.
+
+Evidence is retained outside the repository in the task's
+`bid-runtime-preflight-20261125/live-web-v027` directory: actual V7/V8 downloads,
+byte hashes, repeat-acceptance and layout-acceptance JSON, six page PNGs, text
+checks and final original-workbench screenshot. Production before/after/reopen
+logs and protected release/preflight records are in its parent evidence folder.
+No artifacts, credentials or customer documents are committed with this record.
