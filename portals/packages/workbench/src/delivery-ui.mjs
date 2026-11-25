@@ -5,7 +5,7 @@
  * @author AI-Generated
  * @date 2026-11-25
  */
-import { DeliverySession } from './delivery.mjs';
+import { DeliverySession, syncDeliveryWorkflow } from './delivery.mjs';
 import { autoSave } from './autosave.mjs';
 const labels = {
   queued: '\u7b49\u5f85\u6392\u7248',
@@ -332,17 +332,7 @@ export async function mountDelivery(bridge, workflow) {
       '\u4ea4\u4ed8\u524d\u68c0\u67e5 \u00b7 ' +
       (warnings.length + Number(run.settingsChanged)) +
       ' \u9879\u63d0\u793a';
-    const state =
-      run.jobs[0]?.state === 'completed' && !run.stale
-        ? 'complete'
-        : run.jobs.length
-          ? 'active'
-          : 'pending';
-    if (workflow.states.export !== state) {
-      workflow.states.export = state;
-      workflow.emit();
-      if (state === 'complete') void workflow.mark('export', true, false, run.jobs[0].updatedAt);
-    }
+    syncDeliveryWorkflow(workflow, run.jobs, run.stale);
     previous.disabled = !pdf || page <= 1;
     next.disabled = !pdf || page >= pdf.numPages;
   }
@@ -442,7 +432,7 @@ export async function mountDelivery(bridge, workflow) {
     act(async () => {
       await saver.flush();
       await run.create();
-      await workflow.mark('export', false, true);
+      await workflow.mark('export', false, true, run.job.createdAt);
       await read();
     });
   refresh.onclick = () => act(read);

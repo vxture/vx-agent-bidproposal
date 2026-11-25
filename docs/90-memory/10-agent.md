@@ -5,18 +5,23 @@ Start here if you are an AI agent working in this repo.
 ## What this repo is
 
 Current checkpoint, 2026-11-25: the complete shared Web workbench is live at
-https://bidproposal.ruyin.work/, v0.2.3 / 80bd95f5 (PR #24). Its durable encrypted
+https://bidproposal.ruyin.work/, v0.2.4 / 01908073 (PR #25). Its durable encrypted
 projects, uploaded originals, versioned library and background jobs survived the
 v0.2.0 upgrade. Real own-product generation and source verification produced 15
 source-matched requirements; human confirmation and the two-chapter planning
 checkpoint passed. Actual chapters, review, rewrite, history and three-format
 downloads passed. Actual V3 production output passed all six pages: populated
 contents, cover without furniture, and correct headers/page fields on pages 2-6.
-V1/V2 were retained. Real C2 storage uses a shared gauge pool. The next candidate
+V1-V4 were retained. Real C2 storage uses a shared gauge pool. Production now
 reads its remaining capacity, reconciles actual retained bytes through C3 gauge,
 persists retry/acknowledgment in the existing encrypted library, and rechecks
 the original session/C2 before export retention. It does not provide atomic
-cross-product storage reservation. Release/live gauge acceptance remain pending.
+cross-product storage reservation. Live gauge acceptance passed: original
+536,883 bytes matched the acknowledgment and shared remaining changed by exactly
+that amount; V4 added 186,286 bytes to 723,169, again matching both sides. Actual
+V4 three-format downloads and all six pages passed. A fast repeated-export UI
+timing race was found afterward; the current candidate fixes shared workflow
+projection using the actual render creation/completion timestamps.
 Published RUYIN UI/Node adapters 0.2.2 are consumed from the registry. The package
 and layout prerequisites described below were historical B6.3 observations;
 they no longer block Web delivery. Desktop product identity/signing and the

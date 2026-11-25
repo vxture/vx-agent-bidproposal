@@ -12,6 +12,37 @@ import { checked } from './background.mjs';
 import { evidenceRevisions, reviewDate } from './evidence-review.mjs';
 import { ReviewSession } from './review.mjs';
 
+/** Project the latest real render, including a completion that preceded the next UI poll. */
+export function syncDeliveryWorkflow(workflow, jobs, stale) {
+  const latest = jobs[0];
+  const state =
+    latest?.state === 'completed' && !stale
+      ? 'complete'
+      : jobs.length
+        ? 'active'
+        : 'pending';
+  if (workflow.states.export !== state) {
+    workflow.states.export = state;
+    workflow.emit();
+  }
+  if (state !== 'complete') return;
+  const record = workflow.records.export;
+  if (record?.completedAt === latest.updatedAt) return;
+  if (!Number.isFinite(Date.parse(latest.updatedAt))) return;
+  if (
+    !record?.startedAt ||
+    Date.parse(latest.updatedAt) < Date.parse(record.startedAt)
+  ) {
+    if (
+      !Number.isFinite(Date.parse(latest.createdAt)) ||
+      latest.createdAt > latest.updatedAt
+    )
+      return;
+    void workflow.mark('export', false, true, latest.createdAt);
+  }
+  void workflow.mark('export', true, false, latest.updatedAt);
+}
+
 export function assemble(plan, draft, title) {
   if (!plan.approved || !plan.outline.length)
     throw new Error('\u8bf7\u5148\u786e\u8ba4\u7ae0\u8282\u76ee\u5f55');

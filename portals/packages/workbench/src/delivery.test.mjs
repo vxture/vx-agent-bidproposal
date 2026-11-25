@@ -7,10 +7,101 @@
  */
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { assemble, DeliverySession } from './delivery.mjs';
+import { assemble, DeliverySession, syncDeliveryWorkflow } from './delivery.mjs';
+import { WorkflowRecords } from './workflow.mjs';
 import { Requirements } from './requirements.mjs';
 import { PlanSession } from './plan.mjs';
 import { DraftSession } from './draft.mjs';
+test('fast repeated export records actual task completion even while the previous UI state is complete', async () => {
+  let doc,
+    writes = 0;
+  const bridge = {
+    request: async (method, _path, body) => {
+      if (method === 'GET')
+        return doc ? { ok: true, body: doc } : { ok: false, status: 404 };
+      assert.equal(body.revision, doc?.revision ?? 0);
+      doc = { markdown: body.markdown, revision: body.revision + 1 };
+      writes++;
+      return { ok: true, body: doc };
+    },
+  };
+  const workflow = new WorkflowRecords(
+    bridge,
+    () => {},
+    () => {
+      throw Error('Do not invent a browser time');
+    },
+  );
+  await workflow.load();
+  workflow.states.export = 'complete';
+  await workflow.mark('export', false, true, '2026-11-25T01:00:00.000Z');
+  const jobs = [
+    {
+      state: 'completed',
+      createdAt: '2026-11-25T01:00:00.000Z',
+      updatedAt: '2026-11-25T01:00:01.000Z',
+    },
+  ];
+  syncDeliveryWorkflow(workflow, jobs, false);
+  await workflow.queue;
+  assert.equal(workflow.records.export.startedAt, jobs[0].createdAt);
+  assert.equal(workflow.records.export.completedAt, jobs[0].updatedAt);
+  assert.equal(writes, 2);
+  syncDeliveryWorkflow(workflow, jobs, false);
+  await workflow.queue;
+  assert.equal(writes, 2);
+  const reopened = new WorkflowRecords(bridge, () => {});
+  await reopened.load();
+  assert.deepEqual(reopened.records.export, workflow.records.export);
+});
+test('render task facts repair a delayed start without inventing history or completing failed/stale work', async () => {
+  let doc,
+    writes = 0;
+  const bridge = {
+    request: async (method, _path, body) => {
+      if (method === 'GET')
+        return doc ? { ok: true, body: doc } : { ok: false, status: 404 };
+      doc = { markdown: body.markdown, revision: body.revision + 1 };
+      writes++;
+      return { ok: true, body: doc };
+    },
+  };
+  const workflow = new WorkflowRecords(
+    bridge,
+    () => {},
+    () => {
+      throw Error('No view-time history');
+    },
+  );
+  await workflow.load();
+  for (const jobs of [
+    [],
+    [{ state: 'running' }],
+    [{ state: 'failed' }],
+    [{ state: 'completed' }],
+  ]) {
+    syncDeliveryWorkflow(workflow, jobs, false);
+    await workflow.queue;
+  }
+  const job = {
+    state: 'completed',
+    createdAt: '2026-11-25T01:00:00.000Z',
+    updatedAt: '2026-11-25T01:00:01.000Z',
+  };
+  syncDeliveryWorkflow(workflow, [job], true);
+  await workflow.queue;
+  assert.equal(writes, 0);
+  await workflow.mark('export', false, true, '2026-11-25T01:00:02.000Z');
+  syncDeliveryWorkflow(workflow, [job], false);
+  await workflow.queue;
+  assert.deepEqual(workflow.records.export, {
+    startedAt: job.createdAt,
+    completedAt: job.updatedAt,
+  });
+  const reopened = new WorkflowRecords(bridge, () => {});
+  await reopened.load();
+  assert.equal(reopened.records.export.completedAt, job.updatedAt);
+});
 test('assembly follows approved order, excludes unadopted content and preserves code and tables', () => {
   const plan = {
     approved: true,

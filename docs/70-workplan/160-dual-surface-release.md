@@ -31,9 +31,9 @@ Do not create sync routes, tables, background jobs or disabled entry points.
 
 ## Corrected batches - 2026-11-25
 
-Current production checkpoint: v0.2.3 / 80bd95f5 is deployed through the existing
-protected workflow, run 45517891140. Exact image digest:
-`sha256:de69aedb0bf1f679428c05020a46ad5482224cdb24b4b2c67ec2abe01bd3ee51`.
+Current production checkpoint: v0.2.4 / 01908073 is deployed through the existing
+protected workflow, run 45526254239. Exact image digest:
+`sha256:f693a9529449c7983c38cc200fcd4c80789b3d9b25ed961a5634bcf518bf5af6`.
 Health/readiness pass, anonymous runtime access returns 401, and original DB/
 Redis container identities are unchanged. The protected runtime key, encrypted
 volume, project originals and library versions are retained. No platform source
@@ -66,7 +66,7 @@ baseline is [50-desktop-baseline.md](../40-implementation/50-desktop-baseline.md
 | B6.5 | Adapt Web identity, projects and data | Real subscribed Bid session, project/original/library-version persistence and reopening across v0.2.0-v0.2.2 passed. Workspace/revision/private-record refusal remains covered by runtime tests. |
 | B6.6 | Adapt reading and agent jobs | Real generation, 15 exact-match source requirements, human confirmation, enterprise fact extraction/matching, two-chapter planning/writing/review and single-chapter rewrite passed. Prior manuscript and stale review history are retained; no RUYIN execution grant. |
 | B6.7 | Deliver preview and actual output files | v0.2.3 actual V3 three-format downloads, populated TOC, header/page fields and all six production pages passed. Cover is clear; original V1/V2 retained. Custom-template Linux regression also passes. |
-| B6.8 | Verify product plan rules and feature gaps | Proposal limits, retained-byte dedup and export gates have regression coverage. Real C2 exposes storage as a quota pool, not storage.bytes.max; correct pool reading and gauge reporting next. Independent comparison/OCR and cross-surface business accounting remain open. |
+| B6.8 | Verify product plan rules and feature gaps | v0.2.4 shared gauge admission and durable reporting passed actual inventory/C2 reconciliation and final-session/C2 export checks. Proposal, dedup and paid-export gates retain coverage. Independent comparison/OCR and cross-surface business accounting remain open. |
 | B6.9 | Accept production desktop integration and package | Own-product identity, shared-source desktop regression, signing/trust, install/update and old-project protection using current artifacts. Not started. |
 | B6.10 | Accept and release each surface | Complete login/workspace/project/material/generation/review/export/logout/recovery chain per surface before its reviewed release. No automatic Store change. Not started. |
 
@@ -613,3 +613,53 @@ the local serialization and actual-inventory accounting gap, not that platform
 race. It does not add desktop synchronization; desktop identity, signing, and
 independent comparison/OCR remain separate open gates. Local tests/types/build
 pass; protected CI, exact-image release and real gauge acceptance follow.
+
+### B6.8 production acceptance and B6.10 timing correction
+
+PR #25 and exact main 01908073 passed all CI, Sonar and secret-scan checks.
+v0.2.4 was deployed through the existing protected workflow after an app-only
+Compose preview. DB/Redis identities, operator environment, master key and the
+original encrypted volume are unchanged. Before the release, the real test
+workspace retained 536,883 unique bytes without a gauge. After opening it, the
+private current/acknowledged observation exactly matched that inventory and C2
+remaining fell from 141,220,721,163 to 141,220,184,280 bytes. A real new V4 export
+passed final pinned-session/C2 checks and added 186,286 bytes; the new inventory
+and acknowledgment are 723,169 bytes, with C2 remaining 141,219,997,994. Exact
+before/after agreement is live gauge evidence, not an invented counter event.
+V1-V4, originals and library versions remain available; actual V4 PDF/DOCX/MD
+downloads and all six PDF pages passed. The existing source/review gaps remain.
+
+The original shared export UI has a fast-completion race: starting a new version
+clears its completion timestamp, but a render that finishes before the next
+poll can leave the projected state at its previous complete value. The existing
+state-change-only branch never records the new completion. Limit the follow-up
+to `delivery.mjs`, `delivery-ui.mjs`, `delivery.test.mjs` and the shared/desktop
+package versions. Project actual latest-task facts independently of UI state,
+use its recorded creation time when starting, and repair a delayed start only
+from those real facts. Do not create completion timestamps on page view or for
+failed/stale/unknown jobs. Preserve the original sidebar and all historical
+output snapshots. Candidate desktop package advances to 1.17.3; it is still
+unsigned and is not published to the production install catalog.
+
+### B6.9 authority recheck and remaining gates
+
+On 2026-11-25 the original RY-100 and RY-103 pages were accessible and read.
+RY-100 section 03 defines separate user/runtime/product principals and bound
+runtime credentials; RY-103 phase 3b still requires the corresponding control
+plane handoff. Its old console/central-inference descriptions predate the
+owner's Workbench migration and agent-owned inference decision (RUYIN ADR-028).
+Do not implement its historical transitional central proxy or weaken the
+current own-product audience check. Platform issue #198 remains open. This
+product-only task cannot complete production native invocation by sending a
+RUYIN/Workbench token to Bid or embedding the confidential product secret.
+Formal package publisher signing/trust distribution and actual install/update
+acceptance remain separate from successful reproducible unsigned packaging.
+
+Independent comparison is also unfinished: the current C2 max limit exposes
+the allowed count but no monthly subscription anchor. Annual subscriptions
+must not accidentally get a calendar-month or inferred annual-end reset rule.
+Agree the authoritative period input before enforcing/reporting successful
+comparison counts; failures/retries/views must not count again. Scanned-PDF OCR
+still needs a bounded product reader/provider implementation and paid/Free
+acceptance. Neither feature is silently advertised as completed by the six
+writing stages. Cloud synchronization remains intentionally absent.

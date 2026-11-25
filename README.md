@@ -5,7 +5,8 @@ a separate RUYIN desktop package. Both consume the original six-stage business
 application and shared project/workflow UI. Runtime adapters supply identity,
 files, persistence, background jobs, review and document layout.
 
-Live Web application: https://bidproposal.ruyin.work/ (v0.2.2). It uses the
+Live Web application: https://bidproposal.ruyin.work/. The current release and
+acceptance evidence are in docs/70-workplan/160-dual-surface-release.md. It uses the
 product's own verified session and workspace entitlement, with encrypted durable
 projects and versioned materials on Bid's worker02 volume. RUYIN is a zero-secret
 host; its session must never substitute for Bid product identity. Current signed
