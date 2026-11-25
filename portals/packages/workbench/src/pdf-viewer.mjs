@@ -35,12 +35,15 @@ export class ContinuousPdfViewer {
       this.scrollFrame = requestAnimationFrame(() => {
         this.scrollFrame = null;
         const top = container.getBoundingClientRect().top;
-        for (const [number, row] of this.pages) {
-          if (row.node.getBoundingClientRect().bottom > top + 60) {
-            this.current = number;
-            this.onPage(number, this.pdf?.numPages || 0);
-            break;
-          }
+        let low = 1, high = this.pages.size;
+        while (low < high) {
+          const middle = Math.floor((low + high) / 2);
+          if (this.pages.get(middle).node.getBoundingClientRect().bottom > top + 60) high = middle;
+          else low = middle + 1;
+        }
+        if (this.pages.has(low)) {
+          this.current = low;
+          this.onPage(low, this.pdf?.numPages || 0);
         }
         // An observer emits only on boundary crossings. Pages already outside
         // its margin still need eviction as scrolling carries them farther away.
