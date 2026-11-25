@@ -553,14 +553,44 @@ export class BidRuntime {
       );
     return {
       ...view,
-      meta: archived ? { ...view.meta, archivedAt: archived } : view.meta,
+      meta: {
+        ...view.meta,
+        name: this.compilations.group(id)?.projectName ?? view.meta.name,
+        ...(archived ? { archivedAt: archived } : {}),
+      },
     };
   }
   async listProjects() {
     const hidden = this.compilations.hiddenIds();
-    return (await this.runtime.listProjects()).filter(
-      (project) => !hidden.has(project.id),
-    );
+    return (await this.runtime.listProjects())
+      .filter((project) => !hidden.has(project.id))
+      .map((project) => ({
+        ...project,
+        name: this.compilations.group(project.id)?.projectName ?? project.name,
+      }));
+  }
+  async renameCompilation(id: string, body: Record<string, unknown>) {
+    return this.serial(async () => {
+      await this.checkProject(id, true);
+      const principal = this.principal.getStore();
+      if (!principal)
+        throw new WorkbenchError(
+          403,
+          "SCOPE_REQUIRED",
+          "Signed-in identity required",
+        );
+      const result = await this.compilations.rename(
+        id,
+        {
+          revision: body.revision as number,
+          projectName: body.projectName,
+          label: body.label,
+        },
+        principal.sub,
+      );
+      this.events.publish({ kind: "project", projectId: id });
+      return result;
+    });
   }
   async createCompilation(id: string, body: Record<string, unknown>) {
     return this.serial(async () => {

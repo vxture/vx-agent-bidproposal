@@ -278,6 +278,110 @@ test("compilation versions preserve V01, isolate plans and documents, and count 
   }
 });
 
+test("display names are durable, revision-checked and leave original documents and runtime identities intact", async () => {
+  const root = mkdtempSync(join(tmpdir(), "bid-names-"));
+  let service = make(root);
+  try {
+    const a = access(),
+      project = await service.run(a, () =>
+        service.create("Original project", a.entitlement),
+      );
+    await call(
+      service,
+      ["projects", project.id, "documents", "bid_draft"],
+      "PUT",
+      { revision: 0, markdown: "Retained original output" },
+    );
+    const before = service.documents.list(project.id, "bidproposal", "");
+    const renamed = await (
+      await call(service, ["projects", project.id, "compilations"], "PATCH", {
+        projectName: "Park operations proposal",
+        label: "Combined proposal",
+        revision: 0,
+      })
+    ).json();
+    assert.equal(renamed.projectName, "Park operations proposal");
+    assert.equal(renamed.items[0].label, "Combined proposal");
+    assert.equal(renamed.namingHistory, undefined);
+    assert.equal(
+      (await (await call(service, ["host", "projects"])).json()).items[0].name,
+      "Park operations proposal",
+    );
+    assert.equal(
+      (await service.runtime.openProject(project.id)).meta.name,
+      "Original project",
+    );
+    const child = await (
+      await call(service, ["projects", project.id, "compilations"], "POST", {
+        label: "V02",
+        revision: renamed.revision,
+        requestId: "66666666-6666-4666-8666-666666666666",
+        requirements: DEFAULT_REQUIREMENTS,
+      })
+    ).json();
+    const second = await (
+      await call(
+        service,
+        ["projects", child.selectedId, "compilations"],
+        "PATCH",
+        { label: "Implementation detail", revision: child.revision },
+      )
+    ).json();
+    assert.equal(second.items[1].label, "Implementation detail");
+    assert.equal(
+      (await service.checkProject(child.selectedId)).meta.name,
+      "Park operations proposal",
+    );
+    await assert.rejects(
+      call(service, ["projects", project.id, "compilations"], "PATCH", {
+        projectName: "Stale name",
+        revision: renamed.revision,
+      }),
+      /changed/,
+    );
+    await assert.rejects(
+      call(service, ["projects", project.id, "compilations"], "PATCH", {
+        label: "\n",
+        revision: second.revision,
+      }),
+      /Invalid/,
+    );
+    await assert.rejects(
+      call(
+        service,
+        ["projects", project.id, "compilations"],
+        "PATCH",
+        { label: "Foreign edit", revision: second.revision },
+        access({ ...principal, workspaceId: "other" }),
+      ),
+      /unavailable/,
+    );
+    assert.deepEqual(
+      service.documents.list(project.id, "bidproposal", ""),
+      before,
+    );
+    service.close();
+    service = make(root);
+    const reopened = await (
+      await call(service, ["projects", child.selectedId, "compilations"])
+    ).json();
+    assert.equal(reopened.projectName, "Park operations proposal");
+    assert.equal(reopened.items[1].label, "Implementation detail");
+    assert.equal((await service.checkProject(project.id)).meta.id, project.id);
+    await call(service, ["projects", project.id, "archive"], "POST");
+    await assert.rejects(
+      call(service, ["projects", child.selectedId, "compilations"], "PATCH", {
+        label: "Archived edit",
+        revision: reopened.revision,
+      }),
+      /archived/,
+    );
+  } finally {
+    service.close();
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
 test("version requirements change the actual plan with revision checks while retaining the original outline", async () => {
   const root = mkdtempSync(join(tmpdir(), "bid-version-brief-")),
     service = make(root);

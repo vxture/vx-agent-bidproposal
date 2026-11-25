@@ -196,11 +196,14 @@
   flex: none;
 }
 .jadera-project-context > strong {
+  flex: 1;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 .jadera-project-context > div {
+  flex: none;
   display: flex;
   margin-left: auto;
 }
@@ -301,6 +304,17 @@
     max-width: 100%;
   }
   .jadera-project-context > div {
+    display: flex;
+  }
+}
+@media (max-width: 760px) {
+  .jadera-project-context {
+    padding-inline: var(--space-xs);
+  }
+  .jadera-project-context > div button > span {
+    display: none;
+  }
+  .jadera-context-version {
     display: none;
   }
 }

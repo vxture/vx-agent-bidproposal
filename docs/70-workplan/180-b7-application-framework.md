@@ -166,3 +166,32 @@ guards. Browser checks covered 1920x1080 and 390px, version creation/selection,
 saved requirements, a small completion ring and workflow icon anchors (maximum
 expanded/collapsed center difference below 0.06px). Synthetic local rendering
 fixtures were removed before commit. No production deployment is claimed.
+
+## B7.5 Web release and demonstration acceptance
+
+Protected release v0.3.0 deployed `80176ce3` on 2026-11-26 (Asia/Shanghai),
+run 45658032924. Exact main CI/Sonar, matching CI/ACR image digest,
+isolated non-root startup, anonymous 401 and app-only Compose preview passed.
+Image: `sha256:10ecc5cef6d0d2723465bb4ede8a4c6cbbdec260ba55b46a566a63a8fa4390d1`.
+Original configuration/master key, database/Redis container IDs and encrypted
+volume are preserved. An app-paused encrypted snapshot and rollback inputs are
+retained at `/srv/md0/bidproposal/backups/jadera-b7-v030-20261125T165003Z`.
+Public health/readiness identify the exact production revision.
+
+The owner explicitly permits testing with the current account and retaining its
+data for external demonstrations. New demo records use business-facing names;
+source contents identify fictional demonstration evidence and never invent real
+certification or customer credentials. The original project, six-page export,
+task history and source snapshots remain available. Its current review state is
+derived by the existing business projection; historic completed output does not
+assert that current review is complete. A new compilation and actual product AI
+conversation were retained. Platform native identity issue #198 remains open.
+
+The demonstration follow-up adds display-name editing for logical projects and
+individual compilation versions. Encrypted group metadata records before/after
+names, actor and time with optimistic revision checks. Original runtime metadata,
+project IDs, documents and rendered bytes are untouched. Read/list views project
+the current display name; viewing alone performs no rename. Archived projects
+reject name changes. The project action menu stays reachable below 1280px.
+Focused persistence/isolation/conflict checks and app types pass for this follow-up;
+the previous 421-test phase baseline is not unnecessarily repeated locally.
