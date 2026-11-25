@@ -1,0 +1,433 @@
+/* B7 composition retains product artwork; controls and geometry come from DS. */
+.jadera-work-area {
+  display: flex;
+  height: 100%;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+  position: relative;
+}
+.jadera-work-area > main {
+  flex: 1;
+  min-width: 0;
+}
+.jadera-dock-header {
+  height: var(--spacing-header-lg);
+  min-height: var(--spacing-header-lg);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-xs);
+  padding-inline: var(--space-md);
+  border-bottom: var(--border-width-thin) solid var(--border);
+  flex: none;
+}
+.jadera-dock-actions {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  flex: none;
+}
+.jadera-ai-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  min-width: 0;
+  font-size: var(--body-md-font-size);
+}
+.jadera-ai-title > svg {
+  color: var(--ai-text);
+  flex: none;
+}
+.jadera-ai-title > span {
+  font-size: var(--label-sm-font-size);
+  color: var(--muted-foreground);
+  white-space: nowrap;
+}
+.jadera-assistant-dock {
+  height: 100%;
+  max-width: 100%;
+  box-shadow: none;
+  background: var(--background);
+  z-index: var(--z-index-raised);
+}
+.jadera-assistant-dock .jadera-dock-header {
+  padding-inline: var(--space-xs);
+}
+.jadera-ai-scope {
+  padding: var(--space-xs) var(--space-md);
+  font-size: var(--label-sm-font-size);
+  color: var(--muted-foreground);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2xs);
+}
+.jadera-ai-scope > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.jadera-ai-transcript {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  scrollbar-width: none;
+  padding: var(--space-lg) var(--space-md);
+  font-size: var(--body-md-font-size);
+}
+.jadera-ai-greeting {
+  text-align: center;
+  margin: clamp(var(--space-xl), 12vh, var(--space-7xl)) auto var(--space-xl);
+  max-width: 32ch;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-md);
+}
+.jadera-ai-greeting > div {
+  margin-bottom: var(--space-lg);
+  color: var(--ai-text);
+  padding: var(--space-md);
+  border-radius: 50%;
+  background: var(--ai-muted);
+}
+.jadera-ai-greeting h2 {
+  font-size: var(--title-lg-font-size);
+  font-weight: 500;
+  color: var(--foreground);
+}
+.jadera-ai-greeting p {
+  font-size: var(--body-md-font-size);
+  line-height: 1.9;
+  color: var(--muted-foreground);
+}
+.jadera-ai-message {
+  margin-bottom: var(--space-lg);
+  min-width: 0;
+}
+.jadera-ai-message > span {
+  display: block;
+  font-size: var(--label-sm-font-size);
+  color: var(--muted-foreground);
+  margin-bottom: var(--space-xs);
+}
+.jadera-ai-message > div {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  line-height: 1.9;
+  color: var(--foreground);
+}
+.jadera-ai-message.user > div {
+  padding: var(--space-md);
+  background: var(--accent);
+  border-radius: var(--radius-md);
+}
+.jadera-ai-composer {
+  padding: var(--space-md);
+  flex: none;
+  border-top: var(--border-width-thin) solid var(--border);
+}
+.jadera-ai-composer textarea {
+  min-height: var(--space-row-2xl);
+  max-height: var(--spacing-media-3xl);
+  resize: vertical;
+}
+.jadera-ai-composer > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: var(--space-xs);
+  gap: var(--space-xs);
+}
+.jadera-ai-composer > div > span,
+.jadera-ai-composer > p {
+  font-size: var(--label-sm-font-size);
+  color: var(--muted-foreground);
+}
+.jadera-session-picker {
+  max-height: 60vh;
+  overflow: auto;
+}
+.jadera-session-row {
+  display: flex;
+  width: 100%;
+  justify-content: space-between;
+  gap: var(--space-md);
+  height: auto;
+  padding-block: var(--space-sm);
+}
+.jadera-session-row > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.jadera-session-row > small {
+  font-size: var(--label-sm-font-size);
+  color: var(--muted-foreground);
+}
+.jadera-workflow-navigation {
+  height: 100%;
+  min-height: 0;
+}
+.jadera-flow-item {
+  position: relative;
+}
+.jadera-flow-item:before {
+  content: "";
+  position: absolute;
+  left: calc(
+    (
+        var(--shell-sidebar-anchor-width) - 2 *
+          (var(--shell-sidebar-inset) + var(--shell-sidebar-inner-inset))
+      ) /
+      2
+  );
+  top: var(--shell-sidebar-menu-height);
+  bottom: 0;
+  width: var(--border-width-thin);
+  background: var(--border);
+  pointer-events: none;
+}
+.jadera-flow-item:not(:last-child):after {
+  content: "";
+  position: absolute;
+  left: calc(
+    (
+        var(--shell-sidebar-anchor-width) - 2 *
+          (var(--shell-sidebar-inset) + var(--shell-sidebar-inner-inset))
+      ) /
+      2
+  );
+  top: 100%;
+  height: var(--space-xs);
+  width: var(--border-width-thin);
+  background: var(--border);
+  pointer-events: none;
+}
+.jadera-flow-item:last-child:before {
+  display: none;
+}
+.jadera-flow-item > a {
+  position: relative;
+  z-index: 1;
+  white-space: nowrap;
+}
+.jadera-flow-status {
+  margin-left: auto;
+  margin-right: var(--space-xs);
+  font-size: var(--label-sm-font-size);
+  color: var(--muted-foreground);
+}
+.jadera-flow-item.complete .jadera-flow-status {
+  color: var(--success-text);
+}
+.jadera-flow-item.active .jadera-flow-status,
+.jadera-flow-item.blocked .jadera-flow-status {
+  color: var(--primary-text);
+}
+.jadera-flow-symbol {
+  display: inline-flex;
+  width: var(--spacing-icon-lg);
+  height: var(--spacing-icon-lg);
+  align-items: center;
+  justify-content: center;
+  font-size: var(--label-sm-font-size);
+  position: relative;
+}
+.jadera-flow-item.collapsed .jadera-flow-symbol {
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--muted) 55%, transparent 76%);
+  border: 0;
+}
+.jadera-flow-item.collapsed .jadera-flow-symbol.selected {
+  color: var(--primary-foreground);
+  background: var(--primary);
+}
+.jadera-step-time {
+  display: grid;
+  grid-template-columns: max-content max-content;
+  gap: var(--space-2xs) var(--space-md);
+  padding: 0 var(--space-xs) var(--space-md)
+    calc(
+      var(--shell-sidebar-anchor-width) - 2 *
+        (var(--shell-sidebar-inset) + var(--shell-sidebar-inner-inset)) +
+        var(--shell-sidebar-inset)
+    );
+  color: var(--muted-foreground);
+  font-size: var(--label-sm-font-size);
+}
+.jadera-step-time > span {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2xs);
+}
+.jadera-step-time > span:last-child {
+  grid-column: 2;
+  grid-row: 2;
+}
+.jadera-flow-item.collapsed .jadera-step-time {
+  visibility: hidden;
+  height: calc(var(--space-md) + var(--space-2xs) + 3.1em);
+  padding: 0;
+  gap: 0;
+  font-size: var(--label-sm-font-size);
+  overflow: hidden;
+}
+.jadera-flow-footer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2xs);
+  padding-bottom: var(--space-xs);
+  line-height: 1.3;
+  font-size: var(--label-sm-font-size);
+  color: var(--muted-foreground);
+}
+.jadera-flow-footer [role="progressbar"] {
+  height: var(--border-width-thick);
+}
+.jadera-flow-footer > div:first-child {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-xs);
+}
+.jadera-flow-footer > div:first-child > span:last-child {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2xs);
+}
+.jadera-flow-footer p {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: var(--label-sm-font-size);
+}
+.jadera-collapsed-progress {
+  display: block;
+  text-align: center;
+  font-size: var(--label-sm-font-size);
+  color: var(--muted-foreground);
+}
+.jadera-resource-grid.jadera-resource-collection-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+.jadera-resource-detail {
+  max-width: var(--container-panel-lg);
+  max-height: 85dvh;
+  overflow: auto;
+}
+.jadera-resource-detail-toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+.jadera-resource-source {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  max-height: 50vh;
+  overflow: auto;
+  font-size: var(--body-md-font-size);
+  line-height: 1.9;
+  padding: var(--space-lg);
+  background: var(--muted);
+  border-radius: var(--radius-md);
+}
+.jadera-document-art {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--space-sm);
+  height: 100%;
+  color: var(--primary-text);
+}
+.jadera-document-art > .jadera-document-eyebrow {
+  font-size: var(--overline-font-size);
+  letter-spacing: 0.12em;
+  color: var(--muted-foreground);
+  align-self: flex-start;
+}
+.jadera-document-art > svg {
+  margin-top: var(--space-md);
+}
+.jadera-document-art > strong {
+  font-size: var(--title-md-font-size);
+  line-height: 1.8;
+  margin: 0;
+  overflow-wrap: anywhere;
+  max-height: 4em;
+  overflow: hidden;
+}
+.jadera-document-art > span {
+  font-size: var(--label-sm-font-size);
+}
+.jadera-document-art.certificate {
+  outline: var(--border-width-medium) double var(--warning-border);
+  outline-offset: var(--space-xs);
+  color: var(--warning-text);
+}
+.jadera-document-lines {
+  width: 80%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  margin-top: var(--space-md);
+}
+.jadera-document-lines > i {
+  border-top: var(--border-width-thin) solid var(--border);
+  width: 100%;
+}
+.jadera-document-lines > i:last-child {
+  width: 60%;
+}
+.jadera-document-seal {
+  border: var(--border-width-medium) double var(--destructive-border);
+  border-radius: 50%;
+  width: var(--spacing-media-sm);
+  height: var(--spacing-media-sm);
+  display: grid;
+  place-items: center;
+  color: var(--destructive-text);
+  transform: rotate(-12deg);
+  margin-top: var(--space-md);
+}
+.jadera-resource-card .jadera-resource-title > [data-slot] {
+  flex: none;
+}
+.jadera-resource-card .jadera-resource-title {
+  min-height: var(--spacing-icon-xl);
+}
+.jadera-resource-meta {
+  height: var(--spacing-icon-xl);
+}
+@media (max-width: 1100px) {
+  .jadera-resource-grid.jadera-resource-collection-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .jadera-assistant-dock {
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    z-index: var(--z-index-drawer);
+  }
+}
+@media (max-width: 760px) {
+  .jadera-resource-grid.jadera-resource-collection-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .jadera-assistant-dock {
+    width: 100%;
+  }
+  .jadera-ai-title > span {
+    display: none;
+  }
+}
+
+.jadera-resource-card .jadera-resource-copy {
+  margin: 0;
+  width: 100%;
+}
+.jadera-resource-card .jadera-resource-title > [data-slot] {
+  flex: none;
+}

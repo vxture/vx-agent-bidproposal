@@ -157,3 +157,154 @@
     gap: var(--space-xs);
   }
 }
+
+.bid-workbench .workbench-page {
+  padding: 0;
+  max-width: none;
+  width: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+.jadera-project-workspace {
+  display: flex;
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  min-height: 0;
+}
+.jadera-business-column {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+}
+.jadera-project-context {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-xs) var(--space-lg);
+  font-size: var(--body-md-font-size);
+  min-height: var(--spacing-header-lg);
+  flex: none;
+}
+.jadera-project-context > strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.jadera-project-context > div {
+  display: flex;
+  margin-left: auto;
+}
+.jadera-business-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  scrollbar-width: none;
+}
+.jadera-business-frame-slot {
+  height: 100%;
+  min-height: 0;
+}
+.jadera-business-frame-slot[hidden],
+.jadera-context-slot[hidden],
+.jadera-context-body [hidden] {
+  display: none !important;
+}
+.jadera-business-frame-slot iframe {
+  min-height: 0;
+  height: 100%;
+}
+.jadera-content-scroll-cue {
+  min-height: var(--spacing-icon-xl);
+  height: var(--spacing-icon-xl);
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted-foreground);
+  font-size: var(--label-sm-font-size);
+}
+.jadera-content-scroll-cue > span {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+.jadera-content-scroll-cue i {
+  width: var(--space-xl);
+  border-top: var(--border-width-thin) solid var(--border);
+}
+.jadera-context-slot {
+  display: flex;
+  flex: none;
+  min-width: 0;
+  height: 100%;
+}
+.jadera-context-dock {
+  height: 100%;
+  box-shadow: none;
+  background: var(--background);
+}
+.jadera-context-body {
+  min-height: 0;
+  flex: 1;
+  overflow: auto;
+  padding: var(--space-md);
+  scrollbar-width: none;
+}
+.jadera-context-body .proj {
+  padding: 0;
+  min-width: 0;
+}
+.jadera-context-body .proj-head,
+.jadera-context-body .proj-summary {
+  display: none;
+}
+.jadera-context-body .row {
+  flex-wrap: wrap;
+}
+.jadera-context-edge {
+  position: absolute;
+  right: calc(-1 * var(--space-lg));
+  top: var(--space-md);
+  width: var(--spacing-icon-xl);
+  height: var(--spacing-icon-xl);
+  padding: 0;
+  border-radius: var(--radius-sm);
+  background: var(--primary-muted);
+  color: var(--primary-text);
+  z-index: var(--z-index-raised);
+  transition: transform var(--transition-duration-fast);
+}
+.jadera-context-edge:hover,
+.jadera-context-edge:focus-visible {
+  transform: translateX(calc(-1 * var(--space-lg)));
+}
+@media (max-width: 1280px) {
+  .jadera-context-slot {
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    z-index: var(--z-index-drawer);
+    max-width: 100%;
+  }
+  .jadera-context-dock {
+    max-width: 100%;
+  }
+  .jadera-project-context > div {
+    display: none;
+  }
+}
+
+.jadera-context-body .project-settings-header {
+  display: none;
+}
+.jadera-context-body fieldset {
+  min-width: 0;
+}
+.jadera-context-body [class*="card"] {
+  overflow-wrap: anywhere;
+}

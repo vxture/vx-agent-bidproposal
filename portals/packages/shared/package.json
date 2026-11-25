@@ -5,9 +5,11 @@
   "type": "module",
   "exports": {
     "./brand": "./src/brand.ts",
+    "./assistant": "./src/assistant.ts",
     "./presentation": "./src/presentation/index.ts",
     "./presentation.css": "./src/presentation/presentation.css",
-    "./project-records": "./src/project-records.ts"
+    "./project-records": "./src/project-records.ts",
+    "./resources": "./src/resources.ts"
   },
   "peerDependencies": {
     "@phosphor-icons/react": "^2.1.10",

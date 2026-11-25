@@ -54,7 +54,8 @@ export function runtimeFor(principal: Principal): BidRuntime {
       !host.service.tasks.activeCount &&
       !host.service.jobs.activeCount &&
       !host.service.readings.activeCount &&
-      !host.service.renders.activeCount
+      !host.service.renders.activeCount &&
+      !host.service.assistant.activeCount
     ) {
       host.service.close();
       hosts.delete(id);

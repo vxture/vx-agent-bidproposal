@@ -13,6 +13,7 @@ import {
 } from "@vxture/ruyin-node-runtime";
 import type { BidRuntime } from "./service";
 import { projectRecord } from "@bidproposal/shared/project-records";
+import { allowChatTurn } from "../chat/rate-limit";
 import { WorkbenchError, type WorkbenchAccess } from "./identity";
 
 // --- Explicit request and response boundary -------------------------------
@@ -189,6 +190,51 @@ export async function dispatch(
     return download(service, access, path[1]!);
   const host = path[0] === "host";
   const segments = host ? path.slice(1) : path;
+  if (segments[0] === "assistant") {
+    const id = segments[1];
+    if (method === "GET" && segments.length <= 2)
+      return json(
+        id
+          ? service.assistant.get(access.principal, id)
+          : {
+              items: service.assistant
+                .list(access.principal)
+                .map(({ messages, ...summary }) => summary),
+            },
+      );
+    const body = await jsonBody(request, 128 * 1024);
+    if (method === "POST" && id && segments[2] === "archive")
+      return json(
+        service.assistant.archive(access.principal, id, int(body, "revision")),
+      );
+    if (method === "POST" && !id) {
+      const rate = allowChatTurn(
+        "assistant:" +
+          access.principal.workspaceId +
+          ":" +
+          access.principal.sub,
+      );
+      if (!rate.allowed)
+        throw new WorkbenchError(
+          429,
+          "RATE_LIMIT",
+          "Please wait before sending another message",
+        );
+      const projectId =
+        typeof body.projectId === "string" ? body.projectId : undefined;
+      if (projectId) await service.checkProject(projectId);
+      return json(
+        await service.assistant.send(access.principal, {
+          id: typeof body.id === "string" ? body.id : undefined,
+          requestId: text(body, "requestId"),
+          revision: int(body, "revision"),
+          message: text(body, "message"),
+          projectId,
+        }),
+      );
+    }
+    return missing();
+  }
   if (segments[0] === "projects" && segments.length === 1) {
     if (method === "GET")
       return json({

@@ -1,3 +1,4 @@
+@import "./workspace.css";
 /* B7 product presentation. Shared by browser and native host integrations. */
 .jadera-header {
   height: var(--spacing-header-md, 48px);

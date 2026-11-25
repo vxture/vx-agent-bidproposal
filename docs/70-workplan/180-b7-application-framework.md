@@ -81,3 +81,41 @@ organization and user panels, dark mode and larger type. The header measured
 48px and the shared resource cards measured equal heights with 184px cropped
 previews. Screenshots use explicit synthetic rendering fixtures; they do not
 represent customer data. The fixture route was removed after acceptance.
+
+## B7.2 / B7.3 candidate
+
+The workspace stage composes the existing six-stage business surface with a DS
+workflow navigation, stable expanded/collapsed icon rail, recorded time rows,
+linked stage line, progress footer, hidden-scroll cue and a DS Dock for tasks,
+files and the assistant. The original iframe business modules, human review
+checkpoints, source selection, jobs and downloads remain the authority. Closing
+the task/file dock leaves an edge trigger; opening the assistant uses the same
+56px dock header and keeps its own durable conversation surface.
+
+The assistant endpoint is product-owned and workspace-scoped. Conversation
+records are encrypted product documents keyed to the signed-in member, use
+revision checks and request IDs, survive reopen, isolate members, retain failed
+user input and do not claim that an action was run. Inference is routed through
+the existing capability authorization and turn resolver; the UI does not expose
+the debug chat surface or a fake model catalogue.
+
+Knowledge and template directories now consume the existing encrypted Product
+Library. Both use the same DS Card / Table / ViewModeSwitch contract, two offset
+document layers with an upper-half preview, title/status first row and version /
+date / actions last row. Concrete template categories cover business, technical,
+software, engineering and service proposals. Versions, reading states, retries,
+original bytes and storage accounting remain runtime-owned. A selected library
+version is pinned to a project through the existing optimistic selection
+endpoint, so planning and export can consume the fixed version.
+
+This candidate still does not add compilation-version persistence; the existing
+project remains the durable unit until B7.4. Desktop imports the shared
+presentation package but its host chrome, native identity and signing acceptance
+remain B7.5 work. No production deployment or customer-data mutation is claimed.
+
+Stage verification covered 1920x1080 workspace layout, 1367px and 390px resource
+catalogs, workflow collapse anchors, assistant send behavior, hidden scroll cue,
+DS dock title height, list filtering, version detail and failed library state.
+The phase test set passed: 307 App tests, 107 shared business tests and 3 desktop
+bridge tests, plus type-check, static guardrails and desktop artifact verification.
+Temporary rendering fixtures were removed before commit.
