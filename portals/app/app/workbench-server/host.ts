@@ -6,6 +6,8 @@
  * @date 2026-11-25
  */
 import { isAbsolute, join } from "node:path";
+import { createHash } from "node:crypto";
+import { readFileSync } from "node:fs";
 import { localSourceReader } from "@vxture/ruyin-node-runtime";
 import { BidRuntime } from "./service";
 import {
@@ -64,6 +66,14 @@ export function runtimeFor(principal: Principal): BidRuntime {
       "RUNTIME_BUSY",
       "The runtime is busy; try again shortly",
     );
+  const manifest = JSON.parse(
+    readFileSync(join(process.cwd(), "package.json"), "utf8"),
+  ) as {
+    dependencies: Record<string, string>;
+  };
+  const rendererVersion = manifest.dependencies["@vxture/ruyin-document"];
+  if (!rendererVersion || !/^\d+\.\d+\.\d+$/.test(rendererVersion))
+    throw Error("The document renderer must have an exact version");
   const service = new BidRuntime({
     root,
     masterHex: key,
@@ -71,6 +81,10 @@ export function runtimeFor(principal: Principal): BidRuntime {
     contract: runtimeContract(),
     reader,
     layout: serverLayout,
+    layoutCacheVersion: createHash("sha256")
+      .update(readFileSync(join(process.cwd(), "document-engine/layout.py")))
+      .update(rendererVersion)
+      .digest("hex"),
     storageAccess: async (pinned) =>
       (await authorizePinnedAccess(pinned)).entitlement,
     reportStorage: makePlatformGauge(platformBase),

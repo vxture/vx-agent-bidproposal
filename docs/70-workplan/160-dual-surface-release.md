@@ -641,6 +641,36 @@ failed/stale/unknown jobs. Preserve the original sidebar and all historical
 output snapshots. Candidate desktop package advances to 1.17.3; it is still
 unsigned and is not published to the production install catalog.
 
+The timing source merged as b75e654 (PR #26) with all PR/main checks passing.
+Its v0.2.5 image passed exact shared-module hashes, non-root/resource checks and
+the app-only Compose preview. The protected workflow then remained in its
+image-push step; the owner-authorized task cancelled that un-deployed run
+45529126907 so the following retention correction can ship with timing in one
+app restart. v0.2.4 remains the verified live baseline. The v0.2.5 tag/image is
+not evidence of a production deployment.
+
+### B6.8 identical-export retention follow-up
+
+Binary SHA-256 deduplication alone does not cover repeated export of identical
+content: generated Office/PDF metadata can differ by time. Under the current
+completion authorization, modify only the Web host/service and its runtime
+tests, plus these existing workplan/memory records. The server fingerprints
+the actual pinned Markdown, template bytes, title, header fields, fixed layout
+script and exact published document-renderer version. Only a completed result
+with that private fingerprint in the same project can supply reusable bytes.
+Old un-fingerprinted output is retained unchanged, never silently trusted as a
+new-engine result. Each new version still has its own actual job and timestamps.
+
+Fresh original-session, member, paid-export and storage checks still run before
+retaining reused bytes. Duplicate successful output may be retained at zero
+additional logical space; changing source/template/header/renderer policy
+invalidates reuse. Reopening the encrypted project preserves this behavior.
+The focused real-service test covers identical content under different source
+IDs, reopen, explicit capacity, revoked paid coverage, changed header/template,
+changed Markdown/policy and preservation of earlier output. This is a local
+candidate; protected CI and actual repeated production download/storage
+acceptance must precede a completed-release claim.
+
 ### B6.9 authority recheck and remaining gates
 
 On 2026-11-25 the original RY-100 and RY-103 pages were accessible and read.
