@@ -508,6 +508,17 @@ function Workspace({ access }: { access: AccessState }) {
                     });
                     navigate("#ws/" + result.selectedId + "/overview");
                   }}
+                  onRename={async (label) => {
+                    await compilationRequest(projectId, "compilations", {
+                      method: "PATCH",
+                      body: JSON.stringify({
+                        label,
+                        revision: compilation.data?.revision,
+                      }),
+                    });
+                    await compilation.reload();
+                    await reload();
+                  }}
                   onCreate={async (input) => {
                     const result = await compilationRequest<{
                       selectedId: string;
@@ -561,6 +572,17 @@ function Workspace({ access }: { access: AccessState }) {
                 versionLabel={versionLabel}
                 archived={projectArchived}
                 onProjectChanged={reload}
+                onRename={async (projectName) => {
+                  await compilationRequest(projectId, "compilations", {
+                    method: "PATCH",
+                    body: JSON.stringify({
+                      projectName,
+                      revision: compilation.data?.revision,
+                    }),
+                  });
+                  await compilation.reload();
+                  await reload();
+                }}
                 requirementsView={
                   <CompilationRequirements
                     key={projectId}

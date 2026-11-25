@@ -30,6 +30,13 @@ interface Entry extends CompilationVersion {
 }
 interface Group extends Omit<CompilationList, "items"> {
   items: Entry[];
+  namingHistory?: {
+    at: string;
+    actorId: string;
+    versionId: string;
+    before: { projectName: string; label: string };
+    after: { projectName: string; label: string };
+  }[];
 }
 const invalid = () =>
   new WorkbenchError(400, "INVALID_INPUT", "Invalid compilation requirements");
@@ -133,7 +140,9 @@ export class CompilationVersions {
     const group = this.group(id);
     if (group)
       return {
-        ...group,
+        rootId: group.rootId,
+        projectName: group.projectName,
+        revision: group.revision,
         items: group.items.map(({ id, number, label, createdAt, state }) => ({
           id,
           number,
@@ -174,6 +183,68 @@ export class CompilationVersions {
         "Versions changed; reload before creating",
       );
     group.revision++;
+  }
+  async rename(
+    id: string,
+    input: { revision: number; projectName?: unknown; label?: unknown },
+    actorId: string,
+  ) {
+    if (
+      !actorId ||
+      !Number.isSafeInteger(input.revision) ||
+      input.revision < 0 ||
+      (input.projectName === undefined && input.label === undefined)
+    )
+      throw invalid();
+    for (const [value, max] of [
+      [input.projectName, 120],
+      [input.label, 60],
+    ] as const) {
+      if (
+        value !== undefined &&
+        (typeof value !== "string" ||
+          !value.trim() ||
+          value.trim().length > max ||
+          /[\x00-\x1f]/.test(value))
+      )
+        throw invalid();
+    }
+    const group: Group = this.group(id) ?? (await this.list(id));
+    const entry = group.items.find((item) => item.id === id)!;
+    const before = { projectName: group.projectName, label: entry.label },
+      after = {
+        projectName:
+          typeof input.projectName === "string"
+            ? input.projectName.trim()
+            : group.projectName,
+        label:
+          typeof input.label === "string" ? input.label.trim() : entry.label,
+      };
+    if (
+      before.projectName === after.projectName &&
+      before.label === after.label
+    )
+      return this.list(id);
+    if (group.revision !== input.revision)
+      throw new WorkbenchError(
+        409,
+        "COMPILATION_CONFLICT",
+        "Names or versions changed; reload before renaming",
+      );
+    if ((group.namingHistory?.length ?? 0) >= 500)
+      throw new WorkbenchError(
+        409,
+        "NAMING_HISTORY_LIMIT",
+        "Naming history limit reached",
+      );
+    group.namingHistory = [
+      ...(group.namingHistory ?? []),
+      { at: new Date().toISOString(), actorId, versionId: id, before, after },
+    ];
+    group.projectName = after.projectName;
+    entry.label = after.label;
+    this.save(group);
+    return this.list(id);
   }
   async create(
     id: string,

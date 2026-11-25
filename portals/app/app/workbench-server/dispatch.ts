@@ -401,6 +401,8 @@ async function compilationsRequest({
   method,
 }: ProjectRequest) {
   if (method === "GET") return json(await service.compilations.list(pid));
+  if (method === "PATCH")
+    return json(await service.renameCompilation(pid, await jsonBody(request)));
   if (method === "POST") {
     const body = await jsonBody(request);
     return json(

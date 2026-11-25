@@ -7,3 +7,4 @@ export { AssistantDock } from "./assistant-dock";
 export type { AssistantClient } from "./assistant-dock";
 export { WorkflowNavigation } from "./workflow-nav";
 export { CompilationSelector, CompilationRequirements } from "./compilation-controls";
+export { NameDialog } from "./name-dialog";

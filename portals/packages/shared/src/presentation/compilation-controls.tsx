@@ -24,6 +24,7 @@ import {
   type CompilationBrief,
   type WritingRequirements,
 } from "../compilations";
+import { NameDialog } from "./name-dialog";
 
 export function RequirementsFields({
   value,
@@ -140,6 +141,7 @@ export function CompilationSelector({
   onCreate,
   onRetry,
   readOnly = false,
+  onRename,
 }: {
   data?: CompilationList;
   selectedId: string;
@@ -157,6 +159,7 @@ export function CompilationSelector({
   }) => Promise<void>;
   onRetry?: (id: string) => Promise<void>;
   readOnly?: boolean;
+  onRename?: (name: string) => Promise<void>;
 }) {
   const [open, setOpen] = useState(false),
     [create, setCreate] = useState(false),
@@ -166,6 +169,7 @@ export function CompilationSelector({
     [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
     [requestId, setRequestId] = useState("");
+  const [renaming, setRenaming] = useState(false);
   const current = data?.items.find((item) => item.id === selectedId);
   return (
     <>
@@ -271,9 +275,32 @@ export function CompilationSelector({
               </Button>
             ))}
           </div>
+          {onRename && current && (
+            <Button
+              variant="ghost"
+              className="jadera-version-create"
+              disabled={readOnly || busy}
+              onClick={() => {
+                setOpen(false);
+                setRenaming(true);
+              }}
+            >
+              <Icon name="edit" size="sm" />
+              {"\u91cd\u547d\u540d\u5f53\u524d\u7248\u672c"}
+            </Button>
+          )}
           {error && <p role="alert">{error}</p>}
         </PopoverContent>
       </Popover>
+      {renaming && current && onRename && (
+        <NameDialog
+          title={"\u91cd\u547d\u540d\u7f16\u5236\u7248\u672c"}
+          initialName={current.label}
+          maxLength={60}
+          onClose={() => setRenaming(false)}
+          onSave={onRename}
+        />
+      )}
       <Dialog
         open={create}
         onOpenChange={(next) => {

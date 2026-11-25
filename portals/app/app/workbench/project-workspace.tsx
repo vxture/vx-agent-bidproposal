@@ -20,6 +20,7 @@ import {
   PRODUCT_REVIEW_EVENT,
 } from "@vxture/ruyin-workbench-ui";
 import type { TabId } from "@vxture/ruyin-workbench-ui/workspace-tabs";
+import { NameDialog } from "@bidproposal/shared/presentation";
 export function ProjectWorkspace({
   api,
   id,
@@ -37,6 +38,7 @@ export function ProjectWorkspace({
   versionLabel,
   archived,
   onProjectChanged,
+  onRename,
 }: {
   api: Api;
   id: string;
@@ -54,6 +56,7 @@ export function ProjectWorkspace({
   versionLabel?: string;
   archived?: boolean;
   onProjectChanged?: () => Promise<void>;
+  onRename?: (name: string) => Promise<void>;
 }) {
   const [contextOpen, setContextOpen] = useState(true),
     [rightTab, setRightTab] = useState("tasks"),
@@ -61,6 +64,7 @@ export function ProjectWorkspace({
     [scrollable, setScrollable] = useState(false);
   const [operationBusy, setOperationBusy] = useState(false),
     [operationError, setOperationError] = useState("");
+  const [renaming, setRenaming] = useState(false);
   const content = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const show = (event: Event) => {
@@ -139,12 +143,24 @@ export function ProjectWorkspace({
           <div>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" disabled={operationBusy}>
-                  {"\u9879\u76ee\u64cd\u4f5c"}
+                <Button
+                  variant="ghost"
+                  disabled={operationBusy}
+                  aria-label={"\u9879\u76ee\u64cd\u4f5c"}
+                >
+                  <span>{"\u9879\u76ee\u64cd\u4f5c"}</span>
                   <Icon name="chevron-down" size="xs" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
+                {onRename && (
+                  <DropdownMenuItem
+                    disabled={archived}
+                    onSelect={() => setRenaming(true)}
+                  >
+                    {"\u91cd\u547d\u540d\u9879\u76ee"}
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuItem
                   onSelect={() => onNavigate("#ws/" + id + "/overview")}
                 >
@@ -192,6 +208,15 @@ export function ProjectWorkspace({
             </DropdownMenu>
           </div>
         </div>
+        {renaming && onRename && (
+          <NameDialog
+            title={"\u91cd\u547d\u540d\u9879\u76ee"}
+            initialName={name}
+            maxLength={120}
+            onClose={() => setRenaming(false)}
+            onSave={onRename}
+          />
+        )}
         {operationError && (
           <p role="alert" className="jadera-project-operation-error">
             {operationError}
