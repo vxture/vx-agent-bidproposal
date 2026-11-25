@@ -195,3 +195,61 @@ the current display name; viewing alone performs no rename. Archived projects
 reject name changes. The project action menu stays reachable below 1280px.
 Focused persistence/isolation/conflict checks and app types pass for this follow-up;
 the previous 421-test phase baseline is not unnecessarily repeated locally.
+
+Live demonstration preparation retained three logical projects, a second
+compilation, five knowledge resources and four editable Word templates. Template
+originals rendered as eight pages and were visually checked before upload.
+Their actual background reads completed, and the Card/List controls work with
+those persisted originals. A case was pinned to the second compilation and the
+software template to the software project's first compilation. The owner also
+authorized retaining actual assistant validation; the product inference path
+returned and persisted its answer without claiming to execute project actions.
+
+The first live name save exposed a missing Next route export: dispatch accepted
+PATCH while the API route did not export it. The request returned 405 before any
+rename occurred. PR #37 adds PATCH through the existing authenticated handler;
+its focused route test verifies the anonymous 401 boundary. The previous required
+CI suites and the exact main checks remain the release gates. This was a route
+wiring omission, not a database or customer-data failure.
+
+An encrypted-snapshot comparison confirms that the original runtime metadata,
+101 business documents (excluding workflow projection and private auth records),
+eight retained output snapshots, 14 task instances and two original file
+references are unchanged after B7 and demonstration preparation. New source
+versions retain the old immutable originals. Display-name edits are separate
+metadata and never rewrite old documents or audit records.
+
+## Final Web checkpoint 2026-11-26
+
+v0.3.2 / `e699b598` is live at https://jadera.ruyin.work/. Protected run
+45667761554 attempt 2 completed successfully after exact PR/main CI and Sonar.
+The first attempt stalled publishing the ACR mirror before deployment. The exact
+GHCR manifest `sha256:22dbbe4d003fbea26d731ef6f262bb767da9ce48302463db504e605cd3585c78`
+was verified, copied to ACR and reused by the existing protected retag path.
+Its release OCI index `sha256:1f4b9df04669acd56c8d5b7264dab22771166562c9cb9e7275fb1d4d7a7a0c6e`
+contains that same verified manifest. No approval or required check was removed.
+Isolated startup, anonymous PATCH 401 (instead of the former 405), app-only
+Compose preview, public health/readiness and post-deploy configuration/container
+identity checks pass. The v0.3.2 encrypted snapshot and rollback inputs are at
+`/srv/md0/bidproposal/backups/jadera-b7-v032-20261125T174337Z`.
+
+Actual authenticated UI saves and refresh acceptance now pass for the project
+display name and compilation labels. The retained demonstration names are
+科技园区智能巡检服务采购项目, 智慧园区综合管理平台建设项目 and
+科创中心弱电系统改造工程. Their compilation labels include 综合标 · 基础方案,
+技术标 · 实施深化, 软件标 · 建设方案 and 工程标 · 施工组织. Requirements save
+successfully into the actual plan; the new versions use their own scope and the
+original six-page output remains viewable. Five knowledge records, four Word
+templates, immutable resource versions, actual selection copies and the assistant
+conversation survive app updates. The software demonstration also retains its
+uploaded requirements original and completed source reading. New projects are
+not falsely shown as having completed business stages.
+
+The final snapshot comparison again passes for the original 101 business
+documents, eight output snapshots, 14 task instances, two file references and
+runtime metadata. The current source CI includes 313 App tests, 107 shared
+business tests and three desktop transport tests. Local follow-up verification
+was focused; the earlier full-phase regression was not repeated after each edit.
+Desktop own-product identity, shared host-chrome wiring and publisher signing
+remain explicit separate gates. This checkpoint completes the Web B7 release
+and retained demonstration preparation, not signed native distribution.

@@ -10,12 +10,14 @@ portals/
   app/                  @bidproposal/app     - the Next.js 15 application (App Router)
     workbench/                              - draft browser transport, no page renderer
   desktop/              @bidproposal/desktop - RUYIN transport and package build
-  packages/shared/      @bidproposal/shared  - product identity constants
+  packages/shared/      @bidproposal/shared  - identity, presentation and shared data types
   packages/workbench/   @bidproposal/workbench - shared business pages and task definitions
 ```
 
-`@bidproposal/shared` exists to hold exactly one thing well: `BRAND`, the single source
-of product identity. Everything that names the product - the health payload, C2
+`@bidproposal/shared` owns `BRAND`, the single source of product identity, as well
+as host-neutral presentation and data types. Presentation receives data/callbacks
+without importing Web authentication, API clients or native bridges. Everything
+that names the product - the health payload, C2
 entitlement lookups, the C3 webhook's wrong-product check - reads
 `BRAND.productCode` from there. Never derive the product code from
 `OIDC_CLIENT_ID`: the beta client is `bidproposal-beta` while the product code stays
