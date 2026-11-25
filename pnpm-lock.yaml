@@ -124,22 +124,64 @@ importers:
 
   portals/desktop:
     dependencies:
+      '@bidproposal/shared':
+        specifier: workspace:*
+        version: link:../packages/shared
       '@bidproposal/workbench':
         specifier: workspace:*
         version: link:../packages/workbench
+      '@phosphor-icons/react':
+        specifier: ^2.1.10
+        version: 2.1.10(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+      '@vxture/design-system':
+        specifier: 12.26.1
+        version: 12.26.1(@phosphor-icons/react@2.1.10(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(next-themes@0.4.6(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(tailwindcss-animate@1.0.7(tailwindcss@4.3.3))(tailwindcss@4.3.3)
+      next-themes:
+        specifier: ^0.4.6
+        version: 0.4.6(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+      react:
+        specifier: ^19.0.0
+        version: 19.2.7
+      react-dom:
+        specifier: ^19.0.0
+        version: 19.2.7(react@19.2.7)
     devDependencies:
+      '@tailwindcss/postcss':
+        specifier: 4.3.3
+        version: 4.3.3
+      '@types/node':
+        specifier: ^22.0.0
+        version: 22.20.1
+      '@types/react':
+        specifier: ^19.0.0
+        version: 19.2.17
+      '@types/react-dom':
+        specifier: ^19.0.0
+        version: 19.2.3(@types/react@19.2.17)
       '@vxture/ruyin-cli':
         specifier: 0.2.0
         version: 0.2.0
+      esbuild:
+        specifier: 0.28.1
+        version: 0.28.1
+      postcss:
+        specifier: ^8.5.26
+        version: 8.5.26
+      tailwindcss:
+        specifier: 4.3.3
+        version: 4.3.3
+      tailwindcss-animate:
+        specifier: ^1.0.7
+        version: 1.0.7(tailwindcss@4.3.3)
+      typescript:
+        specifier: ^5.7.0
+        version: 5.9.3
 
   portals/packages/shared:
     dependencies:
       '@phosphor-icons/react':
         specifier: ^2.1.10
         version: 2.1.10(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
-      next:
-        specifier: ^15.5.29
-        version: 15.5.29(@types/node@22.20.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       react:
         specifier: ^19.0.0
         version: 19.2.7
