@@ -94,6 +94,8 @@ sandbox never reached the submit handler, while the identical form with
 `allow-forms` saved successfully. Add only this standard form permission; keep
 the existing authentication, origin checks and other sandbox restrictions.
 This is required for source review and other native forms, not a database fix.
+The outer Web application also owns the dirty-document before-unload guard,
+so unsaved protection does not depend on modal permission inside the sandbox.
 v0.3.6 is the corrected release candidate. The demonstration software project
 already retains a real 18-item extraction, all source quotes matched, followed
 by 15 eligible and three operator-review items. Do not mislabel those findings

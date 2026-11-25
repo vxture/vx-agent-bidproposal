@@ -276,8 +276,17 @@ function Workspace({ access }: { access: AccessState }) {
       setHash(acceptedHash);
     };
     update();
+    const protectUnsaved = (event: BeforeUnloadEvent) => {
+      if (frame.current?.contentDocument?.documentElement.dataset.unsaved !== "true") return;
+      event.preventDefault();
+      event.returnValue = "";
+    };
     window.addEventListener("hashchange", update);
-    return () => window.removeEventListener("hashchange", update);
+    window.addEventListener("beforeunload", protectUnsaved);
+    return () => {
+      window.removeEventListener("hashchange", update);
+      window.removeEventListener("beforeunload", protectUnsaved);
+    };
   }, []);
   useEffect(() => {
     void reload();
