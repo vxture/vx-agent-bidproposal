@@ -23,6 +23,7 @@ import { dispatch } from "./dispatch";
 import { runtimeContract } from "./contract";
 import { EMPTY_ENTITLEMENT } from "../entitlement/types";
 import type { StorageObservation } from "../usage/lib/gauge";
+import { DEFAULT_REQUIREMENTS } from "@bidproposal/shared/compilations";
 
 const principal: Principal = {
   sessionId: "opaque-own-product-session",
@@ -116,6 +117,362 @@ async function call(
   return service.run(a, () => dispatch(service, a, path, request));
 }
 
+test("compilation versions preserve V01, isolate plans and documents, and count one logical proposal after reopen", async () => {
+  const root = mkdtempSync(join(tmpdir(), "bid-versions-"));
+  let service = make(root);
+  const a = access();
+  a.entitlement.limits["proposal.max"] = 1;
+  try {
+    const project = await service.run(a, () =>
+      service.create("Original bid", a.entitlement),
+    );
+    const pid = project.id;
+    await call(service, ["projects", pid, "documents", "bid_draft"], "PUT", {
+      markdown: "Original approved text",
+      revision: 0,
+    });
+    const before = service.documents.list(pid, "bidproposal", "");
+    const original = await (
+      await call(service, ["projects", pid, "compilations"])
+    ).json();
+    assert.equal(original.items[0].label, "V01");
+    assert.equal(original.revision, 0);
+    assert.deepEqual(
+      service.documents.list(pid, "bidproposal", ""),
+      before,
+      "reading historic projects writes nothing",
+    );
+    const input = {
+      requestId: "11111111-1111-4111-8111-111111111111",
+      label: "Technical option",
+      revision: 0,
+      reuseLibrary: false,
+      requirements: {
+        ...DEFAULT_REQUIREMENTS,
+        pages: 120,
+        volume: "technical",
+        brief: "Measurable acceptance",
+      },
+    };
+    const created = await (
+      await call(service, ["projects", pid, "compilations"], "POST", input, a)
+    ).json();
+    const child = created.selectedId;
+    assert.notEqual(child, pid);
+    assert.equal(created.items.length, 2);
+    assert.equal((await service.runtime.listProjects()).length, 2);
+    assert.equal(
+      (await (await call(service, ["host", "projects"])).json()).items.length,
+      1,
+    );
+    assert.deepEqual(service.documents.list(pid, "bidproposal", ""), before);
+    assert.equal(
+      service.documents.get(child, "bidproposal", "bid_draft"),
+      undefined,
+    );
+    const brief = await (
+      await call(service, ["projects", child, "compilation-brief"])
+    ).json();
+    assert.equal(brief.value.pages, 120);
+    assert.equal(brief.value.volume, "technical");
+    assert.equal(brief.value.brief, "Measurable acceptance");
+    await call(service, ["projects", child, "documents", "bid_draft"], "PUT", {
+      markdown: "Separate technical draft",
+      revision: 0,
+    });
+    assert.equal(
+      service.documents.get(pid, "bidproposal", "bid_draft")?.markdown,
+      "Original approved text",
+    );
+    const retry = await (
+      await call(service, ["projects", pid, "compilations"], "POST", input, a)
+    ).json();
+    assert.equal(retry.selectedId, child);
+    await assert.rejects(
+      call(
+        service,
+        ["projects", pid, "compilations"],
+        "POST",
+        { ...input, requestId: "22222222-2222-4222-8222-222222222222" },
+        a,
+      ),
+      /Versions changed/,
+    );
+    await assert.rejects(
+      service.run(a, () => service.create("Another bid", a.entitlement)),
+      /proposal limit/,
+    );
+    service.close();
+    service = make(root);
+    const reopened = await (
+      await call(service, ["projects", child, "compilations"])
+    ).json();
+    assert.equal(reopened.rootId, pid);
+    assert.equal(reopened.items.length, 2);
+    assert.equal(
+      service.documents.get(child, "bidproposal", "bid_draft")?.markdown,
+      "Separate technical draft",
+    );
+    await call(service, ["projects", child, "archive"], "POST");
+    await assert.rejects(
+      call(service, ["projects", child, "documents", "bid_draft"], "PUT", {
+        markdown: "Must fail",
+        revision: 1,
+      }),
+      /archived/,
+    );
+    await assert.rejects(
+      call(service, ["projects", pid, "compilations"], "POST", {
+        ...input,
+        revision: reopened.revision,
+        requestId: "33333333-3333-4333-8333-333333333333",
+      }),
+      /archived/,
+    );
+    const bundle = await (
+      await call(service, ["host", "projects", child, "export"])
+    ).json();
+    assert.equal(bundle.compilations.selectedId, child);
+    assert.equal(bundle.compilations.rootId, pid);
+    await call(service, ["projects", child, "restore"], "POST");
+    await call(service, ["projects", child, "documents", "bid_draft"], "PUT", {
+      markdown: "Restored edit",
+      revision: 1,
+    });
+    const retryById = await (
+      await call(service, ["projects", pid, "compilations"], "POST", {
+        retryId: child,
+      })
+    ).json();
+    assert.equal(retryById.selectedId, child);
+    await call(
+      service,
+      ["projects", child, "documents", "bid_plan_context"],
+      "PUT",
+      {
+        markdown: JSON.stringify({ configuration: {}, requirements: [] }),
+        revision: 0,
+      },
+    );
+    await call(service, ["projects", child, "tasks"], "POST", {
+      taskId: "plan_outline",
+    });
+    await assert.rejects(
+      call(service, ["projects", child, "compilation-brief"], "PUT", {
+        value: { ...brief.value, pages: 121 },
+        revision: brief.revision,
+      }),
+      /active tasks/,
+    );
+    await assert.rejects(
+      call(service, ["projects", pid, "archive"], "POST"),
+      /all compilation tasks/,
+    );
+    await call(service, ["projects", pid, "compilation-brief"], "PUT", {
+      value: { ...DEFAULT_REQUIREMENTS, brief: "Independent original version" },
+      revision: 0,
+    });
+  } finally {
+    service.close();
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("version requirements change the actual plan with revision checks while retaining the original outline", async () => {
+  const root = mkdtempSync(join(tmpdir(), "bid-version-brief-")),
+    service = make(root);
+  try {
+    const a = access(),
+      project = await service.run(a, () =>
+        service.create("Brief", a.entitlement),
+      ),
+      pid = project.id;
+    const plan = {
+      ...DEFAULT_REQUIREMENTS,
+      outline: [{ id: "chapter-a", title: "Response", requirementIds: ["r1"] }],
+      approved: true,
+      requirementsRevision: 3,
+      template: null,
+    };
+    await call(service, ["projects", pid, "documents", "bid_plan"], "PUT", {
+      markdown:
+        "# Bid writing plan\n\n```json\n" + JSON.stringify(plan) + "\n```\n",
+      revision: 0,
+    });
+    const saved = await (
+      await call(service, ["projects", pid, "compilation-brief"], "PUT", {
+        value: {
+          ...DEFAULT_REQUIREMENTS,
+          pages: 160,
+          brief: "Focus on delivery",
+        },
+        revision: 1,
+      })
+    ).json();
+    assert.equal(saved.revision, 2);
+    const next = service.documents.get(pid, "bidproposal", "bid_plan")!;
+    const value = JSON.parse(
+      next.markdown.slice("# Bid writing plan\n\n```json\n".length, -5),
+    );
+    assert.equal(value.pages, 160);
+    assert.equal(value.brief, "Focus on delivery");
+    assert.equal(value.approved, false);
+    assert.deepEqual(value.outline, plan.outline);
+    await assert.rejects(
+      call(service, ["projects", pid, "compilation-brief"], "PUT", {
+        value: DEFAULT_REQUIREMENTS,
+        revision: 1,
+      }),
+      /Requirements changed/,
+    );
+    await assert.rejects(
+      call(service, ["projects", pid, "compilation-brief"], "PUT", {
+        value: { ...DEFAULT_REQUIREMENTS, pages: 0 },
+        revision: 2,
+      }),
+      /Invalid compilation/,
+    );
+    assert.equal(
+      service.documents.get(pid, "bidproposal", "bid_plan")?.revision,
+      2,
+    );
+    await assert.rejects(
+      call(
+        service,
+        ["projects", pid, "compilation-brief"],
+        "GET",
+        undefined,
+        access({ ...principal, workspaceId: "other" }),
+      ),
+      /unavailable/,
+    );
+  } finally {
+    service.close();
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("reserved compilation IDs recover a container interrupted before its contract was written", async () => {
+  const root = mkdtempSync(join(tmpdir(), "bid-version-partial-"));
+  let service = make(root);
+  try {
+    const a = access(),
+      project = await service.run(a, () =>
+        service.create("Partial initialization", a.entitlement),
+      );
+    service.runtime.createProject = async () => {
+      const id = service.compilations.group(project.id)!.items[1]!.id;
+      const store = await service.storage.createProjectStore(id);
+      await store.putMeta({ ...project, id });
+      throw Error("Interrupted before contract");
+    };
+    await assert.rejects(
+      call(service, ["projects", project.id, "compilations"], "POST", {
+        label: "V02",
+        requestId: "55555555-5555-4555-8555-555555555555",
+        revision: 0,
+        requirements: DEFAULT_REQUIREMENTS,
+      }),
+      /before contract/,
+    );
+    const child = service.compilations.group(project.id)!.items[1]!.id;
+    service.close();
+    service = make(root);
+    const recovered = await (
+      await call(service, ["projects", project.id, "compilations"])
+    ).json();
+    assert.equal(recovered.items[1].state, "ready");
+    const view = await service.checkProject(child);
+    assert.equal(view.meta.id, child);
+    assert.equal(view.contract.product.id, "bidproposal");
+    assert.ok((await service.runtime.listAuditEvents(child)).length);
+    assert.equal((await service.runtime.listProjects()).length, 2);
+  } finally {
+    service.close();
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("interrupted compilation initialization recovers pinned library versions without copying tasks or approvals", async () => {
+  const root = mkdtempSync(join(tmpdir(), "bid-version-recovery-"));
+  let service = make(root);
+  try {
+    const a = access(),
+      project = await service.run(a, () =>
+        service.create("Pinned sources", a.entitlement),
+      ),
+      pid = project.id;
+    const item = await (
+      await call(service, ["library"], "POST", {
+        name: "source.md",
+        category: "qualification",
+        base64: Buffer.from("Immutable evidence").toString("base64"),
+      })
+    ).json();
+    for (
+      let i = 0;
+      i < 100 &&
+      service.library.get(service.scope(), item.id)?.versions[0]?.reading
+        ?.state !== "completed";
+      i++
+    )
+      await new Promise((done) => setTimeout(done, 10));
+    await call(service, ["projects", pid, "library-selection"], "POST", {
+      id: item.id,
+      version: 1,
+      revision: 0,
+    });
+    const oldPin = service.library.pin;
+    service.library.pin = async () => {
+      throw Error("Synthetic interrupted initialization");
+    };
+    const input = {
+      requestId: "44444444-4444-4444-8444-444444444444",
+      label: "Alternative",
+      revision: 0,
+      reuseLibrary: true,
+      requirements: DEFAULT_REQUIREMENTS,
+    };
+    await assert.rejects(
+      call(service, ["projects", pid, "compilations"], "POST", input),
+      /interrupted/,
+    );
+    service.library.pin = oldPin;
+    const pending = await (
+      await call(service, ["projects", pid, "compilations"])
+    ).json();
+    const child = pending.items[1].id;
+    await assert.rejects(
+      call(service, ["projects", child, "documents", "bid_plan"]),
+      /pending/,
+    );
+    service.close();
+    service = make(root);
+    const reopened = await (
+      await call(service, ["projects", pid, "compilations"])
+    ).json();
+    assert.equal(reopened.items[1].state, "ready");
+    const pinned = service.library.selections(child, "bidproposal");
+    assert.equal(pinned.items[0].version, 1);
+    assert.equal(pinned.items[0].hash, item.versions[0].hash);
+    assert.equal(
+      await service.storageBytes(),
+      Buffer.byteLength("Immutable evidence"),
+    );
+    assert.deepEqual(await service.runtime.listTaskInstances(child), []);
+    assert.deepEqual(service.jobs.list(child, "bidproposal"), []);
+    assert.deepEqual(service.renders.list(child, "bidproposal"), []);
+    const retried = await (
+      await call(service, ["projects", pid, "compilations"], "POST", input)
+    ).json();
+    assert.equal(retried.selectedId, child);
+    assert.equal(retried.items.length, 2);
+  } finally {
+    service.close();
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
 // --- Identity and encryption boundaries ----------------------------------
 test("workspace namespace and encryption keys include organization and container scope", () => {
   assert.notEqual(
@@ -207,12 +564,27 @@ test("project documents preserve original revisions, opaque identity and durable
     assert.ok(
       view.tasks.some((task: { id: string }) => task.id === "plan_outline"),
     );
-    const emptyCatalog=await (await call(service,["host","projects"])).json();
-    assert.equal(emptyCatalog.items[0].record,undefined);
-    const recordedAt="2026-11-25T02:10:00.000Z";
-    await call(service,["projects",project.id,"documents","bid_workflow"],"PUT",{
-      revision:0,markdown:'# Bid workflow\n\n'+JSON.stringify({analysis:{startedAt:recordedAt,completedAt:"2026-11-25T02:18:00.000Z"}}),
-    });
+    const emptyCatalog = await (
+      await call(service, ["host", "projects"])
+    ).json();
+    assert.equal(emptyCatalog.items[0].record, undefined);
+    const recordedAt = "2026-11-25T02:10:00.000Z";
+    await call(
+      service,
+      ["projects", project.id, "documents", "bid_workflow"],
+      "PUT",
+      {
+        revision: 0,
+        markdown:
+          "# Bid workflow\n\n" +
+          JSON.stringify({
+            analysis: {
+              startedAt: recordedAt,
+              completedAt: "2026-11-25T02:18:00.000Z",
+            },
+          }),
+      },
+    );
     service.close();
     service = make(root);
     const document = await (
@@ -220,9 +592,21 @@ test("project documents preserve original revisions, opaque identity and durable
     ).json();
     assert.equal(document.markdown, "Original chapter");
     assert.equal(document.revision, 1);
-    const reopenedCatalog=await (await call(service,["host","projects"])).json();
-    assert.deepEqual(reopenedCatalog.items[0].record,{stage:"\u62db\u6807\u89e3\u8bfb",stageIndex:0,completed:1,completedStages:[0],recordedAt:"2026-11-25T02:18:00.000Z",complete:false});
-    assert.equal(JSON.stringify(reopenedCatalog).includes(principal.sessionId),false);
+    const reopenedCatalog = await (
+      await call(service, ["host", "projects"])
+    ).json();
+    assert.deepEqual(reopenedCatalog.items[0].record, {
+      stage: "\u62db\u6807\u89e3\u8bfb",
+      stageIndex: 0,
+      completed: 1,
+      completedStages: [0],
+      recordedAt: "2026-11-25T02:18:00.000Z",
+      complete: false,
+    });
+    assert.equal(
+      JSON.stringify(reopenedCatalog).includes(principal.sessionId),
+      false,
+    );
     const foreign = make(root, { ...principal, orgId: "org-b" });
     try {
       await assert.rejects(

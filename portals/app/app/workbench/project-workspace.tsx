@@ -8,6 +8,10 @@ import {
   Tabs,
   TabsList,
   TabsTrigger,
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
 } from "@vxture/design-system";
 import {
   Api,
@@ -29,6 +33,10 @@ export function ProjectWorkspace({
   upload,
   assistantOpen,
   onReview,
+  requirementsView,
+  versionLabel,
+  archived,
+  onProjectChanged,
 }: {
   api: Api;
   id: string;
@@ -42,11 +50,17 @@ export function ProjectWorkspace({
   upload: (file: File) => Promise<void>;
   assistantOpen: boolean;
   onReview: () => void;
+  requirementsView?: ReactNode;
+  versionLabel?: string;
+  archived?: boolean;
+  onProjectChanged?: () => Promise<void>;
 }) {
   const [contextOpen, setContextOpen] = useState(true),
     [rightTab, setRightTab] = useState("tasks"),
     [atBottom, setAtBottom] = useState(true),
     [scrollable, setScrollable] = useState(false);
+  const [operationBusy, setOperationBusy] = useState(false),
+    [operationError, setOperationError] = useState("");
   const content = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const show = (event: Event) => {
@@ -119,21 +133,70 @@ export function ProjectWorkspace({
           </Button>
           <Icon name="chevron-right" size="xs" />
           <strong>{name}</strong>
+          {versionLabel && (
+            <span className="jadera-context-version">{versionLabel}</span>
+          )}
           <div>
-            <Button
-              variant="ghost"
-              onClick={() => onNavigate("#ws/" + id + "/audit")}
-            >
-              {"\u64cd\u4f5c\u8bb0\u5f55"}
-            </Button>
-            <Button
-              variant="ghost"
-              onClick={() => onNavigate("#ws/" + id + "/overview")}
-            >
-              {"\u7f16\u5236\u8981\u6c42"}
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" disabled={operationBusy}>
+                  {"\u9879\u76ee\u64cd\u4f5c"}
+                  <Icon name="chevron-down" size="xs" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                  onSelect={() => onNavigate("#ws/" + id + "/overview")}
+                >
+                  {"\u7f16\u5236\u8981\u6c42"}
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onSelect={() => onNavigate("#ws/" + id + "/audit")}
+                >
+                  {"\u64cd\u4f5c\u8bb0\u5f55"}
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <a
+                    href={"/api/workbench/host/projects/" + id + "/export"}
+                    download
+                  >
+                    {"\u4e0b\u8f7d\u672c\u7248\u9879\u76ee\u8bb0\u5f55"}
+                  </a>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  disabled={operationBusy}
+                  onSelect={() => {
+                    setOperationBusy(true);
+                    setOperationError("");
+                    void (
+                      archived ? api.restoreProject(id) : api.archiveProject(id)
+                    )
+                      .then(async () => {
+                        await onProjectChanged?.();
+                      })
+                      .catch((error) =>
+                        setOperationError(
+                          error instanceof Error
+                            ? error.message
+                            : "\u9879\u76ee\u64cd\u4f5c\u672a\u5b8c\u6210",
+                        ),
+                      )
+                      .finally(() => setOperationBusy(false));
+                  }}
+                >
+                  {archived
+                    ? "\u6062\u590d\u9879\u76ee"
+                    : "\u5f52\u6863\u6574\u4efd\u6807\u4e66"}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
+        {operationError && (
+          <p role="alert" className="jadera-project-operation-error">
+            {operationError}
+          </p>
+        )}
         <div ref={content} className="jadera-business-scroll">
           <div
             hidden={tab !== "product"}
@@ -141,9 +204,16 @@ export function ProjectWorkspace({
           >
             {iframe}
           </div>
-          {tab !== "product" && (
-            <ProjectPanel api={api} id={id} tab={tab} exportView={exportView} />
-          )}
+          {tab === "overview" && requirementsView
+            ? requirementsView
+            : tab !== "product" && (
+                <ProjectPanel
+                  api={api}
+                  id={id}
+                  tab={tab}
+                  exportView={exportView}
+                />
+              )}
         </div>
         <div className="jadera-content-scroll-cue">
           {scrollable && !atBottom ? (

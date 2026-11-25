@@ -169,6 +169,168 @@
   height: 100%;
   min-height: 0;
 }
+.jadera-workflow-navigation.with-versions
+  [data-slot="shell-sidebar-nav"]
+  > div:nth-child(2)
+  > nav
+  > div
+  > button {
+  display: none;
+}
+.jadera-version-trigger {
+  width: 100%;
+  height: var(--shell-sidebar-menu-height);
+  padding: 0;
+  gap: var(--shell-sidebar-inset);
+  justify-content: flex-start;
+  text-align: left;
+}
+.jadera-version-trigger > span:nth-child(2) {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--label-md-font-size);
+}
+.jadera-version-trigger > svg {
+  margin-right: var(--space-xs);
+}
+.jadera-version-anchor {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: calc(
+    var(--shell-sidebar-anchor-width) - 2 *
+      (var(--shell-sidebar-inset) + var(--shell-sidebar-inner-inset))
+  );
+}
+.jadera-version-popover {
+  width: var(--spacing-sidebar-expanded);
+  padding: var(--space-xs);
+}
+.jadera-version-create {
+  width: 100%;
+  justify-content: flex-start;
+  gap: var(--space-xs);
+}
+.jadera-version-list {
+  max-height: 50dvh;
+  overflow: auto;
+}
+.jadera-version-option {
+  width: 100%;
+  height: auto;
+  padding-block: var(--space-sm);
+  gap: var(--space-xs);
+  text-align: left;
+}
+.jadera-version-option > span {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2xs);
+  overflow: hidden;
+}
+.jadera-version-option strong {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.jadera-version-option small {
+  font-size: var(--label-sm-font-size);
+  color: var(--muted-foreground);
+}
+.jadera-version-option[aria-current="true"] {
+  background: var(--primary-muted);
+  color: var(--primary-text);
+}
+.jadera-settings-complete {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2xs);
+  margin-left: auto;
+  margin-right: var(--space-xs);
+  color: var(--muted-foreground);
+  font-size: var(--label-sm-font-size);
+}
+.jadera-settings-complete > span {
+  position: relative;
+  width: var(--spacing-icon-sm);
+  height: var(--spacing-icon-sm);
+  border-radius: 50%;
+}
+.jadera-settings-complete > span:after {
+  content: "";
+  position: absolute;
+  inset: var(--border-width-medium);
+  background: var(--background);
+  border-radius: inherit;
+}
+.jadera-compilation-dialog {
+  max-width: var(--container-panel-lg);
+  max-height: 85dvh;
+  overflow: auto;
+}
+.jadera-requirements-fields {
+  border: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-md);
+  padding: 0;
+  margin-block: var(--space-lg);
+  min-width: 0;
+}
+.jadera-requirements-fields label {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--space-xs);
+  min-width: 0;
+}
+.jadera-requirements-wide {
+  grid-column: 1 / -1;
+}
+.jadera-requirements-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding-block: var(--space-md);
+}
+.jadera-version-reuse {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  line-height: 1.7;
+}
+.jadera-compilation-requirements {
+  max-width: var(--container-panel-lg);
+  margin-inline: auto;
+  padding: var(--space-xl);
+}
+.jadera-requirements-heading {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  margin-bottom: var(--space-lg);
+}
+.jadera-requirements-heading > svg {
+  color: var(--primary-text);
+}
+.jadera-requirements-heading h1 {
+  font-size: var(--title-lg-font-size);
+  font-weight: 500;
+}
+.jadera-requirements-heading p,
+.jadera-requirements-note {
+  font-size: var(--body-sm-font-size);
+  color: var(--muted-foreground);
+  line-height: 1.8;
+}
+.jadera-context-version {
+  font-size: var(--label-sm-font-size);
+  color: var(--muted-foreground);
+}
 .jadera-flow-item {
   position: relative;
 }
@@ -283,7 +445,7 @@
   color: var(--muted-foreground);
 }
 .jadera-flow-footer [role="progressbar"] {
-  height: var(--border-width-thick);
+  height: var(--border-width-medium);
 }
 .jadera-flow-footer > div:first-child {
   display: flex;

@@ -238,12 +238,23 @@ export async function dispatch(
   if (segments[0] === "projects" && segments.length === 1) {
     if (method === "GET")
       return json({
-        items: (await service.runtime.listProjects()).map((project) => ({
+        items: (await service.listProjects()).map((project) => ({
           ...project,
           record: projectRecord(
             service.documents.get(project.id, "bidproposal", "bid_workflow")
               ?.markdown,
           ),
+          compilationRecords: service.compilations
+            .group(project.id)
+            ?.items.filter((item) => item.state === "ready")
+            .map((item) => ({
+              id: item.id,
+              label: item.label,
+              record: projectRecord(
+                service.documents.get(item.id, "bidproposal", "bid_workflow")
+                  ?.markdown,
+              ),
+            })),
         })),
         elsewhere: 0,
       });
@@ -300,7 +311,7 @@ export async function dispatch(
 
   const projectPath = rest.join("/");
   const allowed = [
-    /^(?:project|grants|bindings|tool-policy|context|audit|archive|restore|export|state-request|state|files|library|library-selection|readings|jobs|tasks|renders)$/,
+    /^(?:project|grants|bindings|tool-policy|context|audit|archive|restore|export|state-request|state|files|library|library-selection|readings|jobs|tasks|renders|compilations|compilation-brief)$/,
     /^documents\/[A-Za-z0-9_-]{1,80}$/,
     /^files\/[A-Za-z0-9_-]{1,100}$/,
     /^project\/transition$/,
@@ -312,6 +323,22 @@ export async function dispatch(
   ].some((pattern) => pattern.test(projectPath));
   if (!allowed) return missing();
   const handler = projectHandlers[rest[0] ?? ""];
+  if (handler && !["GET", "HEAD"].includes(method))
+    return service.projectMutation(pid, async () => {
+      const latest = await service.checkProject(pid, rest[0] !== "restore");
+      return handler({
+        service,
+        access,
+        pid,
+        rest,
+        request,
+        method,
+        view: latest,
+        store,
+        scope,
+        host,
+      });
+    });
   return handler
     ? handler({
         service,
@@ -346,6 +373,8 @@ const projectHandlers: Record<
   (context: ProjectRequest) => Promise<Response>
 > = {
   project: projectRequest,
+  compilations: compilationsRequest,
+  "compilation-brief": compilationBriefRequest,
   grants: grantsRequest,
   bindings: bindingsRequest,
   "tool-policy": tool_policyRequest,
@@ -365,6 +394,42 @@ const projectHandlers: Record<
   tasks: tasksRequest,
   renders: rendersRequest,
 };
+async function compilationsRequest({
+  service,
+  pid,
+  request,
+  method,
+}: ProjectRequest) {
+  if (method === "GET") return json(await service.compilations.list(pid));
+  if (method === "POST") {
+    const body = await jsonBody(request);
+    return json(
+      typeof body.retryId === "string"
+        ? await service.retryCompilation(pid, body.retryId)
+        : await service.createCompilation(pid, body),
+      201,
+    );
+  }
+  return missing();
+}
+async function compilationBriefRequest({
+  service,
+  pid,
+  request,
+  method,
+}: ProjectRequest) {
+  if (method === "GET") return json(await service.compilationBrief(pid));
+  if (method === "PUT") {
+    const body = await jsonBody(request);
+    return json(
+      await service.compilationBrief(pid, {
+        revision: int(body, "revision"),
+        value: body.value,
+      }),
+    );
+  }
+  return missing();
+}
 async function projectRequest(context: ProjectRequest): Promise<Response> {
   const { service, access, pid, rest, request, method, view } = context;
   if (rest.length === 1 && method === "GET")
@@ -451,13 +516,15 @@ async function auditRequest(context: ProjectRequest): Promise<Response> {
 
 async function archiveRequest(context: ProjectRequest): Promise<Response> {
   const { service, pid, rest, method } = context;
-  if (method === "POST") return json(await service.runtime.archiveProject(pid));
+  if (method === "POST")
+    return json(await service.archiveCompilationProject(pid));
   return missing();
 }
 
 async function restoreRequest(context: ProjectRequest): Promise<Response> {
   const { service, pid, rest, method } = context;
-  if (method === "POST") return json(await service.runtime.restoreProject(pid));
+  if (method === "POST")
+    return json(await service.archiveCompilationProject(pid, true));
   return missing();
 }
 
@@ -467,13 +534,21 @@ async function exportRequest(context: ProjectRequest): Promise<Response> {
     const exported = await service.runtime.exportProject(pid, {
       runtimeVersion: "0.2.2",
     });
-    return new Response(JSON.stringify(exported, null, 2), {
-      headers: {
-        "content-type": "application/json",
-        "content-disposition": attachmentDisposition("project-record.json"),
-        "cache-control": "private, no-store",
+    const compilations = await service.compilations.list(pid);
+    return new Response(
+      JSON.stringify(
+        { ...exported, compilations: { ...compilations, selectedId: pid } },
+        null,
+        2,
+      ),
+      {
+        headers: {
+          "content-type": "application/json",
+          "content-disposition": attachmentDisposition("project-record.json"),
+          "cache-control": "private, no-store",
+        },
       },
-    });
+    );
   }
   return missing();
 }

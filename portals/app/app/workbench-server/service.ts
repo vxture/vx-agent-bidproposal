@@ -44,6 +44,12 @@ import type { Entitlement } from "../entitlement/types";
 import { runtimeFailure } from "./runtime-errors";
 import { StorageAccounting } from "./storage-accounting";
 import { AssistantSessions } from "./assistant";
+import {
+  CompilationVersions,
+  encodePlan,
+  readPlan,
+  writingRequirements,
+} from "./compilations";
 import { admitStorage, storageBudget } from "./storage-policy";
 import type { GaugeReporter } from "../usage/lib/gauge";
 
@@ -76,16 +82,19 @@ export class BidRuntime {
   readonly renders: DocumentRenders;
   readonly library: ProductLibrary;
   readonly assistant: AssistantSessions;
+  readonly compilations: CompilationVersions;
   readonly documents: JobDocuments;
   private readonly accounting: StorageAccounting;
   private readonly storageAccess: Options["storageAccess"];
   private closed = false;
   private readonly principal = new AsyncLocalStorage<Principal>();
+  private readonly compilationId = new AsyncLocalStorage<string>();
   private readonly cancelled = new Set<string>();
   private readonly namespace: string;
   private readonly workspaceId: string;
   private readonly contract: RuyinContract;
   private mutation: Promise<unknown> = Promise.resolve();
+  private readonly projectMutations = new Map<string, Promise<void>>();
   private readonly renderReservations = new Map<
     string,
     { pid: string; hashes: Map<string, number> }
@@ -151,8 +160,16 @@ export class BidRuntime {
         },
       });
     const storage: StoragePort = {
-      createProjectStore: async (pid) =>
-        wrap(pid, await this.storage.createProjectStore(pid)),
+      createProjectStore: async (pid) => {
+        const pending =
+          this.compilationId.getStore() === pid
+            ? await this.storage.openProjectStore(pid)
+            : undefined;
+        return wrap(
+          pid,
+          pending ?? (await this.storage.createProjectStore(pid)),
+        );
+      },
       openProjectStore: async (pid) => {
         const store = await this.storage.openProjectStore(pid);
         return store && wrap(pid, store);
@@ -214,7 +231,9 @@ export class BidRuntime {
         sleep: (ms) => new Promise((done) => setTimeout(done, ms)),
       },
       id: {
-        newId: (prefix) => prefix + "_" + randomUUID().replaceAll("-", ""),
+        newId: (prefix) =>
+          (prefix === "prj" && this.compilationId.getStore()) ||
+          prefix + "_" + randomUUID().replaceAll("-", ""),
       },
       crypto: {
         sha256: (value) => createHash("sha256").update(value).digest("hex"),
@@ -299,6 +318,40 @@ export class BidRuntime {
       },
     );
     this.library = new ProductLibrary(this.storage, options.reader);
+    this.compilations = new CompilationVersions(
+      this.storage.openLibraryStore(this.workspaceId, "bidproposal").store,
+      this.runtime,
+      this.documents,
+      async (id, name) => {
+        const store = await this.storage.openProjectStore(id),
+          meta = await store?.getMeta();
+        if (meta) {
+          if (
+            meta.workspaceId !== this.workspaceId ||
+            meta.productId !== "bidproposal"
+          )
+            throw new WorkbenchError(
+              404,
+              "NOT_FOUND",
+              "Compilation unavailable",
+            );
+          if (
+            (await store!.getContract()) &&
+            (await store!.getBusinessState()) &&
+            (await store!.listAuditEvents()).length
+          )
+            return meta;
+        }
+        return this.compilationId.run(id, () =>
+          this.runtime.createProject(this.contract, name, this.workspaceId),
+        );
+      },
+      async (id, resource) =>
+        this.library.pin(this.runtime, this.scope(), id, {
+          ...resource,
+          revision: this.library.selections(id, "bidproposal").revision,
+        }),
+    );
     this.assistant = new AssistantSessions(
       this.storage.openLibraryStore(this.workspaceId, "bidproposal").store,
       async (messages, principal, projectId) => {
@@ -430,6 +483,7 @@ export class BidRuntime {
     }
   }
   private async recover(): Promise<void> {
+    await this.compilations.recover();
     await this.readings.recoverAll();
     await this.renders.recoverAll();
     await this.library.readings.recoverAll();
@@ -451,22 +505,166 @@ export class BidRuntime {
     this.mutation = next.catch(() => undefined);
     return next;
   }
+  async projectMutation<T>(
+    id: string,
+    operation: () => Promise<T>,
+  ): Promise<T> {
+    const root = this.compilations.rootId(id);
+    const next = (this.projectMutations.get(root) ?? Promise.resolve()).then(
+      operation,
+    );
+    const tail = next.then(
+      () => undefined,
+      () => undefined,
+    );
+    this.projectMutations.set(root, tail);
+    try {
+      return await next;
+    } finally {
+      if (this.projectMutations.get(root) === tail)
+        this.projectMutations.delete(root);
+    }
+  }
   async checkProject(id: string, write = false) {
     if (!validId(id))
       throw new WorkbenchError(404, "NOT_FOUND", "Project unavailable");
+    if (this.compilations.isCreating(id))
+      throw new WorkbenchError(
+        409,
+        "COMPILATION_PENDING",
+        "Compilation initialization is pending; retry creation",
+      );
     const view = await this.runtime.openProject(id);
     if (
       view.meta.workspaceId !== this.workspaceId ||
       view.meta.productId !== "bidproposal"
     )
       throw new WorkbenchError(404, "NOT_FOUND", "Project unavailable");
-    if (write && view.meta.archivedAt)
+    const rootId = this.compilations.rootId(id);
+    const archived =
+      view.meta.archivedAt ||
+      (rootId !== id &&
+        (await this.runtime.openProject(rootId)).meta.archivedAt);
+    if (write && archived)
       throw new WorkbenchError(
         409,
         "PROJECT_ARCHIVED",
         "Restore the archived project before editing",
       );
-    return view;
+    return {
+      ...view,
+      meta: archived ? { ...view.meta, archivedAt: archived } : view.meta,
+    };
+  }
+  async listProjects() {
+    const hidden = this.compilations.hiddenIds();
+    return (await this.runtime.listProjects()).filter(
+      (project) => !hidden.has(project.id),
+    );
+  }
+  async createCompilation(id: string, body: Record<string, unknown>) {
+    return this.serial(async () => {
+      await this.checkProject(id, true);
+      const selected =
+        body.reuseLibrary === true
+          ? this.library.selections(id, "bidproposal").items
+          : [];
+      const result = await this.compilations.create(id, {
+        label: body.label as string,
+        requestId: body.requestId as string,
+        revision: body.revision as number,
+        requirements: body.requirements,
+        selections: selected.map((item) => ({
+          id: item.id,
+          version: item.version,
+        })),
+      });
+      await this.observeStorage();
+      return result;
+    });
+  }
+  async retryCompilation(id: string, versionId: string) {
+    return this.serial(async () => {
+      await this.checkProject(id, true);
+      const result = await this.compilations.retry(id, versionId);
+      await this.observeStorage();
+      return result;
+    });
+  }
+  async compilationBrief(
+    id: string,
+    input?: { revision: number; value: unknown },
+  ) {
+    await this.checkProject(id, !!input);
+    const saved = this.documents.get(id, "bidproposal", "bid_plan");
+    const plan = readPlan(saved?.markdown);
+    if (!input)
+      return {
+        revision: saved?.revision ?? 0,
+        value: writingRequirements({ ...plan, brief: plan.brief ?? "" }),
+      };
+    const value = writingRequirements(input.value);
+    if (input.revision !== (saved?.revision ?? 0))
+      throw new WorkbenchError(
+        409,
+        "DOCUMENT_CONFLICT",
+        "Requirements changed; reload and merge",
+      );
+    const same =
+      JSON.stringify(value) ===
+      JSON.stringify(writingRequirements({ ...plan, brief: plan.brief ?? "" }));
+    if (same) return { revision: saved?.revision ?? 0, value };
+    if (await this.compilationBusy(id))
+      throw new WorkbenchError(
+        409,
+        "COMPILATION_BUSY",
+        "Wait for or cancel this version's active tasks before editing requirements",
+      );
+    const next = await this.document(id, "bid_plan", {
+      markdown: encodePlan({ ...plan, ...value, approved: false }),
+      revision: input.revision,
+    });
+    return { revision: next.revision, value };
+  }
+  private async compilationBusy(id: string) {
+    return (
+      (await this.runtime.listTaskInstances(id)).some(
+        (task) => !["completed", "failed", "cancelled"].includes(task.state),
+      ) ||
+      this.jobs
+        .list(id, "bidproposal")
+        .some(
+          (job) => !["completed", "error", "cancelled"].includes(job.state),
+        ) ||
+      this.renders
+        .list(id, "bidproposal")
+        .some((job) => ["queued", "running"].includes(job.state)) ||
+      this.readings
+        .list(id, "bidproposal")
+        .some((job) => ["queued", "running"].includes(job.state))
+    );
+  }
+  async archiveCompilationProject(id: string, restore = false) {
+    return this.serial(async () => {
+      const rootId = this.compilations.rootId(id),
+        group = await this.compilations.list(rootId);
+      if (!restore)
+        for (const entry of group.items) {
+          if (
+            entry.state === "creating" ||
+            (await this.compilationBusy(entry.id))
+          )
+            throw new WorkbenchError(
+              409,
+              "COMPILATION_BUSY",
+              "Finish or cancel all compilation tasks before archiving this project",
+            );
+        }
+      // The root is the logical lifecycle gate for every child container.
+      return restore
+        ? this.runtime.restoreProject(rootId)
+        : this.runtime.archiveProject(rootId);
+    });
   }
   async create(name: string, entitlement: Entitlement) {
     return this.serial(async () => {
@@ -477,7 +675,7 @@ export class BidRuntime {
           "Enter a project name (1-120 characters)",
         );
       const policy = getBidPlanPolicy(entitlement),
-        count = (await this.runtime.listProjects()).length;
+        count = (await this.listProjects()).length;
       if (
         !policy ||
         (policy.proposalLimit !== -1 && count >= policy.proposalLimit)

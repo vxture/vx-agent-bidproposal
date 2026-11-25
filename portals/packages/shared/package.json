@@ -6,6 +6,7 @@
   "exports": {
     "./brand": "./src/brand.ts",
     "./assistant": "./src/assistant.ts",
+    "./compilations": "./src/compilations.ts",
     "./presentation": "./src/presentation/index.ts",
     "./presentation.css": "./src/presentation/presentation.css",
     "./project-records": "./src/project-records.ts",
