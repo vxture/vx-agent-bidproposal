@@ -58,7 +58,7 @@ function make(
   ports: Partial<
     Pick<
       ConstructorParameters<typeof BidRuntime>[0],
-      "storageAccess" | "reportStorage"
+      "storageAccess" | "reportStorage" | "layoutCacheVersion"
     >
   > = {},
 ) {
@@ -66,6 +66,7 @@ function make(
     root,
     masterHex,
     principal: p,
+    layoutCacheVersion: ports.layoutCacheVersion ?? "cd".repeat(32),
     storageAccess: ports.storageAccess ?? (async () => access(p).entitlement),
     reportStorage:
       ports.reportStorage ??
@@ -710,6 +711,215 @@ test("export finalization rechecks the pinned session and refuses a plan revoked
     assert.equal(await service.storageBytes(), 0);
   } finally {
     release();
+    service.close();
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("identical completed exports reuse verified bytes across new source IDs and reopen without growing storage", async () => {
+  const root = mkdtempSync(join(tmpdir(), "bid-runtime-export-dedup-"));
+  let layouts = 0,
+    limit = -1,
+    paidPlan = true;
+  const engine = async () => {
+    layouts++;
+    return {
+      docx: Buffer.from("docx-version-" + layouts),
+      pdf: Buffer.from("pdf-version-" + layouts),
+      pages: 1,
+      engine: "synthetic engine",
+    };
+  };
+  const ports = {
+    storageAccess: async () => ({
+      ...access().entitlement,
+      tier: paidPlan ? ("starter" as const) : ("free" as const),
+      limits: { "storage.bytes.max": limit },
+    }),
+  };
+  let service = make(root, principal, "ab".repeat(32), engine, ports);
+  const completed = async (
+    pid: string,
+    id: string,
+    source: string,
+    fields = {
+      projectName: "Project",
+      documentName: "Bid",
+      documentNumber: "001",
+    },
+    template?: { fileId: string; hash: string },
+  ) => {
+    await service.createRender(
+      pid,
+      {
+        id,
+        title: "Same export",
+        source: { id: source, revision: 1 },
+        fields,
+        ...(template ? { template } : {}),
+      } as { id: string },
+      principal,
+    );
+    for (
+      let n = 0;
+      n < 100 &&
+      service.renders.get(pid, "bidproposal", id)?.state !== "completed";
+      n++
+    )
+      await new Promise((done) => setTimeout(done, 10));
+    assert.equal(
+      service.renders.get(pid, "bidproposal", id)!.state,
+      "completed",
+    );
+    await service.flushStorage();
+    return service.renders.file(pid, "bidproposal", id, "pdf").sha256;
+  };
+  try {
+    const project = await call(service, ["host", "projects"], "POST", {
+      name: "Repeated export",
+    });
+    const pid = (await project.json()).id;
+    await service.document(pid, "original", {
+      markdown: "# Same manuscript",
+      revision: 0,
+    });
+    const first = await completed(
+      pid,
+      "44444444-4444-4444-8444-444444444444",
+      "original",
+    );
+    const bytes = await service.storageBytes();
+    limit = bytes;
+    await service.document(pid, "same_content_new_source", {
+      markdown: "# Same manuscript",
+      revision: 0,
+    });
+    const second = await completed(
+      pid,
+      "55555555-5555-4555-8555-555555555555",
+      "same_content_new_source",
+    );
+    assert.equal(second, first);
+    assert.equal(layouts, 1);
+    assert.equal(await service.storageBytes(), bytes);
+    paidPlan = false;
+    const refusedId = "99999999-9999-4999-8999-999999999999";
+    await service.createRender(
+      pid,
+      {
+        id: refusedId,
+        title: "Same export",
+        source: { id: "original", revision: 1 },
+        fields: {
+          projectName: "Project",
+          documentName: "Bid",
+          documentNumber: "001",
+        },
+      } as { id: string },
+      principal,
+    );
+    for (
+      let n = 0;
+      n < 100 &&
+      service.renders.get(pid, "bidproposal", refusedId)?.state !== "failed";
+      n++
+    )
+      await new Promise((done) => setTimeout(done, 10));
+    assert.equal(
+      service.renders.get(pid, "bidproposal", refusedId)!.state,
+      "failed",
+    );
+    assert.equal(
+      service.documents.get(pid, "bidproposal", "runtime_output_" + refusedId),
+      undefined,
+    );
+    assert.equal(layouts, 1);
+    assert.equal(await service.storageBytes(), bytes);
+    paidPlan = true;
+    service.close();
+    service = make(root, principal, "ab".repeat(32), engine, ports);
+    await call(service, ["host", "projects", pid]);
+    const third = await completed(
+      pid,
+      "66666666-6666-4666-8666-666666666666",
+      "original",
+    );
+    assert.equal(third, first);
+    assert.equal(layouts, 1);
+    assert.equal(await service.storageBytes(), bytes);
+    limit = -1;
+    await completed(pid, "77777777-7777-4777-8777-777777777777", "original", {
+      projectName: "Changed project",
+      documentName: "Bid",
+      documentNumber: "001",
+    });
+    assert.equal(layouts, 2);
+    assert.ok((await service.storageBytes()) > bytes);
+    service.close();
+    service = make(root, principal, "ab".repeat(32), engine, {
+      ...ports,
+      layoutCacheVersion: "ef".repeat(32),
+    });
+    await call(service, ["host", "projects", pid]);
+    await completed(pid, "88888888-8888-4888-8888-888888888888", "original");
+    assert.equal(layouts, 3);
+    const templateA = await service.upload(
+      pid,
+      "template.docx",
+      Buffer.from("synthetic template A"),
+      principal,
+    );
+    const templateB = await service.upload(
+      pid,
+      "template.docx",
+      Buffer.from("synthetic template B"),
+      principal,
+    );
+    await completed(
+      pid,
+      "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      "original",
+      undefined,
+      { fileId: templateA.id, hash: templateA.hash },
+    );
+    const templateResult = await completed(
+      pid,
+      "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+      "original",
+      undefined,
+      { fileId: templateB.id, hash: templateB.hash },
+    );
+    assert.equal(layouts, 5);
+    const repeatedTemplate = await completed(
+      pid,
+      "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+      "original",
+      undefined,
+      { fileId: templateB.id, hash: templateB.hash },
+    );
+    assert.equal(repeatedTemplate, templateResult);
+    assert.equal(layouts, 5);
+    await service.document(pid, "changed_content", {
+      markdown: "# Changed manuscript",
+      revision: 0,
+    });
+    await completed(
+      pid,
+      "dddddddd-dddd-4ddd-8ddd-dddddddddddd",
+      "changed_content",
+    );
+    assert.equal(layouts, 6);
+    assert.equal(
+      service.renders.file(
+        pid,
+        "bidproposal",
+        "44444444-4444-4444-8444-444444444444",
+        "pdf",
+      ).sha256,
+      first,
+    );
+    assert.equal(service.renders.list(pid, "bidproposal").length, 10);
+  } finally {
     service.close();
     rmSync(root, { recursive: true, force: true });
   }

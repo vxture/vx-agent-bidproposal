@@ -20,8 +20,14 @@ cross-product storage reservation. Live gauge acceptance passed: original
 536,883 bytes matched the acknowledgment and shared remaining changed by exactly
 that amount; V4 added 186,286 bytes to 723,169, again matching both sides. Actual
 V4 three-format downloads and all six pages passed. A fast repeated-export UI
-timing race was found afterward; the current candidate fixes shared workflow
-projection using the actual render creation/completion timestamps.
+timing race was found afterward; b75e654 (PR #26) fixes shared workflow
+projection using actual render timestamps. Its un-deployed v0.2.5 workflow was
+cancelled during a prolonged image-push step so the next candidate can include
+identical-export retention in one app restart. That candidate reuses only
+same-project completed bytes with a matching private input/renderer fingerprint;
+it still checks the original session and current paid/storage coverage. It does
+not change or retroactively trust old un-fingerprinted output. Actual new-version
+production timing/repeated-download/gauge acceptance remains the release gate.
 Published RUYIN UI/Node adapters 0.2.2 are consumed from the registry. The package
 and layout prerequisites described below were historical B6.3 observations;
 they no longer block Web delivery. Desktop product identity/signing and the

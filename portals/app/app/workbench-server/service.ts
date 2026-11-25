@@ -59,6 +59,7 @@ interface Options {
     fields?: LayoutFields,
   ) => Promise<LayoutOutput>;
   gateway?: AIGatewayPort;
+  layoutCacheVersion: string;
   storageAccess: (principal: Principal) => Promise<Entitlement>;
   reportStorage: GaugeReporter;
 }
@@ -90,6 +91,8 @@ export class BidRuntime {
   private readonly ready: Promise<void>;
 
   constructor(options: Options) {
+    if (!/^[a-f0-9]{64}$/.test(options.layoutCacheVersion))
+      throw Error("A fixed layout policy fingerprint is required");
     this.namespace = namespaceFor(options.principal);
     this.workspaceId = options.principal.workspaceId;
     this.contract = options.contract;
@@ -255,29 +258,11 @@ export class BidRuntime {
       this.documents,
       files,
       async (...args) => {
-        const output = await options.layout(...args);
+        const context = await this.renderContext(options.layoutCacheVersion);
+        const output =
+          this.reusableOutput(context) ?? (await options.layout(...args));
         await this.serial(async () => {
-          const active = (await this.runtime.listProjects()).flatMap(
-            (project) =>
-              this.renders
-                .list(project.id, "bidproposal")
-                .filter((job) => job.state === "running")
-                .map((job) => ({ project, job })),
-          );
-          if (active.length !== 1)
-            throw Error("The active render scope is unavailable");
-          const { project, job } = active[0]!,
-            budget = this.documents.get(
-              project.id,
-              "bidproposal",
-              internalAuth + "render_" + job.id,
-            );
-          if (!budget) throw Error("Render storage admission is unavailable");
-          const pinned = (
-            JSON.parse(budget.markdown) as { principal?: Principal }
-          ).principal;
-          if (!pinned || namespaceFor(pinned) !== this.namespace)
-            throw Error("Render identity is unavailable; submit a new version");
+          const { pid, job, principal, cacheKey } = context;
           const content = await this.retainedContent();
           const before = sumBytes(content);
           for (const bytes of [output.docx, output.pdf])
@@ -285,9 +270,21 @@ export class BidRuntime {
               createHash("sha256").update(bytes).digest("hex"),
               bytes.length,
             );
-          await this.admit(pinned, before, sumBytes(content), true);
+          await this.admit(principal, before, sumBytes(content), true);
+          const key = internalAuth + "render_" + job.id,
+            saved = this.documents.get(pid, "bidproposal", key)!;
+          if (
+            !this.documents.put(
+              pid,
+              "bidproposal",
+              key,
+              JSON.stringify({ principal, cacheKey }),
+              saved.revision,
+            )
+          )
+            throw Error("Render identity changed during retention");
           this.renderReservations.set(job.id, {
-            pid: project.id,
+            pid,
             hashes: new Map(
               [output.docx, output.pdf].map((bytes) => [
                 createHash("sha256").update(bytes).digest("hex"),
@@ -301,6 +298,91 @@ export class BidRuntime {
     );
     this.library = new ProductLibrary(this.storage, options.reader);
     this.ready = this.recover();
+  }
+
+  // --- Identical export reuse without changing historical output ------------
+  private async renderContext(policy: string) {
+    const active = (await this.runtime.listProjects()).flatMap((project) =>
+      this.renders
+        .list(project.id, "bidproposal")
+        .filter((job) => job.state === "running")
+        .map((job) => ({ pid: project.id, job })),
+    );
+    if (active.length !== 1)
+      throw Error("The active render scope is unavailable");
+    const { pid, job } = active[0]!;
+    const auth = this.documents.get(
+      pid,
+      "bidproposal",
+      internalAuth + "render_" + job.id,
+    );
+    const principal =
+      auth &&
+      (JSON.parse(auth.markdown) as { principal?: Principal }).principal;
+    if (!principal || namespaceFor(principal) !== this.namespace)
+      throw Error("Render identity is unavailable; submit a new version");
+    const input = this.documents.get(
+      pid,
+      "bidproposal",
+      "runtime_input_" + job.id,
+    );
+    if (!input) throw Error("The pinned render input is unavailable");
+    const source = JSON.parse(input.markdown) as {
+      markdown: string;
+      template?: string;
+    };
+    const cacheKey = createHash("sha256")
+      .update(
+        JSON.stringify([
+          policy,
+          source.markdown,
+          source.template ?? null,
+          job.title,
+          job.fields ?? null,
+        ]),
+      )
+      .digest("hex");
+    return { pid, job, principal, cacheKey };
+  }
+  private reusableOutput(
+    context: Awaited<ReturnType<BidRuntime["renderContext"]>>,
+  ): LayoutOutput | undefined {
+    for (const job of this.renders.list(context.pid, "bidproposal")) {
+      if (
+        job.id === context.job.id ||
+        job.state !== "completed" ||
+        !job.pages ||
+        !job.engine
+      )
+        continue;
+      const auth = this.documents.get(
+        context.pid,
+        "bidproposal",
+        internalAuth + "render_" + job.id,
+      );
+      if (
+        !auth ||
+        (JSON.parse(auth.markdown) as { cacheKey?: string }).cacheKey !==
+          context.cacheKey
+      )
+        continue;
+      const saved = this.documents.get(
+        context.pid,
+        "bidproposal",
+        "runtime_output_" + job.id,
+      );
+      if (!saved) continue;
+      const output = JSON.parse(saved.markdown) as {
+        docx: string;
+        pdf: string;
+      };
+      return {
+        docx: Buffer.from(output.docx, "base64"),
+        pdf: Buffer.from(output.pdf, "base64"),
+        pages: job.pages,
+        engine: job.engine,
+      };
+    }
   }
   private async recover(): Promise<void> {
     await this.readings.recoverAll();
