@@ -2,6 +2,22 @@
 
 Start here if you are an AI agent working in this repo.
 
+Current checkpoint, 2026-11-26 (Asia/Shanghai): Jadera B7 Web v0.3.2 / e699b598
+is deployed and accepted. Read batch 180 first. Shared DS workspace/AI dock,
+knowledge/template collections, durable compilation versions and authenticated
+display-name editing are live. Actual name saves and refresh checks passed after
+PR #37 added the missing PATCH route export. Protected run 45667761554 attempt 2
+reused the exact verified image after an ACR transfer stall. Original config/key,
+DB/Redis IDs, project identity, 101 business documents, eight output snapshots,
+14 tasks and two original files remain unchanged. The owner permits this account
+for testing and public demonstration and requests retaining realistic business
+names/data. Three logical projects, five knowledge records, four Word templates,
+a second compilation and a real assistant conversation are retained. Source
+contents explicitly identify demonstration evidence. Do not reset or delete them.
+The Web acceptance does not close native own-product identity, host-chrome wiring
+or publisher-signing gates; platform #198 remains open. Code stays bidproposal.
+No cloud synchronization UI or implementation is authorized.
+
 ## What this repo is
 
 Brand checkpoint, 2026-11-25: the owner selected Jadera / Yuzhang, with the

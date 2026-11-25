@@ -1,9 +1,11 @@
 # 70-workplan - Build plan and batch tracker
 
-The accepted B7 visual baseline is now being implemented in
-[180-b7-application-framework.md](180-b7-application-framework.md). The prototype
-itself remains a local review artifact; each implementation batch preserves the
-existing business data and runtime adapters.
+The B7 Web application is deployed as v0.3.2 / e699b598. Shared workspace,
+assistant, knowledge/template collections, compilation versions and display-name
+editing are accepted in [180-b7-application-framework.md](180-b7-application-framework.md).
+The owner's demonstration account retains three projects and real versioned
+demo resources. The prototype remains a local design reference; original business
+data and runtime adapters are preserved. Native identity/chrome/signing remain open.
 
 The active brand/domain batch is
 [170-jadera-brand-domain.md](170-jadera-brand-domain.md). Jadera is the current
@@ -16,8 +18,8 @@ Do not reuse the rejected independent editor or horizontal navigation preview.
 B6.3 runtime verification is recorded in
 [60-runtime-adaptation-preflight.md](../40-implementation/60-runtime-adaptation-preflight.md).
 The public UI/Node packages 0.2.2 and Linux layout prerequisites are resolved.
-The complete Web workbench is deployed as v0.2.1; live six-stage acceptance is
-in progress. Desktop product identity/signing and commercial feature gaps remain
+The Web workbench retains its previously accepted six-stage writing/export
+baseline in the B7 release. Desktop product identity/signing and commercial feature gaps remain
 open. Use the current dated checkpoint in the release tracker, rather than the
 historical prerequisite statements, to decide the next batch.
 
