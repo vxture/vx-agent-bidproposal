@@ -15,6 +15,7 @@ export const BRAND = {
   targetProductCode: "jadera",
   displayName: "Jadera",
   chineseName: "\u745c\u7ae0",
+  descriptor: "\u6807\u4e66\u667a\u80fd\u4f53",
   fullName: "\u745c\u7ae0 \u00b7 \u6295\u6807\u65b9\u6848\u667a\u80fd\u4f53",
   origin: "https://jadera.ruyin.work",
   logo: "/brand/jadera-logo.svg",

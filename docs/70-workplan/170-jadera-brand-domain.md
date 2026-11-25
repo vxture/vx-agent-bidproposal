@@ -87,6 +87,13 @@ Redis, encrypted project or provider credential was reset.
 
 ## Current checkpoint
 
+The owner refined the title to the pen-nib mark, Chinese short name and the
+short descriptor at one matching 18px size, using Yucer's 32px mark and 8px gaps.
+PR #30 merged as 1ab26146 with all exact PR/main checks and Sonar passing.
+Release v0.2.8 was cancelled before protected deployment so this title refinement
+can ship together with the brand in one product recreation. Production remains
+v0.2.7 at the working Jadera origin. No rollback of the accepted domain is needed.
+
 Configuration is saved and independently read back. Original v0.2.7 health and
 readiness are healthy. Product brand source is a local candidate, not yet a
 release. The domain is live; commercial-code migration remains a platform gate.

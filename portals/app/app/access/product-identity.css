@@ -1,0 +1,25 @@
+/* Shared product identity, matching the accepted Yucer title treatment. */
+.bid-product-identity {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+  gap: 8px;
+  font-family: var(--bidproposal-entry-text, var(--font-sans, sans-serif));
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 28px;
+}
+.bid-product-identity > svg {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  color: var(--primary-text, var(--primary));
+}
+.bid-product-short-name { color: var(--foreground); white-space: nowrap; }
+.bid-product-descriptor {
+  color: var(--muted-foreground);
+  white-space: nowrap;
+}
+@media (max-width: 640px) {
+  .bid-entry-brands .bid-entry-platform > span { display: none; }
+}
