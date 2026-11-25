@@ -129,6 +129,50 @@ export class WritingSession {
     const r = check(await this.bridge.request('PUT', path, { markdown, revision: this.revision }));
     this.revision = r.revision;
   }
+  /** Rebase unrelated chapter changes, but never overwrite the edited chapter. */
+  async saveHumanChapter(id, baseBody, body) {
+    if (typeof body !== 'string' || body.length > 100000 || /^<!-- bidproposal:chapter:/m.test(body))
+      throw new Error('Invalid chapter content');
+    await this.load();
+    await this.sources();
+    const item = this.value?.items.find((row) => row.id === id),
+      chapter = this.draft.chapters.find((row) => row.id === id);
+    if (!item || !chapter) throw new Error('Chapter is unavailable');
+    if (['submitting', 'running', 'candidate'].includes(item.state))
+      throw new Error('Finish the AI chapter task before saving a manual revision');
+    const next = body.trimEnd();
+    if (chapter.body !== next && chapter.body !== baseBody)
+      throw new Error('This chapter changed in another window. Your edits are retained; copy them before reloading');
+    if (chapter.body === baseBody && chapter.body !== next) {
+      const baseHash = await fingerprint(baseBody);
+      if (item.humanHistoryBase !== baseHash || !item.humanHistoryId) {
+        const historyId = 'bid_revision_' + crypto.randomUUID();
+        check(await this.bridge.request('PUT', '/documents/' + historyId, {
+          markdown: JSON.stringify({
+            chapterId: id, title: chapter.title, body: chapter.body,
+            replacedAt: new Date().toISOString(), reason: 'human_revision',
+            evidenceRef: item.evidenceRef || null, usedEvidence: item.usedEvidence || [],
+            materialGaps: item.materialGaps || [],
+          }),
+          revision: 0,
+        }));
+        item.history = [...(item.history || []), historyId];
+        item.humanHistoryId = historyId;
+        item.humanHistoryBase = baseHash;
+        await this.save();
+      }
+      chapter.body = next;
+      await this.draft.save();
+    }
+    if (next !== baseBody || item.humanHistoryId) {
+      item.humanEditedAt = new Date().toISOString();
+      item.usedEvidence = (item.usedEvidence || []).filter((usage) => next.includes(usage.quote));
+      delete item.humanHistoryId;
+      delete item.humanHistoryBase;
+      await this.save();
+    }
+    return this.draft.revision;
+  }
   async sources() {
     const plan = new PlanSession(this.bridge),
       matrix = new Requirements(this.bridge),

@@ -31,6 +31,10 @@ test('both deliverables contain exactly the same application bytes with no deskt
   assert.ok(shared.some((asset) => asset.name === 'app.mjs'));
   assert.ok(shared.some((asset) => asset.name === 'library-ui.mjs'));
   assert.ok(web.some((asset) => asset.name === 'vendor-pdf-worker.mjs'));
+  assert.ok(web.some((asset) => asset.name === 'vendor-editor.mjs'));
+  assert.ok(web.some((asset) => asset.name === 'document-workspace.css'));
+  for (const name of ['vendor-editor.mjs', 'pdf-viewer.mjs', 'document-workspace.css'])
+    assert.deepEqual(web.find((asset) => asset.name === name).data, desktop.find((asset) => asset.name === name).data);
   assert.ok(web.some((asset) => asset.name === 'dompurify-LICENSE.txt'));
   assert.equal(
     web.some((asset) => asset.name.endsWith('.test.mjs')),

@@ -7,6 +7,7 @@
  */
 import { DeliverySession, syncDeliveryWorkflow } from './delivery.mjs';
 import { autoSave } from './autosave.mjs';
+import { ContinuousPdfViewer } from './pdf-viewer.mjs';
 const labels = {
   queued: '\u7b49\u5f85\u6392\u7248',
   running: '\u540e\u53f0\u6392\u7248\u4e2d',
@@ -62,7 +63,13 @@ export async function mountDelivery(bridge, workflow) {
     previous = el('button', '\u2190'),
     next = el('button', '\u2192'),
     pageLabel = el('span', 'PDF / \u5b9e\u9645\u6392\u7248'),
+    pageInput = document.createElement('input'),
     zoom = document.createElement('select');
+  pageInput.type = 'number';
+  pageInput.min = '1';
+  pageInput.value = '1';
+  pageInput.className = 'pdf-page-input';
+  pageInput.setAttribute('aria-label', '\u8df3\u8f6c\u5230\u9875');
   previous.setAttribute('aria-label', '\u4e0a\u4e00\u9875');
   next.setAttribute('aria-label', '\u4e0b\u4e00\u9875');
   zoom.setAttribute('aria-label', '\u9884\u89c8\u7f29\u653e');
@@ -75,13 +82,10 @@ export async function mountDelivery(bridge, workflow) {
     o.value = value;
     zoom.append(o);
   }
-  bar.append(previous, pageLabel, next, zoom);
+  bar.append(previous, pageInput, pageLabel, next, el('small', '\u8fde\u7eed\u6eda\u52a8 \u00b7 \u53ef\u9009\u62e9\u6587\u5b57'), zoom);
   viewer.append(bar);
   const canvasWrap = el('div', '', 'delivery-paper'),
-    canvas = document.createElement('canvas'),
     empty = el('div', '', 'delivery-empty');
-  canvas.setAttribute('aria-label', '\u5bfc\u51fa PDF \u539f\u4ef6\u9884\u89c8');
-  canvas.hidden = true;
   empty.append(
     el('span', 'MARKDOWN \u2192 WORD \u2192 PDF', 'section-label'),
     el('h2', '\u7ae0\u8282\u5df2\u5c31\u4f4d\uff0c\u8ba9\u6392\u7248\u81ea\u52a8\u5b8c\u6210'),
@@ -90,8 +94,16 @@ export async function mountDelivery(bridge, workflow) {
       '\u6309\u786e\u8ba4\u7684\u76ee\u5f55\u5408\u5e76\u5df2\u91c7\u7eb3\u6b63\u6587\uff0c\u5e94\u7528\u4f60\u7684\u6a21\u677f\uff0c\u751f\u6210\u76ee\u5f55\u4e0e\u9875\u7801\u3002\u6b64\u5904\u663e\u793a\u7684\u5c31\u662f\u5bfc\u51fa PDF\u3002',
     ),
   );
-  canvasWrap.append(canvas, empty);
+  canvasWrap.append(empty);
   viewer.append(canvasWrap);
+  const pdfViewer = new ContinuousPdfViewer(canvasWrap, (number, total) => {
+    page = number;
+    pageInput.value = number;
+    pageInput.max = total;
+    pageLabel.textContent = '/ ' + total + ' \u9875';
+    previous.disabled = number <= 1;
+    next.disabled = number >= total;
+  }, (error) => { actionError = error.message; render(); });
   const setting = el('div', '', 'delivery-setting');
   setting.append(el('h2', '\u4ea4\u4ed8\u8bbe\u7f6e'));
   const titleLabel = el('label', '\u6210\u679c\u540d\u79f0'),
@@ -238,7 +250,6 @@ export async function mountDelivery(bridge, workflow) {
     pdf = null,
     pdfId = null,
     page = 1,
-    renderTask = null,
     previewSequence = 0,
     actionError = '',
     downloadNotice = '';
@@ -338,34 +349,9 @@ export async function mountDelivery(bridge, workflow) {
   }
   async function draw() {
     if (!pdf || !visible) return;
-    renderTask?.cancel();
-    const document = pdf,
-      n = page,
-      seq = ++previewSequence;
-    const p = await document.getPage(n);
-    if (seq !== previewSequence) return;
-    const first = p.getViewport({ scale: 1 }),
-      width = Math.max(240, canvasWrap.clientWidth - 48),
-      scale = zoom.value === 'fit' ? Math.min(1.5, width / first.width) : Number(zoom.value),
-      view = p.getViewport({ scale }),
-      ratio = Math.min(devicePixelRatio || 1, 2);
-    canvas.width = Math.round(view.width * ratio);
-    canvas.height = Math.round(view.height * ratio);
-    canvas.style.width = view.width + 'px';
-    canvas.style.height = view.height + 'px';
-    canvas.hidden = false;
     empty.hidden = true;
-    renderTask = p.render({
-      canvasContext: canvas.getContext('2d'),
-      viewport: view,
-      transform: ratio === 1 ? null : [ratio, 0, 0, ratio, 0, 0],
-    });
-    try {
-      await renderTask.promise;
-    } catch (e) {
-      if (e.name !== 'RenderingCancelledException') throw e;
-    }
-    pageLabel.textContent = n + ' / ' + pdf.numPages + ' \u9875';
+    await pdfViewer.show(pdf, zoom.value);
+    pageInput.disabled = false;
     render();
   }
   async function preview() {
@@ -376,11 +362,11 @@ export async function mountDelivery(bridge, workflow) {
     }
     if (job?.state !== 'completed') {
       ++previewSequence;
-      renderTask?.cancel();
+      pdfViewer.reset();
       if (pdf) await pdf.destroy();
       pdf = null;
       pdfId = null;
-      canvas.hidden = true;
+      pageInput.disabled = true;
       empty.hidden = false;
       pageLabel.textContent = 'PDF / \u5b9e\u9645\u6392\u7248';
       return;
@@ -388,13 +374,15 @@ export async function mountDelivery(bridge, workflow) {
     const { getDocument, GlobalWorkerOptions } = await import('./vendor-pdf.mjs');
     GlobalWorkerOptions.workerSrc = new URL('./vendor-pdf-worker.mjs', import.meta.url).href;
     const id = job.id,
+      sequence = ++previewSequence,
       bytes = (await run.file('pdf')).bytes;
     const loaded = await getDocument({ data: bytes, isEvalSupported: false, useSystemFonts: true })
       .promise;
-    if (run.selected !== id) {
+    if (run.selected !== id || sequence !== previewSequence) {
       await loaded.destroy();
       return;
     }
+    pdfViewer.reset();
     if (pdf) await pdf.destroy();
     pdf = loaded;
     pdfId = id;
@@ -445,13 +433,13 @@ export async function mountDelivery(bridge, workflow) {
     });
   };
   previous.onclick = () => {
-    page = Math.max(1, page - 1);
-    void act(draw);
+    pdfViewer.jump(page - 1);
   };
   next.onclick = () => {
-    page = Math.min(pdf.numPages, page + 1);
-    void act(draw);
+    pdfViewer.jump(page + 1);
   };
+  pageInput.onchange = () => pdfViewer.jump(Number(pageInput.value));
+  pageInput.onkeydown = (event) => { if (event.key === 'Enter') pdfViewer.jump(Number(pageInput.value)); };
   zoom.onchange = () => void act(draw);
   bridge.onStage((section) => {
     visible = section === 'export';

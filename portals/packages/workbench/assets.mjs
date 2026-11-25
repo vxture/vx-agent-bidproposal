@@ -9,6 +9,7 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 import { dirname, extname, join } from 'node:path';
+import { buildSync } from 'esbuild';
 
 const require = createRequire(import.meta.url);
 const textAssets = new Set(['.mjs', '.js', '.css', '.html', '.json', '.svg']);
@@ -39,10 +40,30 @@ export function applicationAssets() {
 
 /** Resolve declared packages locally; do not fetch anything during packaging. */
 export function vendorAssets() {
-  return vendor.map(([name, dependency, path]) => {
+  const assets = vendor.map(([name, dependency, path]) => {
     const root = dirname(dirname(require.resolve(dependency)));
     return { name, data: readFileSync(join(root, path)) };
   });
+  const editor = buildSync({
+    entryPoints: [fileURLToPath(new URL('./editor-entry.mjs', import.meta.url))],
+    bundle: true,
+    platform: 'browser',
+    format: 'esm',
+    target: 'es2022',
+    write: false,
+    minify: true,
+    legalComments: 'eof',
+  });
+  assets.push({ name: 'vendor-editor.mjs', data: Buffer.from(editor.outputFiles[0].contents) });
+  // Keep PDF.js's private text-layer variables in its own locked vendor sheet.
+  const pdfRoot = dirname(dirname(require.resolve('pdfjs-dist')));
+  const pdfStyles = readFileSync(join(pdfRoot, 'web/pdf_viewer.css'), 'utf8');
+  const start = pdfStyles.indexOf('.textLayer{'), end = pdfStyles.indexOf('.annotationLayer{', start);
+  if (start < 0 || end <= start) throw new Error('Unsupported PDF.js text-layer stylesheet');
+  assets.push({ name: 'vendor-pdf-text.css', data: Buffer.from(
+    '/* PDF.js text layer. See pdfjs-LICENSE.txt. */\n' + pdfStyles.slice(start, end).replaceAll('\r\n', '\n'),
+  ) });
+  return assets;
 }
 
 /** Only the environment entry and its transport differ between outputs. */

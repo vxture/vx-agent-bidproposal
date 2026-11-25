@@ -53,7 +53,7 @@ export async function mountWriting(bridge, workflow, { onDraftSaved = async () =
     agent = text('aside', '', 'writing-agent');
   agent.id = 'writing-agent';
   assistantToggle.setAttribute('aria-controls', agent.id);
-  let agentOpen = window.innerWidth > 1150;
+  let agentOpen = window.innerWidth > 1280;
   const toggleAgent = () => {
     agent.hidden = !agentOpen;
     panel.classList.toggle('is-agent-closed', !agentOpen);
@@ -82,7 +82,32 @@ export async function mountWriting(bridge, workflow, { onDraftSaved = async () =
     gaps = text('details', '', 'writing-material-gaps'),
     versionHistory = text('details', '', 'writing-history');
   versionHistory.append(text('summary', '\u5386\u53f2\u7248\u672c'));
-  viewer.append(title, meta, tabs, body, versionHistory);
+  const documentBar = text('div', '', 'writing-document-bar'),
+    readingMode = text('button', '\u8fde\u7eed\u9605\u8bfb'),
+    edit = text('button', '\u8865\u5145\u4fee\u6539'),
+    selectedToAI = text('button', '\u9009\u4e2d\u6587\u5b57\u4ea4\u7ed9 AI'),
+    editTools = text('div', '', 'chapter-editor-tools'),
+    saveEdit = text('button', '\u4fdd\u5b58\u4fee\u6539', 'primary'),
+    cancelEdit = text('button', '\u53d6\u6d88\u4fee\u6539'),
+    editState = text('span', '', 'chapter-edit-state');
+  documentBar.append(readingMode, selectedToAI, edit);
+  editTools.hidden = true;
+  editTools.setAttribute('role', 'toolbar');
+  editTools.setAttribute('aria-label', '\u6b63\u6587\u6392\u7248');
+  for (const [action, label] of [
+    ['undo', '\u64a4\u9500'], ['redo', '\u91cd\u505a'], ['paragraph', '\u6b63\u6587'],
+    ['h2', '\u6807\u9898'], ['h3', '\u5b50\u6807\u9898'], ['bold', '\u7c97\u4f53'],
+    ['italic', '\u659c\u4f53'], ['bullet', '\u9879\u76ee\u7b26\u53f7'],
+    ['ordered', '\u7f16\u53f7'], ['table', '\u8868\u683c'],
+    ['row', '\u52a0\u884c'], ['column', '\u52a0\u5217'],
+  ]) {
+    const button = text('button', label);
+    button.onmousedown = (event) => event.preventDefault();
+    button.onclick = () => chapterEditor?.command(action);
+    editTools.append(button);
+  }
+  editTools.append(editState, cancelEdit, saveEdit);
+  viewer.append(title, meta, documentBar, tabs, editTools, body, versionHistory);
   const agentTitle = text('h2', '\u672c\u7ae0\u7f16\u5199\u4efb\u52a1'),
     agentContext = text('div', '', 'writing-chapter-context');
   agent.append(
@@ -176,6 +201,101 @@ export async function mountWriting(bridge, workflow, { onDraftSaved = async () =
     visible = false,
     lastMarkdown,
     historyView;
+  let chapterEditor = null,
+    editBase = null,
+    editBody = '',
+    continuous = true;
+  const dirtyEdit = () => editBase && editBody !== editBase.body;
+  const leaveEdit = () => {
+    chapterEditor?.destroy();
+    chapterEditor = null;
+    editBase = null;
+    delete document.documentElement.dataset.unsaved;
+    editTools.hidden = true;
+    lastMarkdown = undefined;
+  };
+  readingMode.onclick = () => {
+    continuous = !continuous;
+    historyView = undefined;
+    showCandidate = false;
+    render();
+  };
+  edit.onclick = async () => {
+    if (busy || editBase) return;
+    const chapter = run.draft?.chapters.find((row) => row.id === selected);
+    if (!chapter) return;
+    busy = true;
+    render();
+    try {
+      const { createChapterEditor } = await import('./vendor-editor.mjs');
+      editBase = { id: selected, body: chapter.body };
+      editBody = chapter.body;
+      continuous = false;
+      showCandidate = false;
+      historyView = undefined;
+      clearTimeout(timer);
+      const host = text('div', '', 'chapter-editor');
+      body.replaceChildren(host);
+      chapterEditor = createChapterEditor(host, chapter.body, (value) => {
+        editBody = value;
+        document.documentElement.dataset.unsaved = String(!!dirtyEdit());
+        editState.textContent = '\u4fee\u6539\u5f85\u4fdd\u5b58';
+      });
+      editTools.hidden = false;
+      editState.textContent = '\u652f\u6301\u9009\u62e9\u3001\u7c98\u8d34\u548c Ctrl+Z';
+      chapterEditor.focus();
+    } catch (e) {
+      actionError = e.message;
+      leaveEdit();
+    } finally {
+      busy = false;
+      render();
+    }
+  };
+  cancelEdit.onclick = () => {
+    leaveEdit();
+    render();
+    schedule();
+  };
+  saveEdit.onclick = () => {
+    if (!editBase) return;
+    const base = { ...editBase }, value = editBody;
+    return act(async () => {
+      await run.saveHumanChapter(base.id, base.body, value);
+      leaveEdit();
+      await onDraftSaved();
+    });
+  };
+  selectedToAI.onmousedown = (event) => event.preventDefault();
+  selectedToAI.onclick = () => {
+    const selection = window.getSelection(),
+      quote = chapterEditor?.selectedText() || selection?.toString() || '',
+      source = selection?.anchorNode?.parentElement?.closest('[data-chapter]')?.dataset.chapter;
+    if (!quote.trim()) {
+      status.textContent = '\u5148\u9009\u4e2d\u6b63\u6587\u4e2d\u7684\u6587\u5b57\uff0c\u518d\u544a\u8bc9 AI \u5982\u4f55\u4fee\u6539\u3002';
+      return;
+    }
+    if (source && source !== selected && !editBase) { selected = source; render(); }
+    instruction.value = '\u8bf7\u4fee\u6539\u4ee5\u4e0b\u5185\u5bb9\uff1a\n' + quote.slice(0, 3000) + '\n\n\u4fee\u6539\u8981\u6c42\uff1a';
+    instructionNotes[selected] = instruction.value;
+    instructionSave.change();
+    agentOpen = true;
+    toggleAgent();
+    instruction.focus();
+  };
+  window.addEventListener('beforeunload', (event) => {
+    if (dirtyEdit()) { event.preventDefault(); event.returnValue = ''; }
+  });
+  document.addEventListener('bid.unsaved', () => {
+    status.textContent = '\u5f53\u524d\u6b63\u6587\u4fee\u6539\u5c1a\u672a\u4fdd\u5b58\uff0c\u8bf7\u5148\u4fdd\u5b58\u6216\u53d6\u6d88\u3002';
+    status.scrollIntoView({ block: 'center' });
+  });
+  document.addEventListener('keydown', (event) => {
+    if (editBase && (event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 's') {
+      event.preventDefault();
+      saveEdit.click();
+    }
+  });
   let evidenceKey = '',
     evidenceSequence = 0;
   const currentEvidence = new Map();
@@ -395,10 +515,15 @@ export async function mountWriting(bridge, workflow, { onDraftSaved = async () =
         text('small', labels[row.state]),
       );
       b.onclick = () => {
+        if (editBase) {
+          status.textContent = '\u8bf7\u5148\u4fdd\u5b58\u6216\u53d6\u6d88\u5f53\u524d\u4fee\u6539\u3002';
+          return;
+        }
         selected = row.id;
-        showCandidate = true;
+        showCandidate = !!row.candidate;
         historyView = undefined;
         render();
+        body.querySelector('[data-chapter="' + row.id + '"]')?.scrollIntoView({ block: 'start', behavior: 'smooth' });
       };
       nav.append(b);
     }
@@ -428,6 +553,13 @@ export async function mountWriting(bridge, workflow, { onDraftSaved = async () =
       : showCandidate && item?.candidate
         ? item.candidate.markdown
         : chapter?.body;
+    const manuscript = continuous && !viewingHistory && !(showCandidate && item?.candidate) && !editBase;
+    readingMode.textContent = manuscript ? '\u5355\u7ae0\u9605\u8bfb' : '\u8fde\u7eed\u9605\u8bfb';
+    readingMode.disabled = !!editBase;
+    edit.hidden = !!editBase || viewingHistory || !!(showCandidate && item?.candidate);
+    edit.disabled = busy || !chapter || ['submitting', 'running', 'candidate'].includes(item?.state);
+    saveEdit.disabled = busy;
+    cancelEdit.disabled = busy;
     if (viewingHistory) {
       const back = text('button', '\u8fd4\u56de\u5f53\u524d\u7a3f');
       back.onclick = () => {
@@ -436,8 +568,26 @@ export async function mountWriting(bridge, workflow, { onDraftSaved = async () =
       };
       tabs.append(back);
     }
-    if (markdown) {
-      if (markdown !== lastMarkdown) {
+    const documentKey = manuscript ? JSON.stringify(run.draft?.chapters) : markdown;
+    if (editBase) {
+      // Polling and status renders must never replace the editor DOM or selection.
+    } else if (manuscript && run.draft?.chapters.length) {
+      if (documentKey !== lastMarkdown) {
+        body.replaceChildren();
+        for (const saved of run.draft.chapters) {
+          const section = text('section', '', 'writing-manuscript-chapter'), content = text('div');
+          section.dataset.chapter = saved.id;
+          section.append(text('h2', saved.title), content);
+          renderMarkdown(content, saved.body);
+          if (/^H[12]$/.test(content.firstElementChild?.tagName || '') && content.firstElementChild.textContent.trim() === saved.title.trim())
+            content.firstElementChild.remove();
+          body.append(section);
+        }
+        lastMarkdown = documentKey;
+      }
+      title.textContent = '\u6807\u4e66\u6b63\u6587';
+    } else if (markdown) {
+      if (documentKey !== lastMarkdown) {
         renderMarkdown(body, markdown);
         lastMarkdown = markdown;
       }
@@ -455,10 +605,10 @@ export async function mountWriting(bridge, workflow, { onDraftSaved = async () =
     }
     if (item)
       meta.textContent =
-        (viewingHistory ? '\u5386\u53f2\u7248\u672c\uff08\u53ea\u8bfb\uff09' : labels[item.state]) +
+        (manuscript ? '\u8fde\u7eed\u9605\u8bfb \u00b7 ' + run.draft.chapters.length + ' \u7ae0' : viewingHistory ? '\u5386\u53f2\u7248\u672c\uff08\u53ea\u8bfb\uff09' : labels[item.state]) +
         ' \u00b7 ' +
-        (markdown?.length || 0) +
-        ' \u5b57 \u00b7 Markdown';
+        (manuscript ? run.draft.chapters.reduce((total, row) => total + row.body.length, 0) : markdown?.length || 0) +
+        ' \u5b57';
     gaps.replaceChildren();
     const missing =
       (showCandidate && item?.candidate ? item.candidate.materialGaps : item?.materialGaps) || [];
@@ -478,8 +628,8 @@ export async function mountWriting(bridge, workflow, { onDraftSaved = async () =
         : '\u5f00\u59cb\u5206\u7ae0\u7f16\u5199';
     pause.disabled = busy || !run.value || run.value.paused;
     refresh.disabled = busy;
-    rewrite.disabled = busy || !!sourceError || !chapter?.body || !!active || !!candidate;
-    instruction.disabled = rewrite.disabled;
+    rewrite.disabled = busy || !!editBase || !!sourceError || !chapter?.body || !!active || !!candidate;
+    instruction.disabled = busy || !!sourceError;
     adopt.textContent = item?.reviewTaskId
       ? '\u67e5\u770b\u5e76\u786e\u8ba4\u91c7\u7528'
       : item?.reviewAccepted
@@ -490,11 +640,13 @@ export async function mountWriting(bridge, workflow, { onDraftSaved = async () =
       : '\u4fdd\u7559\u539f\u7a3f';
     adopt.hidden = item?.state !== 'candidate';
     discard.hidden = item?.state !== 'candidate' && !(item?.state === 'error' && item.candidate);
-    adopt.disabled = busy || !!sourceError;
-    discard.disabled = busy;
+    adopt.disabled = busy || !!editBase || !!sourceError;
+    discard.disabled = busy || !!editBase;
     retry.hidden = item?.state !== 'error';
     retry.disabled = busy || !!sourceError;
-    reset.disabled = busy || !!active || !!candidate;
+    reset.disabled = busy || !!editBase || !!active || !!candidate;
+    start.disabled ||= !!editBase;
+    refresh.disabled ||= !!editBase;
     renderEvidence(item, viewingHistory);
     if (run.value?.backgroundError) status.textContent = run.value.backgroundError;
     else if (sourceError || actionError)
@@ -538,6 +690,7 @@ export async function mountWriting(bridge, workflow, { onDraftSaved = async () =
     for (const [i, id] of (item?.history || []).entries()) {
       const b = text('button', '\u67e5\u770b\u66ff\u6362\u524d\u7248\u672c ' + (i + 1));
       b.onclick = async () => {
+        if (editBase) return;
         try {
           const r = await bridge.request('GET', '/documents/' + id);
           if (!r.ok) throw new Error('History unavailable');
@@ -593,7 +746,7 @@ export async function mountWriting(bridge, workflow, { onDraftSaved = async () =
   }
   async function pump() {
     timer = null;
-    if (busy || !visible) return;
+    if (busy || !visible || editBase) return;
     schedule();
     if (
       !run.value ||
@@ -614,7 +767,7 @@ export async function mountWriting(bridge, workflow, { onDraftSaved = async () =
     clearTimeout(timer);
     const v = run.value;
     if (
-      visible &&
+      visible && !editBase &&
       v &&
       (v.items.some(
         (i) => ['submitting', 'running'].includes(i.state) || i.reviewTaskId || i.reviewAccepted,

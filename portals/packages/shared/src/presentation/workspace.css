@@ -334,46 +334,35 @@
 .jadera-flow-item {
   position: relative;
 }
-.jadera-flow-item:before {
-  content: "";
-  position: absolute;
-  left: calc(
-    (
-        var(--shell-sidebar-anchor-width) - 2 *
-          (var(--shell-sidebar-inset) + var(--shell-sidebar-inner-inset))
-      ) /
-      2
-  );
-  top: var(--shell-sidebar-menu-height);
-  bottom: 0;
-  width: var(--border-width-thin);
-  background: var(--border);
-  pointer-events: none;
-}
 .jadera-flow-item:not(:last-child):after {
   content: "";
   position: absolute;
-  left: calc(
-    (
-        var(--shell-sidebar-anchor-width) - 2 *
-          (var(--shell-sidebar-inset) + var(--shell-sidebar-inner-inset))
-      ) /
-      2
-  );
-  top: 100%;
-  height: var(--space-xs);
+  left: calc((var(--shell-sidebar-anchor-width) - 2 *
+    (var(--shell-sidebar-inset) + var(--shell-sidebar-inner-inset))) / 2);
+  top: calc((var(--shell-sidebar-menu-height) + var(--spacing-icon-lg)) / 2);
+  bottom: calc(-1 * var(--space-xs));
   width: var(--border-width-thin);
   background: var(--border);
   pointer-events: none;
 }
-.jadera-flow-item:last-child:before {
-  display: none;
+.jadera-flow-item.complete:after {
+  background: color-mix(in srgb, var(--success) 52%, var(--border));
+}
+.jadera-flow-item.active:after {
+  background: linear-gradient(var(--primary), var(--border));
+}
+.jadera-flow-item.complete .jadera-flow-symbol { color: var(--success-text); }
+.jadera-flow-symbol > svg {
+  width: var(--spacing-icon-md);
+  height: var(--spacing-icon-md);
 }
 .jadera-flow-item > a {
   position: relative;
   z-index: 1;
   white-space: nowrap;
 }
+.jadera-flow-item > a[aria-current="page"] { background: transparent; }
+.jadera-flow-item > a:hover { background: var(--accent); }
 .jadera-flow-status {
   margin-left: auto;
   margin-right: var(--space-xs);
@@ -401,45 +390,44 @@
   background: radial-gradient(circle, var(--muted) 55%, transparent 76%);
   border: 0;
 }
-.jadera-flow-item.collapsed .jadera-flow-symbol.selected {
+.jadera-flow-item .jadera-flow-symbol.selected {
   color: var(--primary-foreground);
   background: var(--primary);
+  border-radius: 50%;
 }
 .jadera-step-time {
-  display: grid;
-  grid-template-columns: max-content max-content;
-  gap: var(--space-2xs) var(--space-md);
-  padding: 0 var(--space-xs) var(--space-md)
-    calc(
-      var(--shell-sidebar-anchor-width) - 2 *
-        (var(--shell-sidebar-inset) + var(--shell-sidebar-inner-inset)) +
-        var(--shell-sidebar-inset)
-    );
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-start;
+  gap: calc(var(--space-xs) + var(--space-2xs));
+  padding: 0 var(--space-xs) calc(var(--space-xs) - var(--space-2xs) / 2)
+    calc(var(--shell-sidebar-anchor-width) - 2 *
+      (var(--shell-sidebar-inset) + var(--shell-sidebar-inner-inset)) +
+      var(--shell-sidebar-inset));
   color: var(--muted-foreground);
   font-size: var(--label-sm-font-size);
+  line-height: 1.5;
+  font-variant-numeric: tabular-nums;
 }
-.jadera-step-time > span {
+.jadera-step-range {
   display: flex;
+  flex-direction: column;
+  gap: calc(var(--space-2xs) / 2);
+}
+.jadera-step-range > span,
+.jadera-step-duration {
+  display: inline-flex;
   align-items: center;
-  gap: var(--space-2xs);
+  gap: calc(var(--space-2xs) + var(--border-width-thin));
+  white-space: nowrap;
 }
-.jadera-step-time > span:last-child {
-  grid-column: 2;
-  grid-row: 2;
-}
-.jadera-flow-item.collapsed .jadera-step-time {
-  visibility: hidden;
-  height: calc(var(--space-md) + var(--space-2xs) + 3.1em);
-  padding: 0;
-  gap: 0;
-  font-size: var(--label-sm-font-size);
-  overflow: hidden;
-}
+.jadera-flow-item.collapsed .jadera-step-time { visibility: hidden; }
 .jadera-flow-footer {
   display: flex;
   flex-direction: column;
   gap: var(--space-2xs);
   padding-bottom: var(--space-xs);
+  padding-inline: var(--space-sm);
   line-height: 1.3;
   font-size: var(--label-sm-font-size);
   color: var(--muted-foreground);

@@ -32,11 +32,9 @@ export async function mountReading(bridge) {
     model = new Readings(bridge);
   let selected = null,
     index = 0,
-    requestVersion = 0,
     timer,
     stopped = false,
-    visible = false,
-    lastUnitKey = '';
+    visible = false;
   const say = (s) => {
     $('reading-notice').textContent = s;
   };
@@ -45,6 +43,108 @@ export async function mountReading(bridge) {
       if (state === 'error') say(e.message);
     },
   });
+  const stream = document.createElement('div');
+  stream.id = 'reading-continuous';
+  stream.className = 'reading-continuous';
+  stream.setAttribute('aria-label', '\u8fde\u7eed\u539f\u6587');
+  $('reading-text').replaceWith(stream);
+  $('reading-tables').remove();
+  const units = new Map(), loaded = new Map(), loading = new Set();
+  let streamJob = '', streamSequence = 0, activeLoads = 0;
+  const queue = [];
+  const observer = new IntersectionObserver((entries) => {
+    for (const entry of entries) {
+      if (!entry.isIntersecting) continue;
+      const n = Number(entry.target.dataset.unit);
+      if (!loaded.has(n) && !loading.has(n)) {
+        loading.add(n);
+        queue.push(n);
+      }
+    }
+    void loadQueue();
+  }, { rootMargin: '700px 0px' });
+  async function loadQueue() {
+    while (activeLoads < 3 && queue.length) {
+      const n = queue.shift(), sequence = streamSequence,
+        job = model.jobs.find((row) => row.id === streamJob), node = units.get(n);
+      if (!job || !node) continue;
+      activeLoads++;
+      void model.unit(job.id, n).then((unit) => {
+        if (sequence !== streamSequence) return;
+        loaded.set(n, unit);
+        node.replaceChildren();
+        const heading = document.createElement('header');
+        heading.textContent = unit.location.page
+          ? '\u7b2c ' + unit.location.page + ' \u9875'
+          : '\u539f\u6587\u5757 ' + (n + 1);
+        const content = document.createElement('pre');
+        content.textContent = unit.text || '\u672c\u9875\u65e0\u53ef\u63d0\u53d6\u6587\u5b57\uff0c\u8bf7\u5bf9\u7167\u539f\u4ef6\u3002';
+        node.append(heading, content);
+        for (const data of unit.tables || []) {
+          const table = document.createElement('table');
+          table.className = 'reading-grid';
+          for (const row of data.rows) {
+            const tr = document.createElement('tr');
+            for (const value of row) {
+              const td = document.createElement('td');
+              td.textContent = value === null ? '\u2196 \u5408\u5e76\u4f4d\u7f6e' : value;
+              tr.append(td);
+            }
+            table.append(tr);
+          }
+          const wrap = document.createElement('div');
+          wrap.className = 'reading-table-scroll';
+          wrap.append(table);
+          node.append(wrap);
+        }
+        node.classList.add('is-loaded');
+        if (n === index) showFlags(job, unit);
+      }).catch((error) => {
+        if (sequence !== streamSequence) return;
+        const retry = document.createElement('button');
+        retry.textContent = '\u52a0\u8f7d\u5931\u8d25\uff0c\u70b9\u51fb\u91cd\u8bd5';
+        retry.onclick = () => { loading.add(n); queue.push(n); void loadQueue(); };
+        node.replaceChildren(retry);
+        say(error.message);
+      }).finally(() => {
+        activeLoads--;
+        if (sequence === streamSequence) loading.delete(n);
+        void loadQueue();
+      });
+    }
+  }
+  function showFlags(job, unit) {
+    $('reading-flags').replaceChildren();
+    const flags = new Set([...(job.format === 'docx' ? job.flags || [] : []), ...unit.flags]);
+    for (const flag of flags) {
+      const note = document.createElement('p');
+      note.className = 'reading-warning';
+      note.textContent = flagLabel(flag);
+      $('reading-flags').append(note);
+    }
+    $('reading-location').textContent = '\u8fde\u7eed\u539f\u6587 \u00b7 ' + (index + 1) + ' / ' + job.units;
+  }
+  function jumpTo(n) {
+    const job = model.jobs.find((row) => row.id === selected);
+    index = Math.max(0, Math.min(n, (job?.units || 1) - 1));
+    units.get(index)?.scrollIntoView({ block: 'start', behavior: 'smooth' });
+    $('reading-page').value = index + 1;
+    if (loaded.has(index)) showFlags(job, loaded.get(index));
+  }
+  let scrollFrame;
+  document.addEventListener('scroll', () => {
+    if (!visible || scrollFrame) return;
+    scrollFrame = requestAnimationFrame(() => {
+      scrollFrame = null;
+      const nearest = [...units].find(([, node]) => node.getBoundingClientRect().bottom > 100);
+      if (!nearest) return;
+      index = nearest[0];
+      $('reading-page').value = index + 1;
+      $('reading-prev').disabled = index === 0;
+      $('reading-next').disabled = index >= units.size - 1;
+      if (loaded.has(index)) showFlags(model.jobs.find((row) => row.id === streamJob), loaded.get(index));
+    });
+  }, true);
   function render() {
     const fileId = $('reading-file').value;
     $('reading-file').replaceChildren();
@@ -141,73 +241,30 @@ export async function mountReading(bridge) {
     void showUnit(j);
   }
   async function showUnit(j) {
-    const key = (j?.id || '') + ':' + index;
-    if (key === lastUnitKey) return;
-    const token = ++requestVersion;
-    lastUnitKey = key;
-    $('reading-tables').replaceChildren();
-    $('reading-flags').replaceChildren();
+    if (streamJob !== (j?.id || '')) {
+      streamJob = j?.id || '';
+      streamSequence++;
+      queue.length = 0;
+      units.clear(); loaded.clear(); loading.clear(); observer.disconnect();
+      stream.replaceChildren();
+    }
     if (!j?.units) {
-      $('reading-text').textContent =
-        '\u8bfb\u53d6\u540e\uff0c\u539f\u6587\u4f1a\u663e\u793a\u5728\u8fd9\u91cc\u3002';
-      lastUnitKey = '';
+      stream.textContent = '\u8bfb\u53d6\u540e\uff0c\u539f\u6587\u5c06\u5728\u6b64\u8fde\u7eed\u5c55\u793a\u3002';
       return;
     }
-    try {
-      const u = await model.unit(j.id, index);
-      if (token !== requestVersion) return;
-      const l = u.location;
-      $('reading-location').textContent = l.page
-        ? '\u539f\u6587\u7b2c ' + l.page + ' \u9875'
-        : l.block
-          ? '\u6bb5\u843d / \u8868\u683c ' + l.block
-          : '\u539f\u6587\u7b2c ' + l.lineStart + '\u2013' + l.lineEnd + ' \u884c';
-      $('reading-text').textContent =
-        u.text ||
-        '\u8be5\u9875\u65e0\u53ef\u63d0\u53d6\u6587\u5b57\uff0c\u8bf7\u5bf9\u7167\u539f\u4ef6\u3002';
-      const flags = new Set([...(j.format === 'docx' ? j.flags || [] : []), ...u.flags]);
-      for (const flag of flags) {
-        const p = document.createElement('p');
-        p.className = 'reading-warning';
-        p.textContent = flagLabel(flag);
-        $('reading-flags').append(p);
-      }
-      if (!flags.size) {
-        const p = document.createElement('p');
-        p.textContent =
-          '\u672c\u5757\u672a\u62a5\u544a\u63d0\u53d6\u5f02\u5e38\uff0c\u4e0d\u4ee3\u8868\u5df2\u4eba\u5de5\u6838\u5bf9\u3002';
-        $('reading-flags').append(p);
-      }
-      (u.tables || []).forEach((t, i) => {
-        const details = document.createElement('details'),
-          summary = document.createElement('summary');
-        summary.textContent =
-          '\u8868\u683c ' +
-          (i + 1) +
-          ' \u00b7 ' +
-          t.rows.length +
-          ' \u884c\uff08\u63d0\u53d6\u7ed3\u6784\uff09';
-        details.append(summary);
-        const table = document.createElement('table');
-        table.className = 'reading-grid';
-        for (const row of t.rows) {
-          const tr = document.createElement('tr');
-          for (const v of row) {
-            const td = document.createElement('td');
-            td.textContent = v === null ? '\u2196 \u5408\u5e76\u4f4d\u7f6e' : v;
-            tr.append(td);
-          }
-          table.append(tr);
-        }
-        details.append(table);
-        $('reading-tables').append(details);
-      });
-    } catch (e) {
-      if (token === requestVersion) {
-        lastUnitKey = '';
-        say(e.message);
-      }
+    if (!units.size) stream.replaceChildren();
+    for (let n = units.size; n < j.units; n++) {
+      const node = document.createElement('section');
+      node.className = 'reading-unit';
+      node.dataset.unit = n;
+      node.textContent = '\u539f\u6587 ' + (n + 1) + ' \u00b7 \u52a0\u8f7d\u4e2d\u2026';
+      if (j.format === 'pdf') node.classList.add('is-pdf');
+      units.set(n, node);
+      stream.append(node);
+      observer.observe(node);
     }
+    if (loaded.has(index)) showFlags(j, loaded.get(index));
+    else if (!loading.has(index)) { loading.add(index); queue.unshift(index); void loadQueue(); }
   }
   function schedule() {
     clearTimeout(timer);
@@ -251,18 +308,16 @@ export async function mountReading(bridge) {
     }
   };
   $('reading-prev').onclick = () => {
-    index--;
-    render();
+    jumpTo(index - 1);
   };
   $('reading-next').onclick = () => {
-    index++;
-    render();
+    jumpTo(index + 1);
   };
   $('reading-page').onchange = () => {
     const page = Number($('reading-page').value);
-    index = Number.isSafeInteger(page) ? page - 1 : 0;
-    render();
+    jumpTo(Number.isSafeInteger(page) ? page - 1 : 0);
   };
+  $('reading-page').onkeydown = (event) => { if (event.key === 'Enter') $('reading-page').onchange(); };
   $('reading-toggle').onclick = () => {
     const info = $('reading-info');
     info.hidden = !info.hidden;

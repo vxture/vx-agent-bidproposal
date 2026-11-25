@@ -1,5 +1,10 @@
 # 70-workplan - Build plan and batch tracker
 
+Web-first design conformance and continuous document editing are tracked in
+[200-web-design-conformance.md](200-web-design-conformance.md). The owner requires
+accepted Web behavior before desktop adaptation. The separate runtime workflow
+extraction remains parked; shared product business assets stay one source.
+
 The B7 Web application is deployed as v0.3.2 / e699b598. Shared workspace,
 assistant, knowledge/template collections, compilation versions and display-name
 editing are accepted in [180-b7-application-framework.md](180-b7-application-framework.md).

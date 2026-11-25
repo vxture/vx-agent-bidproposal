@@ -1,5 +1,5 @@
 "use client";
-import {
+import React, {
   Children,
   cloneElement,
   createContext,
@@ -132,6 +132,7 @@ function WorkflowLink({
         className="jadera-step-time"
         aria-label={step.label + "\u7684\u73af\u8282\u65f6\u95f4"}
       >
+        <span className="jadera-step-range">
         <span title={"\u5f00\u59cb " + time(step.startedAt)}>
           <Icon name="play" size="xs" />
           <time>{time(step.startedAt)}</time>
@@ -140,7 +141,8 @@ function WorkflowLink({
           <Icon name="stop" size="xs" />
           <time>{time(step.completedAt)}</time>
         </span>
-        <span title={"\u8017\u65f6"}>
+        </span>
+        <span className="jadera-step-duration" title={"\u8017\u65f6"}>
           <Icon name="timer" size="xs" />
           {duration(step.startedAt, step.completedAt)}
         </span>
@@ -197,7 +199,7 @@ export function WorkflowNavigation({
         data-collapsed={collapsed}
       >
         <ShellSidebarNav
-          domainName={"\u9879\u76ee\u6d41\u7a0b"}
+          domainName=""
           sections={[
             {
               title: "\u7f16\u5236\u6d41\u7a0b",

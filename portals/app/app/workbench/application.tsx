@@ -213,6 +213,11 @@ function Workspace({ access }: { access: AccessState }) {
     }
   }, [lastKey]);
   const navigate = useCallback((href: string) => {
+    const doc = frame.current?.contentDocument;
+    if (doc?.documentElement.dataset.unsaved === "true") {
+      doc.dispatchEvent(new Event("bid.unsaved"));
+      return;
+    }
     window.location.hash = href;
   }, []);
   const reload = useCallback(async () => {
@@ -254,7 +259,17 @@ function Workspace({ access }: { access: AccessState }) {
     }
   }, [api, lastKey]);
   useEffect(() => {
-    const update = () => setHash(window.location.hash);
+    let acceptedHash = window.location.hash;
+    const update = () => {
+      const doc = frame.current?.contentDocument;
+      if (doc?.documentElement.dataset.unsaved === "true" && window.location.hash !== acceptedHash) {
+        window.history.replaceState(null, "", acceptedHash);
+        doc.dispatchEvent(new Event("bid.unsaved"));
+        return;
+      }
+      acceptedHash = window.location.hash;
+      setHash(acceptedHash);
+    };
     update();
     window.addEventListener("hashchange", update);
     return () => window.removeEventListener("hashchange", update);
@@ -401,6 +416,19 @@ function Workspace({ access }: { access: AccessState }) {
       "title-md-font-size",
       "space-md",
       "space-lg",
+      "space-2xs",
+      "space-xs",
+      "space-sm",
+      "space-xl",
+      "space-2xl",
+      "space-3xl",
+      "space-control-md",
+      "radius-sm",
+      "accent",
+      "ring",
+      "body-sm-font-size",
+      "title-sm-font-size",
+      "title-lg-font-size",
     ]) {
       target.style.setProperty(
         "--" + token,
