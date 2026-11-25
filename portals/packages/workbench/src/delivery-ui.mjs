@@ -5,7 +5,7 @@
  * @author AI-Generated
  * @date 2026-11-25
  */
-import { DeliverySession } from './delivery.mjs';
+import { DeliverySession, syncDeliveryWorkflow } from './delivery.mjs';
 import { autoSave } from './autosave.mjs';
 const labels = {
   queued: '\u7b49\u5f85\u6392\u7248',
@@ -30,7 +30,10 @@ export async function mountDelivery(bridge, workflow) {
     headingText = el('div');
   headingText.append(
     el('p', 'DELIVERY / \u6210\u679c\u5bfc\u51fa', 'section-label'),
-    el('h1', '\u4ece\u7ae0\u8282\uff0c\u5230\u4e00\u4efd\u53ef\u4ea4\u4ed8\u7684\u6807\u4e66'),
+    el(
+      'h1',
+      '\u4ece\u7ae0\u8282\uff0c\u5230\u4e00\u4efd\u53ef\u4ea4\u4ed8\u7684\u6807\u4e66',
+    ),
   );
   const create = el('button', '\u5408\u7a3f\u5e76\u6392\u7248', 'primary');
   create.id = 'delivery-create';
@@ -80,11 +83,17 @@ export async function mountDelivery(bridge, workflow) {
   const canvasWrap = el('div', '', 'delivery-paper'),
     canvas = document.createElement('canvas'),
     empty = el('div', '', 'delivery-empty');
-  canvas.setAttribute('aria-label', '\u5bfc\u51fa PDF \u539f\u4ef6\u9884\u89c8');
+  canvas.setAttribute(
+    'aria-label',
+    '\u5bfc\u51fa PDF \u539f\u4ef6\u9884\u89c8',
+  );
   canvas.hidden = true;
   empty.append(
     el('span', 'MARKDOWN \u2192 WORD \u2192 PDF', 'section-label'),
-    el('h2', '\u7ae0\u8282\u5df2\u5c31\u4f4d\uff0c\u8ba9\u6392\u7248\u81ea\u52a8\u5b8c\u6210'),
+    el(
+      'h2',
+      '\u7ae0\u8282\u5df2\u5c31\u4f4d\uff0c\u8ba9\u6392\u7248\u81ea\u52a8\u5b8c\u6210',
+    ),
     el(
       'p',
       '\u6309\u786e\u8ba4\u7684\u76ee\u5f55\u5408\u5e76\u5df2\u91c7\u7eb3\u6b63\u6587\uff0c\u5e94\u7528\u4f60\u7684\u6a21\u677f\uff0c\u751f\u6210\u76ee\u5f55\u4e0e\u9875\u7801\u3002\u6b64\u5904\u663e\u793a\u7684\u5c31\u662f\u5bfc\u51fa PDF\u3002',
@@ -111,8 +120,14 @@ export async function mountDelivery(bridge, workflow) {
     o.value = f.id;
     template.append(o);
   }
-  if (run.settings.template && !run.files.some((f) => f.id === run.settings.template.id)) {
-    const o = el('option', run.settings.template.name + ' \u00b7 \u5df2\u4e0d\u53ef\u7528');
+  if (
+    run.settings.template &&
+    !run.files.some((f) => f.id === run.settings.template.id)
+  ) {
+    const o = el(
+      'option',
+      run.settings.template.name + ' \u00b7 \u5df2\u4e0d\u53ef\u7528',
+    );
     o.value = run.settings.template.id;
     template.append(o);
   }
@@ -161,7 +176,8 @@ export async function mountDelivery(bridge, workflow) {
     input.value = run.settings.fields[key];
     input.setAttribute('aria-label', label);
     if (key === 'documentNumber')
-      input.placeholder = '\u672a\u63d0\u4f9b\u65f6\u663e\u793a\u201c\u672a\u586b\u5199\u201d';
+      input.placeholder =
+        '\u672a\u63d0\u4f9b\u65f6\u663e\u793a\u201c\u672a\u586b\u5199\u201d';
     input.oninput = () => {
       run.settings.fields[key] = input.value;
       saver.change();
@@ -187,14 +203,20 @@ export async function mountDelivery(bridge, workflow) {
   const downloads = el('div', '', 'delivery-downloads');
   side.append(downloads);
   for (const format of ['docx', 'pdf', 'md']) {
-    const b = el('button', format === 'md' ? 'Markdown \u6e90\u6587\u4ef6' : format.toUpperCase());
+    const b = el(
+      'button',
+      format === 'md' ? 'Markdown \u6e90\u6587\u4ef6' : format.toUpperCase(),
+    );
     b.dataset.format = format;
     b.onclick = () => {
       if (b.disabled) return;
       const id = run.selected;
       return act(async () => {
         const ticket = checkedDownload(
-          await bridge.request('POST', '/renders/' + id + '/downloads/' + format),
+          await bridge.request(
+            'POST',
+            '/renders/' + id + '/downloads/' + format,
+          ),
         );
         const a = document.createElement('a');
         a.href = bridge.downloadUrl(ticket.path);
@@ -213,9 +235,16 @@ export async function mountDelivery(bridge, workflow) {
     downloads.append(b);
   }
   function checkedDownload(reply) {
-    if (!reply.ok) throw new Error(reply.error?.message || '\u4e0b\u8f7d\u6682\u4e0d\u53ef\u7528');
+    if (!reply.ok)
+      throw new Error(
+        reply.error?.message || '\u4e0b\u8f7d\u6682\u4e0d\u53ef\u7528',
+      );
     const v = reply.body;
-    if (!v || !/^\/downloads\/[a-f0-9]{64}$/.test(v.path) || typeof v.filename !== 'string')
+    if (
+      !v ||
+      !/^\/downloads\/[a-f0-9]{64}$/.test(v.path) ||
+      typeof v.filename !== 'string'
+    )
       throw new Error('\u4e0b\u8f7d\u5730\u5740\u65e0\u6548');
     return v;
   }
@@ -285,7 +314,9 @@ export async function mountDelivery(bridge, workflow) {
       b.tabIndex = b.disabled ? -1 : 0;
     });
     refresh.disabled = busy;
-    const warnings = run.manifest ? [...run.manifest.warnings] : [...run.warnings];
+    const warnings = run.manifest
+      ? [...run.manifest.warnings]
+      : [...run.warnings];
     if (run.stale)
       warnings.unshift(
         '\u6b63\u6587\u6216\u4f9d\u636e\u5df2\u66f4\u65b0\uff1b\u5f53\u524d\u9884\u89c8\u4e3a\u5386\u53f2\u5feb\u7167\uff0c\u8bf7\u751f\u6210\u65b0\u7248',
@@ -293,7 +324,9 @@ export async function mountDelivery(bridge, workflow) {
     if (
       job?.pages &&
       run.manifest?.targetPages &&
-      Math.abs(job.pages - run.manifest.targetPages) / run.manifest.targetPages > 0.2
+      Math.abs(job.pages - run.manifest.targetPages) /
+        run.manifest.targetPages >
+        0.2
     )
       warnings.push(
         '\u5b9e\u9645 ' +
@@ -311,7 +344,9 @@ export async function mountDelivery(bridge, workflow) {
       ),
     );
     checkSummary.textContent =
-      '\u4ea4\u4ed8\u524d\u68c0\u67e5 \u00b7 ' + warnings.length + ' \u9879\u63d0\u793a';
+      '\u4ea4\u4ed8\u524d\u68c0\u67e5 \u00b7 ' +
+      warnings.length +
+      ' \u9879\u63d0\u793a';
     source.textContent = run.manifest
       ? '\u6b63\u6587 v' +
         run.manifest.revisions.bid_draft +
@@ -319,7 +354,9 @@ export async function mountDelivery(bridge, workflow) {
         (run.manifest.template?.name || '\u6807\u51c6 A4')
       : '\u4f7f\u7528\u5df2\u91c7\u7eb3\u6b63\u6587 v' + run.draft.revision;
     outlineList.replaceChildren(
-      ...(run.manifest?.chapters || run.plan.value.outline).map((c) => el('li', c.title)),
+      ...(run.manifest?.chapters || run.plan.value.outline).map((c) =>
+        el('li', c.title),
+      ),
     );
     if (run.settingsChanged)
       checks.prepend(
@@ -332,17 +369,7 @@ export async function mountDelivery(bridge, workflow) {
       '\u4ea4\u4ed8\u524d\u68c0\u67e5 \u00b7 ' +
       (warnings.length + Number(run.settingsChanged)) +
       ' \u9879\u63d0\u793a';
-    const state =
-      run.jobs[0]?.state === 'completed' && !run.stale
-        ? 'complete'
-        : run.jobs.length
-          ? 'active'
-          : 'pending';
-    if (workflow.states.export !== state) {
-      workflow.states.export = state;
-      workflow.emit();
-      if (state === 'complete') void workflow.mark('export', true, false, run.jobs[0].updatedAt);
-    }
+    syncDeliveryWorkflow(workflow, run.jobs, run.stale);
     previous.disabled = !pdf || page <= 1;
     next.disabled = !pdf || page >= pdf.numPages;
   }
@@ -356,7 +383,10 @@ export async function mountDelivery(bridge, workflow) {
     if (seq !== previewSequence) return;
     const first = p.getViewport({ scale: 1 }),
       width = Math.max(240, canvasWrap.clientWidth - 48),
-      scale = zoom.value === 'fit' ? Math.min(1.5, width / first.width) : Number(zoom.value),
+      scale =
+        zoom.value === 'fit'
+          ? Math.min(1.5, width / first.width)
+          : Number(zoom.value),
       view = p.getViewport({ scale }),
       ratio = Math.min(devicePixelRatio || 1, 2);
     canvas.width = Math.round(view.width * ratio);
@@ -395,12 +425,19 @@ export async function mountDelivery(bridge, workflow) {
       pageLabel.textContent = 'PDF / \u5b9e\u9645\u6392\u7248';
       return;
     }
-    const { getDocument, GlobalWorkerOptions } = await import('./vendor-pdf.mjs');
-    GlobalWorkerOptions.workerSrc = new URL('./vendor-pdf-worker.mjs', import.meta.url).href;
+    const { getDocument, GlobalWorkerOptions } =
+      await import('./vendor-pdf.mjs');
+    GlobalWorkerOptions.workerSrc = new URL(
+      './vendor-pdf-worker.mjs',
+      import.meta.url,
+    ).href;
     const id = job.id,
       bytes = (await run.file('pdf')).bytes;
-    const loaded = await getDocument({ data: bytes, isEvalSupported: false, useSystemFonts: true })
-      .promise;
+    const loaded = await getDocument({
+      data: bytes,
+      isEvalSupported: false,
+      useSystemFonts: true,
+    }).promise;
     if (run.selected !== id) {
       await loaded.destroy();
       return;
@@ -419,7 +456,10 @@ export async function mountDelivery(bridge, workflow) {
   }
   function schedule() {
     clearTimeout(timer);
-    if (visible && run.jobs.some((j) => ['queued', 'running'].includes(j.state)))
+    if (
+      visible &&
+      run.jobs.some((j) => ['queued', 'running'].includes(j.state))
+    )
       timer = setTimeout(() => void act(read), 2200);
   }
   async function act(fn) {
@@ -442,7 +482,7 @@ export async function mountDelivery(bridge, workflow) {
     act(async () => {
       await saver.flush();
       await run.create();
-      await workflow.mark('export', false, true);
+      await workflow.mark('export', false, true, run.job.createdAt);
       await read();
     });
   refresh.onclick = () => act(read);
