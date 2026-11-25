@@ -1,5 +1,11 @@
 # 70-workplan - Build plan and batch tracker
 
+Web v0.3.6 / 05ce0bea is live. The accepted workflow correction, continuous
+document surfaces, Tiptap editor and real form-save acceptance are recorded in
+[200-web-design-conformance.md](200-web-design-conformance.md), including retained
+data and protected release evidence. This supersedes the v0.3.2 live checkpoint
+below; the native identity/signing gates remain separate.
+
 Web-first design conformance and continuous document editing are tracked in
 [200-web-design-conformance.md](200-web-design-conformance.md). The owner requires
 accepted Web behavior before desktop adaptation. The separate runtime workflow

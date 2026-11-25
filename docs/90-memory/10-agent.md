@@ -1,5 +1,16 @@
 # Agent entry point
 
+Live 2026-11-26: Web v0.3.6 / 05ce0bea is deployed by protected run
+45699629981. Batch 200 records workflow design, continuous sources/manuscript/PDF,
+local Tiptap chapter supplementation and the corrected Web form sandbox.
+436 tests and exact PR/main gates pass. Actual six-page PDF, zero icon movement,
+editor/dirty-route behavior and source-review form saves pass. Original 101
+documents/eight outputs/14 tasks/two originals remain unchanged. Software demo
+now retains 18 confirmed requirements and an accepted technical outline.
+Its first real generated chapter and a saved rich-text human supplement/history
+are retained; remaining chapter scheduling is paused (one of ten saved).
+Keep the desktop extraction parked and consume accepted shared Web source next.
+
 Active 2026-11-26: batch 200 corrects Web workflow design and adds continuous
 source/manuscript/PDF reading plus locally bundled Tiptap chapter editing.
 The owner requires Web acceptance/deployment first, substantial-phase testing,
