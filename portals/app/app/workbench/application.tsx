@@ -35,6 +35,7 @@ import {
   WorkflowNavigation,
   CompilationSelector,
   CompilationRequirements,
+  useMediaQuery,
   type ProjectCardData,
 } from "@bidproposal/shared/presentation";
 import { ProjectWorkspace } from "./project-workspace";
@@ -171,6 +172,10 @@ function Workspace({ access }: { access: AccessState }) {
     [collapsed, setCollapsed] = useState(false),
     [pending, setPending] = useState(0);
   const [assistantOpen, setAssistantOpen] = useState(false);
+  const compactWorkflow = useMediaQuery("(max-width: 990px)");
+  useEffect(() => {
+    if (compactWorkflow !== undefined) setCollapsed(compactWorkflow);
+  }, [compactWorkflow]);
   const frame = useRef<HTMLIFrameElement>(null);
   const parts = hash.split("/"),
     projectId = parts[0] === "#ws" ? parts[1] : undefined;

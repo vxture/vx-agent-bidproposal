@@ -21,11 +21,12 @@ body.host-navigation button.primary:hover:not(:disabled) { filter: brightness(.9
 body.host-navigation :is(button, input, select, textarea, .chapter-prose):focus-visible { outline: 2px solid var(--ring, #0052d9); outline-offset: 2px; }
 body.host-navigation :is(.muted, .section-label, .eyebrow, .writing-boundary, .writing-maintenance, .reading-notice) { color: var(--muted-foreground, #6b7280); }
 body.host-navigation :is(.writing-hero, .delivery-heading, .reading-hero) { margin: 0 0 var(--space-lg, 24px); }
+body.host-navigation .writing-hero > .section-label { padding: 0; margin: 0 0 var(--space-xs, 8px); }
 body.host-navigation :is(.writing-hero h1, .delivery-heading h1, .reading-hero h1) { font-size: var(--title-lg-font-size, 24px); font-weight: 600; letter-spacing: -.02em; }
 body.host-navigation :is(.writing-hero > p:last-child, .reading-hero > p:last-child) { max-width: 65ch; font-size: var(--body-md-font-size, 14px); line-height: 1.8; }
 body.host-navigation .writing-toolbar { border-color: var(--border, #e5e7eb); gap: var(--space-xs, 8px); padding-block: var(--space-sm, 12px); }
 body.host-navigation .writing-toolbar > strong { color: var(--foreground, #14171f); font-weight: 500; }
-body.host-navigation .writing-status { color: var(--muted-foreground, #6b7280); line-height: 1.8; margin-block: var(--space-sm, 12px) var(--space-lg, 24px); }
+body.host-navigation .writing-status { color: var(--muted-foreground, #6b7280); line-height: 1.8; margin-block: var(--space-xs, 8px) var(--space-md, 16px); }
 body.host-navigation .writing-layout { grid-template-columns: 160px minmax(0, 1fr) 280px; gap: var(--bidproposal-doc-gap); }
 body.host-navigation .writing-studio.is-agent-closed .writing-layout { grid-template-columns: 160px minmax(0, 1fr); }
 body.host-navigation .writing-chapter-nav { top: var(--space-md, 16px); }
@@ -90,6 +91,9 @@ body.host-navigation .delivery-controls { background: var(--card, #fff); border-
 @media (max-width: 600px) {
   body.host-navigation main { padding: var(--space-md, 16px); }
   body.host-navigation .writing-layout, body.host-navigation .writing-studio.is-agent-closed .writing-layout { grid-template-columns: minmax(0, 1fr); }
+  body.host-navigation .writing-hero > p { display: none; }
+  body.host-navigation .writing-hero h1 { margin: 0; font-size: var(--title-md-font-size, 22px); }
+  body.host-navigation .writing-toolbar > strong { width: auto; }
   body.host-navigation .writing-chapter-nav { grid-column: 1; grid-row: 1; position: static; display: flex; overflow: auto; max-height: 115px; padding: 0; }
   body.host-navigation .writing-chapter { flex: 0 0 150px; }
   body.host-navigation .writing-document { grid-column: 1; grid-row: 2; padding: var(--space-md, 16px); }

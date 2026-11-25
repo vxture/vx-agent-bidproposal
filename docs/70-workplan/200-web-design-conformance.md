@@ -66,4 +66,20 @@ Long-document follow-up: scroll pruning also checks pages which crossed the lazy
 observer margin earlier; an observer alone does not keep reporting those pages.
 Visible pages, active rendering and text selections are retained. A focused
 regression covers this case. v0.3.3 was cancelled during image construction,
-before any production deployment; the corrected Web release is v0.3.4.
+before any production deployment.
+
+Authenticated narrow-window review also exposed the old default of opening both
+the 256px workflow and right-hand task overlay, hiding the main surface. The Web
+now follows the prototype's 990px workflow breakpoint and the existing 1280px
+context-overlay breakpoint: narrow windows start with the DS rail and closed
+context. Explicit toggles remain available, and breakpoint changes adapt the
+layout. A shared hydration-safe media hook preserves a single presentation
+source. v0.3.4 was also cancelled before deployment while this was corrected;
+v0.3.5 is the final release candidate for this Web phase.
+
+The shared component fixture at 580px confirms a 48px DS rail, 532px main column
+and initially hidden context; at 1367px the expanded workflow and context leave
+691px for the main surface without horizontal overflow. Small writing windows
+omit redundant introduction text and completed action buttons, keeping the
+manuscript visible earlier. Actual signed-in post-deployment checks remain the
+final acceptance, rather than treating this fixture as customer-data evidence.

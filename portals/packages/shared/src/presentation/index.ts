@@ -8,5 +8,6 @@ export type { AssistantClient } from "./assistant-dock";
 export { WorkflowNavigation } from "./workflow-nav";
 export { CompilationSelector, CompilationRequirements } from "./compilation-controls";
 export { NameDialog } from "./name-dialog";
+export { useMediaQuery } from "./use-media-query";
 export { ResourceCollection, ResourcePreview } from "./resource-collection";
 export type { ResourceCollectionProps, ResourceRequest, ResourceRequestOptions } from "./resource-collection";
