@@ -1,5 +1,12 @@
 # bidproposal - product definition
 
+Current public brand: **Jadera / 瑜章 / 瑜章 · 投标方案智能体**. The public
+origin is `https://jadera.ruyin.work`. The existing commercial product code
+remains `bidproposal`; its target `jadera` migration must preserve the original
+product ID and all commercial associations. See batch 170 for the accepted
+brand/domain configuration and platform handoff. Older product-code references
+below remain valid identity keys, rather than a second product.
+
 ## What bidproposal is
 
 `bidproposal` is the platform's product code for **标书方案智能体 / Proposal Writing

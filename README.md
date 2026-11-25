@@ -1,11 +1,19 @@
-# vx-agent-bidproposal
+# Jadera
 
-Bidproposal is the Proposal Writing Agent, delivered as a Web application and
+Jadera is the Proposal Intelligence Agent, delivered as a Web application and
 a separate RUYIN desktop package. Both consume the original six-stage business
 application and shared project/workflow UI. Runtime adapters supply identity,
 files, persistence, background jobs, review and document layout.
 
-Live Web application: https://bidproposal.ruyin.work/. The current release and
+The registered commercial product code remains `bidproposal` while the target
+code is `jadera`. The Chinese brand and complete display name live in `BRAND`.
+Existing plans, subscriptions and usage must keep their original product ID.
+The live public origin is https://jadera.ruyin.work/. Its registered domain,
+callbacks and product-only runtime origin were switched together after the
+owner authorized one generated-map publication and graceful Nginx reload.
+See docs/70-workplan/170-jadera-brand-domain.md for the staged cutover.
+
+The current release and
 acceptance evidence are in docs/70-workplan/160-dual-surface-release.md. It uses the
 product's own verified session and workspace entitlement, with encrypted durable
 projects and versioned materials on Bid's worker02 volume. RUYIN is a zero-secret

@@ -4,6 +4,21 @@ Start here if you are an AI agent working in this repo.
 
 ## What this repo is
 
+Brand checkpoint, 2026-11-25: the owner selected Jadera / Yuzhang, with the
+complete Chinese name and pen-nib mark in `BRAND`. Opera branding, platform
+PNG, Web/desktop support and staged exact redirect allowlists are saved. A
+controlled owner-authorized database update filled only the existing catalog
+icon URL; original product ID, plans and subscription associations are preserved.
+The commercial code stays `bidproposal`. Domain cutover and supported code
+migration are handed to platform issue #750; dynamic route work is #741. The
+owner subsequently authorized one existing generated-map publication/graceful
+reload. The new origin https://jadera.ruyin.work/ now serves v0.2.7, uses the
+product-only worker02 origin, and recovered the original subscribed workspace,
+six stages and six-page saved output. That one-time worker01 permission is
+exhausted; platform source and further worker01 changes remain excluded.
+Read `docs/70-workplan/170-jadera-brand-domain.md` before the brand release;
+the dated v0.2.7 evidence below remains the production baseline.
+
 Current checkpoint, 2026-11-25: the complete shared Web workbench is live at
 https://bidproposal.ruyin.work/, v0.2.7 / 8a1d9014 (PR #28). Its durable encrypted
 projects, uploaded originals, versioned library and background jobs survived the

@@ -1,7 +1,7 @@
 /** Smoke the production-shaped Web artifact without source, credentials, or live services. */
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
-import { createHmac } from "node:crypto";
+import { createHash, createHmac } from "node:crypto";
 import { once } from "node:events";
 import { cpSync, mkdtempSync, rmSync } from "node:fs";
 import { createServer } from "node:net";
@@ -64,7 +64,15 @@ try {
   const home = await request("/");
   assert.equal(home.status, 200);
   const html = await home.text();
-  assert.match(html, /Bidproposal/);
+  assert.match(html, /Jadera/);
+  const logo = await request("/brand/jadera-logo-512.png");
+  assert.equal(logo.status, 200);
+  assert.match(logo.headers.get("content-type") ?? "", /image\/png/);
+  assert.equal(createHash("sha256").update(Buffer.from(await logo.arrayBuffer())).digest("hex"),
+    "641c330332a30b75382691915a2a64368d641a35db09f2b95daec590bb347eda");
+  const mark = await request("/brand/jadera-logo.svg");
+  assert.equal(mark.status, 200);
+  assert.match(mark.headers.get("content-type") ?? "", /image\/svg\+xml/);
   assert.doesNotMatch(html, /20-SECOND CHALLENGE|entitlement-matrix|\/api\/game/);
   for (const path of ["/challenge", "/chat", "/platform-check", "/entitlement-matrix",
     "/api/game", "/api/chat", "/api/platform-check"]) {
@@ -75,7 +83,9 @@ try {
   const contractUrl = "/api/products/bidproposal/contract";
   const contract = await request(contractUrl);
   assert.equal(contract.status, 200);
-  assert.match(await contract.text(), /\n  id: bidproposal\n/);
+  const contractBody = await contract.text();
+  assert.match(contractBody, /\n  id: bidproposal\n/);
+  assert.match(contractBody, /\u745c\u7ae0/);
   const etag = contract.headers.get("etag");
   assert.ok(etag);
   assert.equal((await request(contractUrl, { headers: { "if-none-match": etag } })).status, 304);
@@ -100,7 +110,7 @@ try {
   assert.equal((await request(webhook, { method: "POST", headers, body: body + " " })).status, 401);
   assert.equal((await request(webhook, { method: "POST", headers: { ...headers, "x-vxture-delivery": "other" }, body })).status, 400);
   assert.equal((await request(webhook, { method: "POST", body: " ".repeat(64 * 1024 + 1) })).status, 413);
-  console.log("Bidproposal standalone release smoke passed");
+  console.log("Jadera standalone release smoke passed");
 } finally {
   if (child && child.exitCode === null && child.signalCode === null) {
     const exited = once(child, "exit");
