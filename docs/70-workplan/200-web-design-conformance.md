@@ -358,3 +358,31 @@ no short organization name or workspace-wide resource balance; name falls back
 to full text and balances explicitly remain unavailable, never product quotas
 or fabricated amounts. Actual browser geometry is not yet verified because the
 browser connection is unavailable; DOM interaction checks are narrower.
+
+
+## v0.3.9 production verification 2026-11-26
+
+PR #49 merged as 9c903bd3384107afa149a8b096561e6a184484fe. All five required
+checks and Sonar passed on that exact main source. Protected release run
+45787181703 succeeded; public health/readiness report v0.3.9 / 9c903bd3.
+Image digest matches in GHCR and ACR:
+`sha256:ceb4f9d3e097b8d64e621c1c9c27b18f2019c589a6c93b33ece9734b0d77eb03`.
+The isolated image starts, preserves the approved logo, and refuses anonymous
+reads/PATCH. App-only Compose preflight passed before environment approval.
+
+Encrypted rollback snapshot:
+`/srv/md0/bidproposal/backups/jadera-b7-v039-20261126T085027Z`.
+Post-release comparison against that snapshot confirms four retained projects,
+179 product documents, 18 task instances and six source references unchanged.
+The 12 library entries retain IDs, names, categories, versions and reading
+states (six knowledge, six templates). Environment/master key and DB/Redis
+container IDs are unchanged. Existing editor/document assets and the new
+framework artifact markers pass. No data imports, platform edits or DDL.
+
+Validation: all workspace type checks, 441 existing tests, docs numbering and
+diff hygiene pass. DOM tests open scope/avatar panels, verify the two links
+and profile identity, inline search autofocus/Escape focus restoration, main
+content and task-panel opening without render errors. This is not pixel,
+hover, zoom or real-account browser acceptance; browser connection remains
+unavailable. Organization shorthand and real workspace resource data still
+require a platform-provided display contract, not guessed client values.
