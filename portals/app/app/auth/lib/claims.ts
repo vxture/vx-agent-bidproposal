@@ -60,6 +60,8 @@ export interface AccessClaims {
   active_org?: string;
   active_org_type?: string;
   active_org_name?: string;
+  active_org_display_name?: string;
+  active_org_logo_url?: string;
   active_workspace?: string;
   active_workspace_name?: string;
   roles?: string[];
@@ -71,6 +73,8 @@ export interface AuthUser {
   activeOrg: string | null;
   activeOrgType: string | null; // "personal" | "organization"
   activeOrgName: string | null; // human label; the id is an internal key
+  activeOrgDisplayName?: string | null;
+  activeOrgLogoUrl?: string | null;
   activeWorkspace: string | null;
   activeWorkspaceName: string | null; // ditto - what a UI is allowed to show
   roles: string[]; // raw scope-prefixed, as issued
@@ -139,6 +143,8 @@ export function toAuthUser(claims: AccessClaims): AuthUser {
     activeOrg: claims.active_org ?? null,
     activeOrgType: claims.active_org_type ?? null,
     activeOrgName: claims.active_org_name ?? null,
+    activeOrgDisplayName: typeof claims.active_org_display_name === "string" ? claims.active_org_display_name.trim().slice(0, 200) || null : null,
+    activeOrgLogoUrl: publicImageUrl(claims.active_org_logo_url),
     activeWorkspace: claims.active_workspace ?? null,
     activeWorkspaceName: claims.active_workspace_name ?? null,
     roles,
@@ -146,4 +152,12 @@ export function toAuthUser(claims: AccessClaims): AuthUser {
     canManage: canManageWorkspace(roles),
     isWorkspaceOwner: isWorkspaceOwner(roles),
   };
+}
+
+function publicImageUrl(value: unknown): string | null {
+  if (typeof value !== "string" || value.length > 2048) return null;
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" && !url.username && !url.password ? url.href : null;
+  } catch { return null; }
 }

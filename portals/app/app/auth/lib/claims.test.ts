@@ -105,6 +105,17 @@ test("toAuthUser tolerates missing roles/context", () => {
   assert.equal(user.activeWorkspace, null);
 });
 
+test("organization short name and HTTPS logo are display-only authority claims", () => {
+  const user = toAuthUser({ sub: "usr_x", active_org_name: "Acme Incorporated", active_org_display_name: " Acme ", active_org_logo_url: "https://accounts.example/org/logo.png", roles: ["workspace:member"] });
+  assert.equal(user.activeOrgName, "Acme Incorporated");
+  assert.equal(user.activeOrgDisplayName, "Acme");
+  assert.equal(user.activeOrgLogoUrl, "https://accounts.example/org/logo.png");
+  assert.equal(user.canManage, false);
+  for (const url of ["javascript:alert(1)", "http://example/logo", "https://user:pass@example/logo"]) {
+    assert.equal(toAuthUser({ sub: "usr_x", active_org_logo_url: url }).activeOrgLogoUrl, null);
+  }
+});
+
 test("toAuthUser carries the human names beside the ids", () => {
   const user = toAuthUser({
     sub: "usr_abc",

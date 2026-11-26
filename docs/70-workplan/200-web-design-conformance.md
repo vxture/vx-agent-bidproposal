@@ -386,3 +386,24 @@ content and task-panel opening without render errors. This is not pixel,
 hover, zoom or real-account browser acceptance; browser connection remains
 unavailable. Organization shorthand and real workspace resource data still
 require a platform-provided display contract, not guessed client values.
+
+
+## Header account correction 2026-11-26
+
+Owner review identified six remaining defects after v0.3.9. Existing platform
+claims active_org_display_name and active_org_logo_url were missed by Jadera;
+consume them as display-only fields, preserve the full name in the popup and
+reject unsafe logo URLs. Header short name is 14px foreground; workspace is
+12px muted with enough trigger width. Remove the unrequested workspace/rights
+link. Restore DS control typography by removing the legacy unlayered global
+font-size inheritance, and use the DS-sized system/small/large labels. Add
+account selection through the existing login flow with prompt=select_account.
+Application-center destination follows the verified CoSpace implementation.
+
+Workspace totals exist behind the Console RP quota-usage endpoint, not a
+product-callable S2S contract. Owner authorizes issues only, no platform code/
+configuration changes. Platform issue #751 tracks the missing authorized read:
+https://github.com/vxture-platform/vxture-platform/issues/751 . Resource values
+remain unavailable until that contract is delivered; do not substitute C2
+product-specific pool projections. This corrects the earlier overbroad claim
+that the platform lacked display fields or resource computation entirely.
