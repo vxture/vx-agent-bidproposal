@@ -2,6 +2,7 @@
 import { ArrowsClockwise } from "@phosphor-icons/react";
 import React, { useMemo, useState, type ReactNode } from "react";
 import {
+  ContentWidthContainer,
   Button,
   Input,
   InputGroup,
@@ -22,6 +23,7 @@ import {
 } from "@vxture/design-system";
 import { workflowStageIcons } from "./workflow-icons";
 import { WorkspaceHeadline } from "./workspace-headline";
+import { XiaoyuAvatar } from "./xiaoyu-identity";
 
 export interface ProjectRecord {
   stage: string;
@@ -40,7 +42,10 @@ export interface ProjectCardData {
   productId: string;
   record?: ProjectRecord;
   versionLabel?: string;
-  owner?: { name: string };
+  owner?: { id?: string; name: string };
+  creator?: { id?: string; name: string };
+  /** Host-supplied live execution state; never inferred from workflow stage. */
+  backgroundTaskRunning?: boolean;
 }
 const date = (value: string) => {
   const parsed = Date.parse(value);
@@ -77,8 +82,10 @@ function ProjectCard({
         : record
           ? "running"
           : "pending";
+  const executing = project.backgroundTaskRunning === true && !project.archivedAt;
+  const stage = record?.stage || "\u540e\u53f0\u6267\u884c";
   return (
-    <Card className={"jadera-project-card " + tone}>
+    <Card className={"jadera-project-card " + tone} data-executing={executing || undefined}>
       <Button
         variant="ghost"
         className="jadera-project-card-button"
@@ -91,6 +98,26 @@ function ProjectCard({
           {current && <small>{"\u5f53\u524d\u9879\u76ee"}</small>}
         </span>
         <strong title={project.name}>{project.name}</strong>
+        <span className="jadera-project-summary-row">
+        <span className="jadera-project-owner">
+          <Icon name="user" size="xs" />
+          <span title={project.owner?.name || project.creator?.name}>{project.owner?.name || project.creator?.name || "\u8d1f\u8d23\u4eba\u5f85\u8865\u5f55"}</span>
+        </span>
+        <span className="jadera-project-assistant">
+          <XiaoyuAvatar running={executing} />
+          <span>{"\u5c0f\u745c"}</span>
+          <span className="jadera-project-status" role={executing ? "status" : undefined}>
+          {executing ? "\u5de5\u4f5c\u4e2d" : project.archivedAt
+            ? "\u53ef\u67e5\u770b\u4e0e\u5bfc\u51fa"
+            : record?.complete
+              ? "\u6709\u5b8c\u6210\u8bb0\u5f55"
+              : record
+                ? "\u5df2\u6709\u5de5\u4f5c\u8bb0\u5f55"
+                : "\u5f85\u5f00\u59cb\u7f16\u5236"}
+          </span>
+          {executing && <span className="jadera-background-task" aria-label={"\u540e\u53f0\u6267\u884c\u4efb\u52a1"}><ArrowsClockwise size={16} aria-hidden="true" /></span>}
+        </span>
+        </span>
         <span className="jadera-project-stage">
           <span>
             {record && !project.archivedAt && workflowStageIcons[record.stageIndex] && (
@@ -98,10 +125,12 @@ function ProjectCard({
             )}
             {project.archivedAt
               ? "\u5df2\u5f52\u6863"
-              : record?.stage || "\u5c1a\u65e0\u6d41\u7a0b\u8bb0\u5f55"}
+              : executing
+                ? stage.replace(/[\u4e2d\u2026.\s]+$/, "") + "\u4e2d\u2026"
+                : record?.stage || "\u5c1a\u65e0\u6d41\u7a0b\u8bb0\u5f55"}
           </span>
           {record && (
-            <small>{Math.round((record.completed / 6) * 100)}%</small>
+            <small className="jadera-project-percent">{Math.round((record.completed / 6) * 100)}%</small>
           )}
           {!record && <small>{"\u2014"}</small>}
         </span>
@@ -118,21 +147,6 @@ function ProjectCard({
               }
             />
           ))}
-        </span>
-        <span className="jadera-project-summary-row">
-        <span className="jadera-project-owner">
-          <Icon name="user" size="xs" />
-          <span title={project.owner?.name}>{project.owner?.name || "\u672a\u6307\u5b9a\u8d1f\u8d23\u4eba"}</span>
-        </span>
-        <span className="jadera-project-status">
-          {project.archivedAt
-            ? "\u53ef\u67e5\u770b\u4e0e\u5bfc\u51fa"
-            : record?.complete
-              ? "\u6709\u5b8c\u6210\u8bb0\u5f55"
-              : record
-                ? "\u5df2\u6709\u5de5\u4f5c\u8bb0\u5f55"
-                : "\u5f85\u5f00\u59cb\u7f16\u5236"}
-        </span>
         </span>
         <span className="jadera-project-card-foot">
           <time dateTime={record?.recordedAt || project.createdAt}>
@@ -222,7 +236,7 @@ export function ProjectCollection({
   };
   return (
     <main className="jadera-home-scroll">
-      <div className="jadera-home-wrap">
+      <ContentWidthContainer className="jadera-home-wrap">
         {catalog ? (
           <header className="jadera-collection-heading">
             <div>
@@ -235,6 +249,7 @@ export function ProjectCollection({
               </p>
             </div>
             <Button
+              size="xl"
               disabled={state !== "ready"}
               onClick={() => setCreating(true)}
             >
@@ -254,6 +269,7 @@ export function ProjectCollection({
               </p>
               <div className="jadera-home-actions">
                 <Button
+                  size="xl"
                   disabled={state !== "ready"}
                   onClick={() => setCreating(true)}
                 >
@@ -261,7 +277,7 @@ export function ProjectCollection({
                   {"\u65b0\u5efa\u6807\u4e66"}
                 </Button>
                 {onContinue && (
-                  <Button variant="outline" onClick={onContinue}>
+                  <Button size="xl" variant="outline" onClick={onContinue}>
                     <Icon name="arrow-right" size="sm" />
                     {"\u7ee7\u7eed\u5f53\u524d\u9879\u76ee"}
                   </Button>
@@ -466,7 +482,7 @@ export function ProjectCollection({
           </section>
         )}
         {!catalog && resources}
-      </div>
+      </ContentWidthContainer>
     </main>
   );
 }

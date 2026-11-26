@@ -15,6 +15,7 @@ import {
   Textarea,
 } from "@vxture/design-system";
 import type { AssistantConversation } from "../assistant";
+import { XiaoyuAvatar } from "./xiaoyu-identity";
 import { usePanelFocus } from "./use-panel-focus";
 export interface AssistantClient {
   list: () => Promise<Omit<AssistantConversation, "messages">[]>;
@@ -192,8 +193,8 @@ export function AssistantDock({
     >
       <header className="jadera-dock-header">
         <div className="jadera-ai-title">
-          <Icon name="sparkles" size="md" />
-          <strong>{"\u745c\u7ae0"}</strong>
+          <XiaoyuAvatar running={busy || conversation?.state === "running"} />
+          <strong>{"\u5c0f\u745c"}</strong>
           <span>{"\u9010\u9879\u786e\u8ba4"}</span>
         </div>
         <div className="jadera-dock-actions">
@@ -277,7 +278,7 @@ export function AssistantDock({
         {!conversation?.messages.length ? (
           <div className="jadera-ai-greeting">
             <div>
-              <Icon name="sparkles" size="2xl" />
+              <XiaoyuAvatar size={32} />
             </div>
             <h2>
               {"\u6211\u4eec\u4ece\u54ea\u4efd\u6807\u4e66\u5f00\u59cb\uff1f"}
@@ -295,7 +296,7 @@ export function AssistantDock({
         ) : (
           conversation.messages.map((message, i) => (
             <article key={i} className={"jadera-ai-message " + message.role}>
-              <span>{message.role === "user" ? "\u4f60" : "\u745c\u7ae0"}</span>
+              <span>{message.role === "user" ? "\u4f60" : <XiaoyuAvatar />}</span>
               <div>{message.content}</div>
             </article>
           ))

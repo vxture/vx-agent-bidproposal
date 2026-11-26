@@ -17,6 +17,15 @@ function fakeJwt(payload: Record<string, unknown>): string {
   return `${b64({ alg: "RS256" })}.${b64(payload)}.sig`;
 }
 
+test("phone and real identity remain independent and unknown identity is not unverified", () => {
+  const profile = profileFromClaims({ phone_number: "+8618092907523", real_name_verified: false });
+  assert.equal(profile.phone, "+8618092907523");
+  assert.equal(profile.realNameVerified, false);
+  assert.equal(profileFromClaims({ phone_number_verified: true }).realNameVerified, undefined);
+  assert.equal(mergeProfile(EMPTY_PROFILE, profile).phone, profile.phone);
+  assert.equal(mergeProfile(EMPTY_PROFILE, profile).realNameVerified, false);
+});
+
 test("profileFromIdToken reads display claims, name first", () => {
   const p = profileFromIdToken(
     fakeJwt({ sub: "usr_1", name: "Ada L", nickname: "ada", picture: "https://a/img.png", email: "ada@x.com" }),
@@ -151,7 +160,15 @@ test("mergeProfile fills holes without overwriting what the token already had", 
 });
 
 test("profileIsComplete gates the UserInfo call", () => {
-  assert.equal(profileIsComplete({ displayName: "Ada", picture: "p", email: "e" }), true);
+  assert.equal(profileIsComplete({ displayName: "Ada", picture: "p", email: "e", phone: "+8618092907523" }), true);
   assert.equal(profileIsComplete({ displayName: "Ada", picture: null, email: "e" }), false);
   assert.equal(profileIsComplete(EMPTY_PROFILE), false);
+});
+
+test("profile preserves account separately from display name and contact email", () => {
+  const profile = profileFromClaims({ name: "Ada Lovelace", preferred_username: "ada", email: "ada@example.com" });
+  assert.equal(profile.displayName, "Ada Lovelace");
+  assert.equal(profile.account, "ada");
+  assert.equal(profile.email, "ada@example.com");
+  assert.equal(mergeProfile({ displayName: "Ada", email: null, picture: null }, profile).account, "ada");
 });

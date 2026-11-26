@@ -117,6 +117,49 @@ async function call(
   return service.run(a, () => dispatch(service, a, path, request));
 }
 
+test("creator is durable default owner and legacy assignment never overwrites ownership", async () => {
+  const root = mkdtempSync(join(tmpdir(), "bid-owner-"));
+  let service = make(root);
+  try {
+    const project = await service.run(access(), () => service.create("Owned bid", access().entitlement, "Stone Smoker"));
+    assert.equal(project.owner.id, principal.sub);
+    assert.equal(project.owner.name, "Stone Smoker");
+    service.close();
+    service = make(root);
+    await service.run(access(), async () => {
+      await service.claimLegacyProjects([project.id], "Another name");
+      assert.equal((await service.listProjects())[0]!.owner?.name, "Stone Smoker");
+    });
+  } finally { service.close(); rmSync(root, { recursive: true, force: true }); }
+});
+
+test("project activity excludes waiting and terminal states and includes each execution source", async () => {
+  const states = { task: "waiting_human", job: "paused", render: "queued", reading: "completed" };
+  const host = {
+    runtime: { listTaskInstances: async () => [{ state: states.task }] },
+    jobs: { list: () => [{ state: states.job }] },
+    renders: { list: () => [{ state: states.render }] },
+    readings: { list: () => [{ state: states.reading }] },
+  } as unknown as BidRuntime;
+  const running = () => BidRuntime.prototype.backgroundTaskRunning.call(host, "project-a");
+  assert.equal(await running(), false);
+  for (const task of ["created", "waiting_human", "suspended", "completed", "failed", "cancelled"]) {
+    states.task = task;
+    assert.equal(await running(), false, task);
+  }
+  for (const task of ["selecting", "executing", "verifying", "finalizing"]) {
+    states.task = task;
+    assert.equal(await running(), true, task);
+  }
+  states.task = "completed";
+  for (const source of ["job", "render", "reading"] as const) {
+    const previous = states[source];
+    states[source] = "running";
+    assert.equal(await running(), true, source);
+    states[source] = previous;
+  }
+});
+
 test("compilation versions preserve V01, isolate plans and documents, and count one logical proposal after reopen", async () => {
   const root = mkdtempSync(join(tmpdir(), "bid-versions-"));
   let service = make(root);

@@ -1,13 +1,16 @@
 "use client";
 
 import { Button } from "@vxture/design-system";
+import { XiaoyuAvatar } from "./xiaoyu-identity";
 
 /** A host-supplied image and callback keep this entry usable on both surfaces. */
 export function HomeCompanion({
   imageSrc,
+  running = false,
   onOpen,
 }: {
-  imageSrc: string;
+  imageSrc?: string;
+  running?: boolean;
   onOpen: () => void;
 }) {
   return (
@@ -26,7 +29,7 @@ export function HomeCompanion({
           "AI \u7f16\u6807\u642d\u6863\uff0c\u6253\u5f00 AI \u52a9\u624b"
         }
       >
-        <img src={imageSrc} alt="" />
+        {imageSrc ? <img src={imageSrc} alt="" /> : <XiaoyuAvatar size={32} running={running} />}
         <span>
           <small>{"AI \u7f16\u6807\u642d\u6863"}</small>
           <strong>

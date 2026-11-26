@@ -1,7 +1,11 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { ThemeProvider, themeBootstrapScript } from "@vxture/design-system";
+import {
+  ContentWidthProvider,
+  ThemeProvider,
+  themeBootstrapScript,
+} from "@vxture/design-system";
 
 // The single client boundary through which server components reach the design
 // system.
@@ -81,7 +85,9 @@ export function AppTheme({ children }: { children: ReactNode }) {
   return (
     <>
       <script dangerouslySetInnerHTML={{ __html: themeBootstrapScript }} />
-      <ThemeProvider defaultMode="system">{children}</ThemeProvider>
+      <ThemeProvider defaultMode="system">
+        <ContentWidthProvider>{children}</ContentWidthProvider>
+      </ThemeProvider>
     </>
   );
 }

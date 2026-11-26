@@ -242,6 +242,7 @@ function Workspace({ access }: { access: AccessState }) {
                 id: string;
                 label: string;
                 record?: ProjectCardData["record"];
+                backgroundTaskRunning?: boolean;
               }[];
             };
           let selected = project.id;
@@ -260,6 +261,7 @@ function Workspace({ access }: { access: AccessState }) {
                 ...project,
                 record: version.record,
                 versionLabel: version.label,
+                backgroundTaskRunning: version.backgroundTaskRunning,
               }
             : project;
         }),
@@ -296,6 +298,17 @@ function Workspace({ access }: { access: AccessState }) {
   }, []);
   useEffect(() => {
     void reload();
+  }, [reload, projectId]);
+  useEffect(() => {
+    if (projectId) return;
+    let stopped = false;
+    let timer: ReturnType<typeof setTimeout>;
+    const refresh = async () => {
+      if (document.visibilityState === "visible") await reload();
+      if (!stopped) timer = setTimeout(refresh, 5000);
+    };
+    timer = setTimeout(refresh, 5000);
+    return () => { stopped = true; clearTimeout(timer); };
   }, [reload, projectId]);
   useEffect(() => {
     setItems(initialNavigation);
@@ -503,7 +516,7 @@ function Workspace({ access }: { access: AccessState }) {
   return (
     <div
       ref={shellRegion.ref}
-      data-page-width={projectId ? "1920" : "1536"}
+      data-page-width="preferred"
       className={`bid-workbench ${displayFont.variable} ${textFont.variable}`}
       id="jadera-application"
     >
@@ -514,8 +527,13 @@ function Workspace({ access }: { access: AccessState }) {
             identity={{
               name: displayNameFor(user, "\u5f53\u524d\u8d26\u53f7"),
               email: user?.email || undefined,
+              account: user?.account || undefined,
+              phone: user?.phone,
+              realNameVerified: user?.realNameVerified,
               avatarSrc: user?.picture || undefined,
               organization: user?.activeOrgName || undefined,
+              organizationId: user?.activeOrg || undefined,
+              workspaceId: user?.activeWorkspace || undefined,
               organizationShortName: user?.activeOrgDisplayName || undefined,
               organizationLogoSrc: user?.activeOrgLogoUrl || undefined,
               workspace: user?.activeWorkspaceName || undefined,
@@ -526,6 +544,7 @@ function Workspace({ access }: { access: AccessState }) {
             onNavigate={headerNavigate}
             onSignOut={signOut}
             onAssistant={assistant}
+            assistantRunning={projects.some((project) => project.backgroundTaskRunning && !project.archivedAt)}
             search={<WorkspaceSearch open={searchOpen} onOpen={() => setSearchOpen(true)} onClose={() => setSearchOpen(false)} projects={projects} onNavigate={navigate} />}
           />
         }
@@ -753,7 +772,7 @@ function Workspace({ access }: { access: AccessState }) {
                 }
                 companion={
                   <HomeCompanion
-                    imageSrc="/brand/jadera-companion.svg"
+                    running={projects.some((project) => project.backgroundTaskRunning && !project.archivedAt)}
                     onOpen={assistant}
                   />
                 }

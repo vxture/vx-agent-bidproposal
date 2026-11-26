@@ -58,7 +58,7 @@ export async function GET(): Promise<Response> {
   // Reuse this already-resolved session; a parallel /auth/session could race
   // the rotating refresh token. Profile failures do not change authorization.
   const profile = await resolveDisplayProfile(cfg, rpsid, context).catch(() => null);
-  const displayUser = { ...user, displayName: profile?.displayName ?? null, email: profile?.email ?? null, picture: profile?.picture ?? null };
+  const displayUser = { ...user, displayName: profile?.displayName ?? null, email: profile?.email ?? null, picture: profile?.picture ?? null, account: profile?.account ?? null };
 
   // Signed in, but the session carries no workspace to scope entitlement to.
   // Nothing to resolve, and re-authenticating will not add one.

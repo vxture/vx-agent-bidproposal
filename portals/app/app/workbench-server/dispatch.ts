@@ -238,24 +238,26 @@ export async function dispatch(
   if (segments[0] === "projects" && segments.length === 1) {
     if (method === "GET")
       return json({
-        items: (await service.listProjects()).map((project) => ({
+        items: await Promise.all((await service.listProjects()).map(async (project) => ({
           ...project,
+          backgroundTaskRunning: await service.backgroundTaskRunning(project.id),
           record: projectRecord(
             service.documents.get(project.id, "bidproposal", "bid_workflow")
               ?.markdown,
           ),
-          compilationRecords: service.compilations
+          compilationRecords: await Promise.all((service.compilations
             .group(project.id)
-            ?.items.filter((item) => item.state === "ready")
-            .map((item) => ({
+            ?.items.filter((item) => item.state === "ready") || [])
+            .map(async (item) => ({
               id: item.id,
               label: item.label,
+              backgroundTaskRunning: await service.backgroundTaskRunning(item.id),
               record: projectRecord(
                 service.documents.get(item.id, "bidproposal", "bid_workflow")
                   ?.markdown,
               ),
-            })),
-        })),
+            }))),
+        }))),
         elsewhere: 0,
       });
     if (method === "POST") {
@@ -263,7 +265,7 @@ export async function dispatch(
       if (body.product !== undefined && body.product !== "bidproposal")
         return missing();
       return json(
-        await service.create(text(body, "name"), access.entitlement),
+        await service.create(text(body, "name"), access.entitlement, access.principal.displayName),
         201,
       );
     }

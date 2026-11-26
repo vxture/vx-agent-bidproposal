@@ -566,8 +566,32 @@ export class BidRuntime {
       .filter((project) => !hidden.has(project.id))
       .map((project) => ({
         ...project,
+        ...this.projectResponsibility(project.id),
         name: this.compilations.group(project.id)?.projectName ?? project.name,
       }));
+  }
+  private projectResponsibility(id: string): { creator?: { id: string; name: string }; owner?: { id: string; name: string } } {
+    const saved = this.documents.get(id, "bidproposal", "runtime_project_responsibility");
+    return saved ? JSON.parse(saved.markdown) : {};
+  }
+  /** Explicit legacy backfill: never performed as a side effect of viewing. */
+  async claimLegacyProjects(ids: string[], name: string) {
+    return this.serial(async () => {
+      const principal = this.principal.getStore();
+      if (!principal) throw new WorkbenchError(403, "SCOPE_REQUIRED", "Signed-in identity required");
+      const projects = await this.listProjects();
+      for (const id of ids) {
+        if (!projects.some((project) => project.id === id))
+          throw new WorkbenchError(404, "NOT_FOUND", "Project unavailable");
+      }
+      for (const id of ids) {
+        const saved = this.projectResponsibility(id);
+        if (saved.owner || saved.creator) continue;
+        const value = { owner: { id: principal.sub, name: name.trim() || "\u9879\u76ee\u8d1f\u8d23\u4eba" } };
+        this.documents.put(id, "bidproposal", "runtime_project_responsibility", JSON.stringify(value), 0);
+      }
+      return this.listProjects();
+    });
   }
   async renameCompilation(id: string, body: Record<string, unknown>) {
     return this.serial(async () => {
@@ -656,6 +680,16 @@ export class BidRuntime {
     });
     return { revision: next.revision, value };
   }
+  async backgroundTaskRunning(id: string) {
+    return (
+      (await this.runtime.listTaskInstances(id)).some((task) =>
+        ["selecting", "executing", "verifying", "finalizing"].includes(task.state),
+      ) ||
+      this.jobs.list(id, "bidproposal").some((job) => job.state === "running") ||
+      this.renders.list(id, "bidproposal").some((job) => job.state === "running") ||
+      this.readings.list(id, "bidproposal").some((job) => job.state === "running")
+    );
+  }
   private async compilationBusy(id: string) {
     return (
       (await this.runtime.listTaskInstances(id)).some(
@@ -696,8 +730,10 @@ export class BidRuntime {
         : this.runtime.archiveProject(rootId);
     });
   }
-  async create(name: string, entitlement: Entitlement) {
+  async create(name: string, entitlement: Entitlement, creatorName = "\u9879\u76ee\u521b\u5efa\u4eba") {
     return this.serial(async () => {
+      const principal = this.principal.getStore();
+      if (!principal) throw new WorkbenchError(403, "SCOPE_REQUIRED", "Signed-in identity required");
       if (typeof name !== "string" || !name.trim() || name.trim().length > 120)
         throw new WorkbenchError(
           400,
@@ -715,11 +751,15 @@ export class BidRuntime {
           "PROPOSAL_LIMIT",
           "The workspace proposal limit has been reached",
         );
-      return this.runtime.createProject(
+      const project = await this.runtime.createProject(
         this.contract,
         name.trim(),
         this.workspaceId,
       );
+      const creator = { id: principal.sub, name: creatorName.trim() || "\u9879\u76ee\u521b\u5efa\u4eba" };
+      if (!this.documents.put(project.id, "bidproposal", "runtime_project_responsibility", JSON.stringify({ creator, owner: creator }), 0))
+        throw new WorkbenchError(409, "OWNER_CONFLICT", "Project responsibility could not be saved");
+      return { ...project, creator, owner: creator };
     });
   }
 

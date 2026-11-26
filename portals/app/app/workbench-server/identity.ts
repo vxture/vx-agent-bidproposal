@@ -8,6 +8,7 @@
 import { createHash } from "node:crypto";
 import { getOidcConfig } from "../auth/lib/config";
 import { getAuthContext } from "../auth/lib/session";
+import { resolveDisplayProfile } from "../auth/lib/profile";
 import {
   resolveCapabilityCaller,
   isRefusal,
@@ -30,6 +31,7 @@ export class WorkbenchError extends Error {
   }
 }
 export interface Principal {
+  displayName?: string;
   sessionId: string;
   sub: string;
   orgId: string;
@@ -124,11 +126,21 @@ export async function authorizeWorkbench(
       "SCOPE_REQUIRED",
       "Select an organization and workspace",
     );
+  let displayName: string | undefined;
+  if (method === "POST") {
+    const cfg = getOidcConfig();
+    const context = await getAuthContext(cfg, sessionId);
+    if (!context || context.user.sub !== caller.sub)
+      throw new WorkbenchError(401, "AUTH_REQUIRED", "Sign in again");
+    const profile = await resolveDisplayProfile(cfg, sessionId, context);
+    displayName = profile.displayName || profile.account || undefined;
+  }
   const principal = {
     sessionId,
     sub: caller.sub,
     orgId: caller.orgId,
     workspaceId: caller.workspaceId,
+    ...(displayName ? { displayName } : {}),
   };
   return {
     principal,

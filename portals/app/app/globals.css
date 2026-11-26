@@ -297,7 +297,7 @@ select:not([data-slot]) {
   background: var(--accent);
   color: var(--primary-text);
   font-weight: 700;
-  font-size: var(--label-sm-font-size);
+  font-size: var(--label-small-font-size);
   letter-spacing: 0.06em;
   text-transform: uppercase;
   text-align: left;
@@ -347,7 +347,7 @@ select:not([data-slot]) {
   border-radius: 999px;
   background: var(--background);
   padding: 0.28rem 0.75rem 0.28rem 0.85rem;
-  font-size: var(--label-sm-font-size);
+  font-size: var(--label-small-font-size);
   color: var(--foreground);
 }
 .pill-select .pill-label {

@@ -76,7 +76,7 @@ export default function StatusPage() {
     <main className="page">
       <div className="eyebrow">Verification surface</div>
       <Section
-        level={1}
+        level={2}
         title="Integration status"
         description={<span className="block max-w-[62ch]">Non-secret config presence + live channel probes across every platform-integration surface.</span>}
       >

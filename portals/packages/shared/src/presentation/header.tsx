@@ -1,6 +1,7 @@
 "use client";
 /** Host-independent product chrome. Identity and navigation are supplied by the host. */
 import { useState, type ReactNode } from "react";
+import { parsePhoneNumberFromString } from "libphonenumber-js";
 import {
   Button,
   Icon,
@@ -9,18 +10,21 @@ import {
   PopoverContent,
   ShellHeader,
   ShellIconButton,
+  ShellAgentButton,
   ShellIconGroup,
   ShellScopeButton,
   ShellPanelContent,
-  ShellPanelHeader,
-  ShellPanelSection,
   ShellPanelRow,
   ShellUserMenu,
-  ShellPreferencePanel,
   ShellThemeToggle,
   ShellFullscreenToggle,
   useTheme,
 } from "@vxture/design-system";
+
+import { ProductOrganizationPanel } from "./organization-panel";
+import type { ProductScopeOption } from "./organization-panel";
+import { ProductPreferences } from "./preferences";
+import type { WorkspaceResourceUsage } from "./resource-meter";
 
 const navigation = [
   ["home", "\u9996\u9875"],
@@ -28,15 +32,33 @@ const navigation = [
   ["knowledge", "\u77e5\u8bc6\u8d44\u6599"],
   ["templates", "\u6a21\u677f\u7ba1\u7406"],
 ] as const;
+function phoneParts(raw: string) {
+  const phone = parsePhoneNumberFromString(raw.trim().replace(/^00(?=\d)/, "+"), "CN");
+  if (!phone?.isValid()) return { number: raw };
+  const national = String(phone.nationalNumber);
+  return {
+    callingCode: "+" + phone.countryCallingCode,
+    number: phone.countryCallingCode === "86" && /^1\d{10}$/.test(national)
+      ? national.slice(0, 3) + " " + national.slice(3, 7) + " " + national.slice(7)
+      : phone.formatInternational().slice(phone.countryCallingCode.length + 2),
+  };
+}
 export interface HeaderIdentity {
+  phone?: string;
+  realNameVerified?: boolean;
   name: string;
   organization?: string;
   organizationShortName?: string;
   organizationLogoSrc?: string;
   workspace?: string;
   email?: string;
+  account?: string;
   avatarSrc?: string;
   personal?: boolean;
+  resources?: WorkspaceResourceUsage;
+  organizationId?: string;
+  workspaceId?: string;
+  scopeOptions?: ProductScopeOption[];
 }
 export function ApplicationHeader({
   brand,
@@ -45,6 +67,7 @@ export function ApplicationHeader({
   onNavigate,
   onSignOut,
   onAssistant,
+  assistantRunning = false,
   search,
 }: {
   brand: ReactNode;
@@ -54,6 +77,7 @@ export function ApplicationHeader({
   onNavigate: (page: string) => void;
   onSignOut: () => void;
   onAssistant: () => void;
+  assistantRunning?: boolean;
   search?: ReactNode;
 }) {
   const [launcher, setLauncher] = useState(false),
@@ -190,51 +214,7 @@ export function ApplicationHeader({
               />
             </PopoverTrigger>
             <ShellPanelContent align="start" aria-label={"\u7ec4\u7ec7\u4e0e\u5de5\u4f5c\u7a7a\u95f4"}>
-              <ShellPanelHeader
-                className="jadera-organization-identity"
-                icon="buildings"
-                avatarSrc={identity.organizationLogoSrc}
-                avatarAlt={identity.organization}
-                title={identity.organization || identity.name}
-                titleAside={<span className="jadera-scope-type">{identity.personal ? "\u4e2a\u4eba\u79df\u6237" : "\u7ec4\u7ec7\u79df\u6237"}</span>}
-                metaRows={[
-                  ...(identity.workspace
-                    ? [{ key: "workspace", content: identity.workspace }]
-                    : []),
-                ]}
-              />
-              <ShellPanelSection title={"\u8d44\u6e90"}>
-                <ShellPanelRow
-                  icon="sparkles"
-                  label={"AI \u70b9\u6570"}
-                  description="workspace"
-                  value={<span title={"\u5c1a\u672a\u63a5\u5165\u5de5\u4f5c\u7a7a\u95f4\u8d44\u6e90\u6570\u636e"}>{"\u6682\u4e0d\u53ef\u7528"}</span>}
-                />
-                <ShellPanelRow
-                  icon="database"
-                  label={"\u5b58\u50a8\u5bb9\u91cf"}
-                  description="workspace"
-                  value={<span title={"\u5c1a\u672a\u63a5\u5165\u5de5\u4f5c\u7a7a\u95f4\u8d44\u6e90\u6570\u636e"}>{"\u6682\u4e0d\u53ef\u7528"}</span>}
-                />
-              </ShellPanelSection>
-              <ShellPanelSection>
-                <ShellPanelRow
-                  icon="app-grid"
-                  label={"\u5e94\u7528\u4e2d\u5fc3"}
-                  description={"\u8bbf\u95ee\u5168\u90e8\u5e94\u7528"}
-                  href="https://ruyin.work/"
-                  newTab
-                  trailingIcon="external-link"
-                />
-                <ShellPanelRow
-                  icon="buildings"
-                  label={"\u7ec4\u7ec7\u4fe1\u606f"}
-                  description={"\u7ba1\u7406\u7ec4\u7ec7\u4e0e\u7a7a\u95f4"}
-                  href="https://console.vxture.com/zh-CN/tenant"
-                  newTab
-                  trailingIcon="external-link"
-                />
-              </ShellPanelSection>
+              <ProductOrganizationPanel identity={identity} />
             </ShellPanelContent>
           </Popover>
           <nav
@@ -258,14 +238,13 @@ export function ApplicationHeader({
       trailing={
         <div className="jadera-header-tools">
           {search}
-          <ShellIconButton
-            icon="sparkles"
+          <ShellAgentButton
             label={"AI \u52a9\u624b"}
             className="jadera-assistant-trigger"
             onClick={onAssistant}
-          >
-            <Icon name="sparkles" size="lg" />
-          </ShellIconButton>
+            size="xl"
+            running={assistantRunning}
+          />
           <ShellIconGroup
             label={"\u663e\u793a\u4e0e\u914d\u7f6e"}
             className="jadera-header-button-group"
@@ -298,45 +277,10 @@ export function ApplicationHeader({
             user={{
               displayName: identity.name,
               avatarSrc: identity.avatarSrc,
-              uniqueLine: identity.email,
+              ...(identity.phone ? { phone: phoneParts(identity.phone) } : { uniqueLine: "\u624b\u673a\u53f7\u5f85\u540c\u6b65" }),
+              statusTag: { label: identity.realNameVerified === true ? "\u5df2\u5b9e\u540d" : identity.realNameVerified === false ? "\u672a\u5b9e\u540d" : "\u72b6\u6001\u672a\u77e5", verified: identity.realNameVerified === true },
             }}
-            settings={
-              <ShellPreferencePanel
-                locale="zh-CN"
-                localeOptions={[
-                  { locale: "zh-CN", label: "\u7b80\u4f53\u4e2d\u6587" },
-                ]}
-                onLocaleChange={() => {}}
-                theme={theme.mode}
-                onThemeChange={theme.setMode}
-                density={theme.density}
-                onDensityChange={theme.setDensity}
-                fontSize={theme.fontSize}
-                onFontSizeChange={theme.setFontSize}
-                labels={{
-                  title: "\u504f\u597d\u8bbe\u7f6e",
-                  locale: "\u8bed\u8a00",
-                  theme: "\u5916\u89c2",
-                  density: "\u754c\u9762\u5bc6\u5ea6",
-                  fontSize: "\u6587\u5b57\u5927\u5c0f",
-                  themeOptions: {
-                    system: "\u7cfb\u7edf",
-                    light: "\u6d45\u8272",
-                    dark: "\u6df1\u8272",
-                  },
-                  densityOptions: {
-                    compact: "\u7d27\u51d1",
-                    default: "\u9ed8\u8ba4",
-                    comfortable: "\u5bbd\u677e",
-                  },
-                  fontSizeOptions: {
-                    small: "\u5c0f",
-                    default: "\u9ed8\u8ba4",
-                    large: "\u5927",
-                  },
-                }}
-              />
-            }
+            settings={<ProductPreferences />}
             links={[
               {
                 key: "profile",

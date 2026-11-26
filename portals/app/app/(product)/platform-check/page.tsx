@@ -91,7 +91,7 @@ export default function PlatformCheckPage() {
       <Stack gap="xs">
         <div className="eyebrow">Verification surface</div>
         <Section
-          level={1}
+          level={2}
           title="Platform capability check"
           description={
             <span className="block max-w-[62ch]">
