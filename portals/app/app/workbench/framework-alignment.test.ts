@@ -43,7 +43,7 @@ test("recent work contains at most six real cards and does not invent a project 
   );
   assert.equal((html.match(/jadera-project-card pending/g) || []).length, 6);
   assert.equal(
-    (html.match(/\u672a\u6307\u5b9a\u8d1f\u8d23\u4eba/g) || []).length,
+    (html.match(/\u8d1f\u8d23\u4eba\u5f85\u8865\u5f55/g) || []).length,
     6,
   );
   assert.doesNotMatch(html, />0%</);

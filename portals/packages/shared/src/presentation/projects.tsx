@@ -42,7 +42,8 @@ export interface ProjectCardData {
   productId: string;
   record?: ProjectRecord;
   versionLabel?: string;
-  owner?: { name: string };
+  owner?: { id?: string; name: string };
+  creator?: { id?: string; name: string };
   /** Host-supplied live execution state; never inferred from workflow stage. */
   backgroundTaskRunning?: boolean;
 }
@@ -100,7 +101,7 @@ function ProjectCard({
         <span className="jadera-project-summary-row">
         <span className="jadera-project-owner">
           <Icon name="user" size="xs" />
-          <span title={project.owner?.name}>{project.owner?.name || "\u672a\u6307\u5b9a\u8d1f\u8d23\u4eba"}</span>
+          <span title={project.owner?.name || project.creator?.name}>{project.owner?.name || project.creator?.name || "\u8d1f\u8d23\u4eba\u5f85\u8865\u5f55"}</span>
         </span>
         <span className="jadera-project-assistant">
           <XiaoyuAvatar running={executing} />

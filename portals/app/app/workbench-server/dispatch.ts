@@ -265,7 +265,7 @@ export async function dispatch(
       if (body.product !== undefined && body.product !== "bidproposal")
         return missing();
       return json(
-        await service.create(text(body, "name"), access.entitlement),
+        await service.create(text(body, "name"), access.entitlement, access.principal.displayName),
         201,
       );
     }

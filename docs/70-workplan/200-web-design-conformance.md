@@ -645,3 +645,10 @@ Resource management correction: AI credit and storage retain standard semantic
 icons, not the agent identity. The robot represents Xiaoyu only. Stage execution
 text uses a single trailing suffix and ellipsis; the activity spinner follows
 the working label. Local preview and real registry package checks pass.
+
+New projects durably record the authenticated creator as owner, using the
+verified display profile. Presentation prefers explicit owner then creator.
+Owner authorizes legacy projects to be assigned to the owner account. Explicit
+claim-legacy-projects operator migration requires that account's product session;
+viewing a project never claims it. Existing ownership is never overwritten.
+Production backfill remains pending execution against the deployed store.
