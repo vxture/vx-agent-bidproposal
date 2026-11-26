@@ -41,6 +41,19 @@ replays a refused operation. Isolated home/workspace preview bundles include
 focus and 200% zoom remain browser acceptance gates; do not label expected
 large-screen arithmetic as measured browser evidence.
 
+Owner framework review follow-up: the breadcrumb/project actions belong inside
+the constrained center content, not a separate title strip. They now share the
+same center container and scroll region as the body; auxiliary docks remain
+outside it. Actual preview execution in a DOM test environment checks header,
+business content, task-panel expansion and this containment without exceptions.
+The local preview additionally needed complete fixture data and the production
+FullscreenProvider; its 2440px canvas now scales to the viewing window rather
+than adding an outer horizontal scrollbar. These fixture corrections do not
+change production identity or runtime responses. On 2026-11-26 the owner accepted
+the basic framework and directed continued integration, deferring fine details.
+This is owner framework review, not a claim of exhaustive browser geometry,
+keyboard/zoom or real-account recovery acceptance.
+
 Owner direction, 2026-11-26: follow the supplied Vxtpl common product page kit
 v2.0.0 for further common-page architecture and presentation. Local source:
 `D:/stonesomker/OneDrive/Vxtpl-通用产品页面套件-v2.0.0`.

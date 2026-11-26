@@ -138,6 +138,8 @@ export function ProjectWorkspace({
   return (
     <div className="jadera-project-workspace" ref={region.ref} data-context-drawer={drawer}>
       <div className="jadera-business-column">
+        <div ref={content} className="jadera-business-scroll">
+          <div className="jadera-center-content">
         <div className="jadera-project-context">
           <Button variant="ghost" onClick={() => onNavigate("#projects")}>
             {"\u6807\u4e66\u9879\u76ee"}
@@ -229,7 +231,6 @@ export function ProjectWorkspace({
             {operationError}
           </p>
         )}
-        <div ref={content} className="jadera-business-scroll">
           <div
             hidden={tab !== "product"}
             className="jadera-business-frame-slot"
@@ -246,6 +247,7 @@ export function ProjectWorkspace({
                   exportView={exportView}
                 />
               )}
+          </div>
         </div>
         <div className="jadera-content-scroll-cue">
           {scrollable && !atBottom ? (
