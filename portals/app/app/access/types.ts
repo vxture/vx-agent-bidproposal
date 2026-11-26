@@ -16,7 +16,7 @@ export interface AccessGates {
 }
 
 /** Display-only name resolved from the existing RP profile, never a token. */
-export type AccessUser = AuthUser & { displayName?: string | null };
+export type AccessUser = AuthUser & { displayName?: string | null; email?: string | null; picture?: string | null };
 
 export type AccessState =
   /** No session. Signing in is the move. */

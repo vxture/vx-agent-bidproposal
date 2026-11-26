@@ -1,8 +1,12 @@
 "use client";
+import { ArrowsClockwise } from "@phosphor-icons/react";
 import React, { useMemo, useState, type ReactNode } from "react";
 import {
   Button,
   Input,
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
   NativeSelect,
   ViewModeSwitch,
   Icon,
@@ -115,6 +119,7 @@ function ProjectCard({
             />
           ))}
         </span>
+        <span className="jadera-project-summary-row">
         <span className="jadera-project-owner">
           <Icon name="user" size="xs" />
           <span title={project.owner?.name}>{project.owner?.name || "\u672a\u6307\u5b9a\u8d1f\u8d23\u4eba"}</span>
@@ -127,6 +132,7 @@ function ProjectCard({
               : record
                 ? "\u5df2\u6709\u5de5\u4f5c\u8bb0\u5f55"
                 : "\u5f85\u5f00\u59cb\u7f16\u5236"}
+        </span>
         </span>
         <span className="jadera-project-card-foot">
           <time dateTime={record?.recordedAt || project.createdAt}>
@@ -332,12 +338,15 @@ export function ProjectCollection({
                   </span>
                 </div>
                 <div>
-                  <Input
+                  <InputGroup>
+                    <InputGroupInput
                     aria-label={"\u641c\u7d22\u6807\u4e66\u9879\u76ee"}
                     placeholder={"\u641c\u7d22\u6807\u4e66\u9879\u76ee"}
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
                   />
+                    <InputGroupAddon><Icon name="search" size="sm" /></InputGroupAddon>
+                  </InputGroup>
                   <NativeSelect
                     aria-label={"\u9879\u76ee\u8303\u56f4"}
                     value={scope}
@@ -353,12 +362,15 @@ export function ProjectCollection({
                   </NativeSelect>
                   <Button
                     variant="ghost"
+                    size="icon-md"
+                    aria-label={"\u590d\u4f4d\u7b5b\u9009"}
+                    title={"\u590d\u4f4d\u7b5b\u9009"}
                     onClick={() => {
                       setQuery("");
                       setScope("current");
                     }}
                   >
-                    {"\u590d\u4f4d"}
+                    <ArrowsClockwise size={16} aria-hidden="true" />
                   </Button>
                 </div>
               </div>
@@ -396,6 +408,7 @@ export function ProjectCollection({
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      <TableHead>{"\u5e8f\u53f7"}</TableHead>
                       <TableHead>{"\u6807\u4e66\u540d\u79f0"}</TableHead>
                       <TableHead>
                         {"\u6700\u8fd1\u73af\u8282\u8bb0\u5f55"}
@@ -407,9 +420,10 @@ export function ProjectCollection({
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {rows.map((project) => (
+                    {rows.map((project, index) => (
                       <TableRow key={project.id}>
-                        <TableCell>{project.name}</TableCell>
+                        <TableCell>{index + 1}</TableCell>
+                        <TableCell><span className="jadera-project-table-name" title={project.name}>{project.name}</span></TableCell>
                         <TableCell>
                           {project.archivedAt
                             ? "\u5df2\u5f52\u6863"
@@ -425,8 +439,11 @@ export function ProjectCollection({
                           <Button
                             variant="ghost"
                             onClick={() => onOpen(project.id)}
+                            size="icon-md"
+                            aria-label={"\u6253\u5f00" + project.name}
+                            title={"\u6253\u5f00\u9879\u76ee"}
                           >
-                            {"\u6253\u5f00\u9879\u76ee"}
+                            <Icon name="arrow-right" size="sm" />
                           </Button>
                         </TableCell>
                       </TableRow>

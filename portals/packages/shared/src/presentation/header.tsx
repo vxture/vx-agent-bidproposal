@@ -31,18 +31,20 @@ const navigation = [
 export interface HeaderIdentity {
   name: string;
   organization?: string;
+  organizationShortName?: string;
   workspace?: string;
+  email?: string;
+  avatarSrc?: string;
   personal?: boolean;
 }
 export function ApplicationHeader({
   brand,
   identity,
   page,
-  projectCount,
   onNavigate,
   onSignOut,
   onAssistant,
-  onSearch,
+  search,
 }: {
   brand: ReactNode;
   identity: HeaderIdentity;
@@ -51,7 +53,7 @@ export function ApplicationHeader({
   onNavigate: (page: string) => void;
   onSignOut: () => void;
   onAssistant: () => void;
-  onSearch?: () => void;
+  search?: ReactNode;
 }) {
   const [launcher, setLauncher] = useState(false),
     [scopeOpen, setScopeOpen] = useState(false),
@@ -174,28 +176,23 @@ export function ApplicationHeader({
                 className="jadera-scope"
                 label={
                   <>
-                    <span>{identity.organization || identity.name}</span>
+                    <span title={identity.organization}>{identity.organizationShortName || identity.organization || identity.name}</span>
                     {identity.workspace && (
                       <span className="jadera-workspace">
                         {" "}
-                        / {identity.workspace}
+                        {"\u00b7"} {identity.workspace}
                       </span>
                     )}
                   </>
                 }
               />
             </PopoverTrigger>
-            <ShellPanelContent align="start">
+            <ShellPanelContent align="start" aria-label={"\u7ec4\u7ec7\u4e0e\u5de5\u4f5c\u7a7a\u95f4"}>
               <ShellPanelHeader
                 icon="buildings"
                 title={identity.organization || identity.name}
+                titleAside={<span className="jadera-scope-type">{identity.personal ? "\u4e2a\u4eba\u79df\u6237" : "\u7ec4\u7ec7\u79df\u6237"}</span>}
                 metaRows={[
-                  {
-                    key: "type",
-                    content: identity.personal
-                      ? "\u4e2a\u4eba\u5de5\u4f5c\u533a"
-                      : "\u7ec4\u7ec7\u5de5\u4f5c\u533a",
-                  },
                   ...(identity.workspace
                     ? [{ key: "workspace", content: identity.workspace }]
                     : []),
@@ -203,27 +200,31 @@ export function ApplicationHeader({
               />
               <ShellPanelSection title={"\u8d44\u6e90"}>
                 <ShellPanelRow
-                  icon="file-text"
-                  label={"\u6807\u4e66\u9879\u76ee"}
-                  value={projectCount}
-                  onClick={() => go("projects")}
+                  icon="sparkles"
+                  label={"AI \u70b9\u6570"}
+                  description="workspace"
+                  value={<span title={"\u5c1a\u672a\u63a5\u5165\u5de5\u4f5c\u7a7a\u95f4\u8d44\u6e90\u6570\u636e"}>{"\u6682\u4e0d\u53ef\u7528"}</span>}
                 />
                 <ShellPanelRow
-                  icon="book-open"
-                  label={"\u77e5\u8bc6\u8d44\u6599"}
-                  onClick={() => go("knowledge")}
+                  icon="database"
+                  label={"\u5b58\u50a8\u5bb9\u91cf"}
+                  description="workspace"
+                  value={<span title={"\u5c1a\u672a\u63a5\u5165\u5de5\u4f5c\u7a7a\u95f4\u8d44\u6e90\u6570\u636e"}>{"\u6682\u4e0d\u53ef\u7528"}</span>}
                 />
               </ShellPanelSection>
               <ShellPanelSection>
                 <ShellPanelRow
-                  icon="settings"
-                  label={"\u914d\u7f6e\u7ba1\u7406"}
-                  onClick={() => go("admin")}
+                  icon="app-grid"
+                  label={"\u5e94\u7528\u4e2d\u5fc3"}
+                  description={"\u8bbf\u95ee\u5168\u90e8\u5e94\u7528"}
+                  href="https://cospace.ruyin.work/apps"
+                  newTab
                 />
                 <ShellPanelRow
-                  icon="external-link"
-                  label={"\u5de5\u4f5c\u533a\u7ba1\u7406"}
-                  href="https://console.vxture.com/"
+                  icon="buildings"
+                  label={"\u7ec4\u7ec7\u4fe1\u606f"}
+                  description={"\u7ba1\u7406\u7ec4\u7ec7\u4e0e\u7a7a\u95f4"}
+                  href="https://console.vxture.com/zh-CN/tenant"
                   newTab
                 />
               </ShellPanelSection>
@@ -249,7 +250,7 @@ export function ApplicationHeader({
       }
       trailing={
         <div className="jadera-header-tools">
-          {onSearch && <ShellIconButton icon="search" label={"\u641c\u7d22\u5f53\u524d\u5de5\u4f5c\u533a"} onClick={onSearch} />}
+          {search}
           <ShellIconButton
             icon="sparkles"
             label={"AI \u52a9\u624b"}
@@ -288,9 +289,8 @@ export function ApplicationHeader({
             online
             user={{
               displayName: identity.name,
-              meta: [identity.organization, identity.workspace]
-                .filter(Boolean)
-                .join(" / "),
+              avatarSrc: identity.avatarSrc,
+              uniqueLine: identity.email,
             }}
             settings={
               <ShellPreferencePanel

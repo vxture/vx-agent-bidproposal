@@ -336,3 +336,25 @@ shared-workflow artifact directory. Browser access remains unavailable to this
 recovery chat, so production hover/tooltip/responsive visual acceptance is not
 claimed. This section supersedes the earlier pending-release/import statements;
 desktop identity, signing and installation remain outside this Web release.
+
+
+## Framework refinement release 2026-11-26
+
+Owner authorizes direct Jadera implementation and production release for this
+batch; updating the offline HTML kit and Figma is deferred. Shared resource
+cards have four desktop columns, consistent cover/footer heights and secondary
+eyebrow icons. Home omits extraction status while catalog management retains it.
+Project cards keep owner/status together and use one card-hover action state.
+Open project tables use transparent surfaces, explicit columns and 32px search/
+reset controls. Header gutters are 24px, launcher is 32/24px, active navigation
+has no persistent fill, and search expands inline with responsive tool hiding.
+
+Organization and avatar panels use DS ShellPanel and ShellUserMenu primitives.
+Scope identity shows full name/type/workspace, followed by AI points/storage
+and two external links: application center and organization information. No
+sample note, scope switcher or project counts as resources. RP profile email
+and picture complete the avatar identity. The current platform claims expose
+no short organization name or workspace-wide resource balance; name falls back
+to full text and balances explicitly remain unavailable, never product quotas
+or fabricated amounts. Actual browser geometry is not yet verified because the
+browser connection is unavailable; DOM interaction checks are narrower.

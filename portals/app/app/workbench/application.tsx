@@ -513,6 +513,8 @@ function Workspace({ access }: { access: AccessState }) {
             brand={<ProductIdentity />}
             identity={{
               name: displayNameFor(user, "\u5f53\u524d\u8d26\u53f7"),
+              email: user?.email || undefined,
+              avatarSrc: user?.picture || undefined,
               organization: user?.activeOrgName || undefined,
               workspace: user?.activeWorkspaceName || undefined,
               personal: user?.activeOrgType === "personal",
@@ -522,7 +524,7 @@ function Workspace({ access }: { access: AccessState }) {
             onNavigate={headerNavigate}
             onSignOut={signOut}
             onAssistant={assistant}
-            onSearch={() => setSearchOpen(true)}
+            search={<WorkspaceSearch open={searchOpen} onOpen={() => setSearchOpen(true)} onClose={() => setSearchOpen(false)} projects={projects} onNavigate={navigate} />}
           />
         }
         sidebar={
@@ -766,7 +768,6 @@ function Workspace({ access }: { access: AccessState }) {
           </div>
         </ShellPageContainer>
       </ShellViewport>
-      <WorkspaceSearch open={searchOpen} onClose={() => setSearchOpen(false)} projects={projects} onNavigate={navigate} />
       <SessionRecovery original={access} frame={frame} />
     </div>
   );
