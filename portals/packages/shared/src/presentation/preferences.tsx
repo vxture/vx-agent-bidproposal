@@ -6,9 +6,7 @@ export function ProductPreferences() {
   return (
     <ShellPreferencePanel
       locale="zh-CN"
-      localeOptions={[
-        { locale: "zh-CN", nativeName: "\u7b80\u4f53\u4e2d\u6587" },
-      ]}
+      locales={["zh-CN"]}
       onLocaleChange={() => {}}
       theme={theme.mode}
       onThemeChange={theme.setMode}

@@ -572,3 +572,11 @@ At default density this leaves 24px above and 20px below the progress group
 DS follow-up PR #152 introduces supported locale-code arrays, DS-owned native
 names/short marks, explicit product display overrides and safe code fallback.
 Jadera supports only zh-CN and must not advertise nonfunctional English.
+
+
+DS locale-code contract is released as 15.10.0 from 6d0cd9f after PR #152,
+exact-main CI, dry run 45816129780 and publish 45816796211 passed. Jadera
+passes only locales=[zh-CN]; DS supplies native label and CN mark consistently
+in field/menu, retaining the existing locale selection pattern. No unsupported
+English toggle is advertised. Product type/DOM checks are repeated on registry
+bytes; this remains local review, not production release.
