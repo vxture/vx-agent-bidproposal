@@ -1,0 +1,47 @@
+name: onlyoffice-validation
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: Inspect capacity or deploy isolated document service
+        type: choice
+        options: [inspect, deploy]
+        default: inspect
+permissions:
+  contents: read
+concurrency:
+  group: onlyoffice-validation
+  cancel-in-progress: false
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    environment: production
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/tailnet-ssh-connect
+        with:
+          tailscale-oauth-client-id: ${{ secrets.TAILSCALE_OAUTH_CLIENT_ID }}
+          tailscale-oauth-secret: ${{ secrets.TAILSCALE_OAUTH_CLIENT_SECRET }}
+          tailscale-tag: ${{ vars.TAILSCALE_OAUTH_CLIENT_TAG }}
+          deploy-host: ${{ secrets.DEPLOY_HOST }}
+          deploy-port: ${{ secrets.DEPLOY_PORT }}
+          deploy-ssh-key: ${{ secrets.DEPLOY_SSH_KEY }}
+          deploy-ssh-passphrase: ${{ secrets.DEPLOY_SSH_KEY_PASSPHRASE }}
+          deploy-known-hosts: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+      - name: Inspect or deploy standalone ONLYOFFICE
+        env:
+          OFFICE_MODE: ${{ inputs.mode }}
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
+        run: |
+          set -euo pipefail
+          port="${DEPLOY_PORT:-22}"
+          target="$DEPLOY_USER@$DEPLOY_HOST"
+          opts=(-i ~/.ssh/deploy_key -p "$port" -o ConnectTimeout=30 -o ServerAliveInterval=30)
+          if [ "$OFFICE_MODE" = deploy ]; then
+            ssh "${opts[@]}" "$target" 'mkdir -p /srv/md0/bidproposal/onlyoffice-validation'
+            scp -i ~/.ssh/deploy_key -P "$port" deploy/onlyoffice/compose.yml "$target:/srv/md0/bidproposal/onlyoffice-validation/compose.yml"
+          fi
+          ssh "${opts[@]}" "$target" "bash -s -- '$OFFICE_MODE'" < deploy/onlyoffice/validate.sh
