@@ -278,7 +278,7 @@ export function ApplicationHeader({
               displayName: identity.name,
               avatarSrc: identity.avatarSrc,
               ...(identity.phone ? { phone: phoneParts(identity.phone) } : { uniqueLine: "\u624b\u673a\u53f7\u5f85\u540c\u6b65" }),
-              ...(typeof identity.realNameVerified === "boolean" ? { statusTag: { label: identity.realNameVerified ? "\u5df2\u5b9e\u540d" : "\u672a\u5b9e\u540d", verified: identity.realNameVerified } } : {}),
+              statusTag: { label: identity.realNameVerified === true ? "\u5df2\u5b9e\u540d" : identity.realNameVerified === false ? "\u672a\u5b9e\u540d" : "\u72b6\u6001\u672a\u77e5", verified: identity.realNameVerified === true },
             }}
             settings={<ProductPreferences />}
             links={[
