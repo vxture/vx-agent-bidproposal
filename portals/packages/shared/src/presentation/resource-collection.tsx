@@ -1,9 +1,13 @@
 "use client";
+import { ArrowsClockwise } from "@phosphor-icons/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Button,
   Icon,
   Input,
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
   NativeSelect,
   ViewModeSwitch,
   Table,
@@ -291,7 +295,8 @@ export function ResourceCollection({
             </span>
           </div>
           <div>
-            <Input
+            <InputGroup>
+              <InputGroupInput
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               aria-label={"\u641c\u7d22\u8d44\u6599"}
@@ -301,6 +306,8 @@ export function ResourceCollection({
                   : "\u641c\u7d22\u77e5\u8bc6\u8d44\u6599"
               }
             />
+              <InputGroupAddon><Icon name="search" size="sm" /></InputGroupAddon>
+            </InputGroup>
             <NativeSelect
               value={category}
               onChange={(e) => setCategory(e.target.value)}
@@ -315,12 +322,15 @@ export function ResourceCollection({
             </NativeSelect>
             <Button
               variant="ghost"
+              size="icon-md"
+              aria-label={"\u590d\u4f4d\u7b5b\u9009"}
+              title={"\u590d\u4f4d\u7b5b\u9009"}
               onClick={() => {
                 setQuery("");
                 setCategory("");
               }}
             >
-              {"\u590d\u4f4d"}
+              <ArrowsClockwise size={16} aria-hidden="true" />
             </Button>
           </div>
         </div>
@@ -360,7 +370,7 @@ export function ResourceCollection({
             {rows.map((item) => (
               <ResourceVisualCard
                 key={item.id}
-                title={item.name.replace(/[.](pdf|docx|md)$/i, "")}
+                title={item.name}
                 category={categoryName(item.category)}
                 version={item.versions.at(-1)?.version}
                 updatedAt={item.updatedAt}
@@ -670,8 +680,6 @@ export function ResourcePreview({
       }
     >
       <span className="jadera-document-eyebrow">
-        {template ? "JADERA" : "\u77e5\u8bc6\u8d44\u6599"}
-      </span>
       <Icon
         name={
           template
@@ -680,8 +688,11 @@ export function ResourcePreview({
               ? "certificate"
               : "buildings"
         }
-        size="xl"
+        size="xs"
       />
+
+        {template ? "JADERA" : "\u77e5\u8bc6\u8d44\u6599"}
+      </span>
       <strong>
         {template
           ? categoryName(item.category)

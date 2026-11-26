@@ -30,6 +30,7 @@ export function ResourceVisualCard({
   preview?: ReactNode;
 }) {
   const date = new Date(updatedAt);
+  const displayTitle = title.replace(/[.](pdf|docx|md)$/i, "");
   return (
     <Card className="jadera-resource-card">
       <div className="jadera-resource-preview" aria-hidden>
@@ -39,7 +40,7 @@ export function ResourceVisualCard({
           {preview || (
             <>
               <Icon name="file-text" size="lg" />
-              <strong>{title}</strong>
+              <strong>{displayTitle}</strong>
               <span>{category}</span>
               <hr />
               <hr />
@@ -49,7 +50,7 @@ export function ResourceVisualCard({
       </div>
       <CardFooter className="jadera-resource-copy">
         <div className="jadera-resource-title">
-          <h3 title={title}>{title}</h3>
+          <h3 title={title}>{displayTitle}</h3>
           {status && (
             <StatusBadge tone="neutral" dot>
               {status}

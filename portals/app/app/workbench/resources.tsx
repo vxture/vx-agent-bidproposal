@@ -6,7 +6,6 @@ import { ResourceVisualCard } from "@bidproposal/shared/presentation";
 import {
   RESOURCE_CATEGORIES,
   isTemplate,
-  resourceState,
   type ResourceData,
 } from "@bidproposal/shared/resources";
 import { ResourcePreview } from "./resource-collection";
@@ -96,7 +95,6 @@ export function ResourceProgress({
                     }
                     version={item.versions.at(-1)?.version}
                     updatedAt={item.updatedAt}
-                    status={resourceState(item)}
                     onOpen={() => go(item.id)}
                     preview={<ResourcePreview item={item} />}
                   />

@@ -1,7 +1,7 @@
 @import "./workspace.css";
 /* B7 product presentation. Shared by browser and native host integrations. */
 .jadera-header {
-  padding-inline: clamp(20px, calc(6cqw - 16px), 48px);
+  padding-inline: 24px;
   height: var(--spacing-header-md, 48px);
   min-height: var(--spacing-header-md);
   background: color-mix(in srgb, var(--primary) 4%, var(--background));
@@ -78,7 +78,10 @@
 .jadera-global-nav button.selected {
   color: var(--primary-text);
   font-weight: 500;
-  background: color-mix(in srgb, var(--primary) 5%, transparent);
+  background: transparent;
+}
+.jadera-global-nav button.selected:hover {
+  background: var(--accent);
 }
 .jadera-launcher {
   width: 720px;
@@ -312,12 +315,9 @@
 }
 .jadera-project-card:hover .jadera-project-open-action,
 .jadera-project-card:focus-within .jadera-project-open-action {
-  color: var(--primary-text);
-  border-color: color-mix(in srgb, var(--primary) 25%, var(--border));
-  background: var(--primary-muted);
-}
-.jadera-project-card .jadera-project-open-action:hover {
-  background: color-mix(in srgb, var(--primary) 14%, var(--card));
+  color: var(--primary-foreground);
+  border-color: var(--primary);
+  background: var(--primary);
 }
 .jadera-project-card:focus-within {
   outline: 2px solid var(--primary);
@@ -572,7 +572,7 @@
     grid-template-columns: minmax(0, 1fr);
   }
   .jadera-header {
-    padding-inline: var(--space-md);
+    padding-inline: 24px;
   }
   .jadera-header-divider,
   .jadera-scope {
@@ -681,10 +681,13 @@
   background: var(--card);
   overflow: hidden;
   min-width: 0;
+  height: 276px;
+  box-sizing: border-box;
 }
 .jadera-resource-preview {
   position: relative;
   height: 184px;
+  flex: 0 0 184px;
   background: color-mix(in srgb, var(--primary) 5%, var(--card));
   overflow: hidden;
   color: color-mix(in srgb, var(--primary-text) 55%, var(--muted-foreground));
@@ -751,6 +754,8 @@
 .jadera-resource-copy {
   display: block;
   height: 90px;
+  flex: 0 0 90px;
+  box-sizing: border-box;
   padding: calc(var(--space-xs) + var(--space-2xs))
     calc(var(--space-md) - var(--space-2xs) / 2) var(--space-sm);
 }
@@ -810,7 +815,7 @@
 }
 .jadera-resource-grid {
   display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: var(--space-md);
 }
 .jadera-resource-empty {
@@ -847,7 +852,7 @@
 .jadera-work-area { container: jadera-work-area / inline-size; }
 .jadera-home-scroll { container: jadera-home / inline-size; }
 .jadera-home-wrap { padding-inline: clamp(20px, calc(6cqw - 16px), 48px); }
-.jadera-project-owner { display:flex; align-items:center; gap:8px; margin-top:12px; color:var(--muted-foreground); font-size:var(--label-sm-font-size); min-width:0; }
+.jadera-project-owner { display:flex; align-items:center; gap:8px; color:var(--muted-foreground); font-size:var(--label-sm-font-size); min-width:0; }
 .jadera-project-owner > span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .jadera-project-track i.current { flex:1.3; }
 .jadera-project-stage > span { display:inline-flex; align-items:center; gap:8px; }
@@ -863,7 +868,8 @@
 .jadera-search-results > button { display:flex; width:100%; justify-content:flex-start; gap:8px; }
 .jadera-search-results > button > span { min-width:0; overflow:hidden; text-overflow:ellipsis; }
 .jadera-search-results small { margin-left:auto; flex:none; }
-.jadera-header .jadera-launcher-trigger svg { width:16px !important; height:16px !important; }
+.jadera-header .jadera-launcher-trigger { width:32px; height:32px; min-width:32px; padding:0; }
+.jadera-header .jadera-launcher-trigger svg { width:24px !important; height:24px !important; }
 .jadera-header .jadera-assistant-trigger svg { width:24px !important; height:24px !important; }
 .jadera-assistant-trigger { color:color-mix(in srgb,var(--primary-text) 65%,var(--muted-foreground)); }
 .jadera-assistant-trigger:hover,.jadera-assistant-trigger:focus-visible { box-shadow:0 0 0 4px color-mix(in srgb,var(--primary) 9%,transparent); }
@@ -873,7 +879,7 @@
 @container jadera-shell (max-width:1100px) {
   .jadera-header { height:auto; min-height:88px; align-items:flex-start; position:relative; }
   .jadera-header > div { min-height:48px; }
-  .jadera-global-nav { display:flex; position:absolute; left:20px; right:20px; top:48px; height:40px; margin:0; overflow:auto; white-space:nowrap; }
+  .jadera-global-nav { display:flex; position:absolute; left:24px; right:24px; top:48px; height:40px; margin:0; overflow:auto; white-space:nowrap; }
   .jadera-global-nav button { flex:none; }
 }
 .jadera-header > div:first-child { min-width:0; }
@@ -883,3 +889,64 @@
 .jadera-assistant-region .jadera-assistant-dock { width:420px; }
 .jadera-assistant-region[data-wide="true"] .jadera-assistant-dock { width:clamp(480px,46cqw,760px); }
 .jadera-assistant-region[data-drawer="true"] .jadera-assistant-dock { width:100%; }
+
+.jadera-project-summary-row { display:flex; align-items:center; justify-content:space-between; gap:8px; min-width:0; margin-top:12px; }
+.jadera-project-summary-row .jadera-project-owner { flex:1; min-width:0; }
+.jadera-project-summary-row .jadera-project-status { flex:none; margin:0; white-space:nowrap; }
+.jadera-home-kicker > svg { color:var(--primary-text,var(--primary)); flex:none; }
+
+/* Shared resource geometry applies equally to home and independent catalogs. */
+@container jadera-home (max-width:1100px) {
+  .jadera-resource-grid,.jadera-resource-grid.jadera-resource-collection-grid { grid-template-columns:repeat(3,minmax(0,1fr)); }
+}
+@container jadera-home (max-width:760px) {
+  .jadera-resource-grid,.jadera-resource-grid.jadera-resource-collection-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+}
+@container jadera-home (max-width:420px) {
+  .jadera-resource-grid,.jadera-resource-grid.jadera-resource-collection-grid { grid-template-columns:minmax(0,1fr); }
+}
+
+/* Shared card slots must not inherit page-specific DS footer spacing. */
+.jadera-resource-card .jadera-resource-copy { margin:0; width:100%; min-width:0; height:90px; flex:0 0 90px; box-sizing:border-box; }
+.jadera-resource-card .jadera-resource-title { min-height:32px; }
+.jadera-resource-card .jadera-resource-title > [data-slot] { flex:none; }
+.jadera-resource-card .jadera-resource-meta { height:32px; }
+.jadera-resource-card .jadera-resource-meta > div { flex:none; }
+.jadera-resource-card .jadera-resource-meta > span { overflow:hidden; white-space:nowrap; }
+
+.jadera-header-search { display:flex; align-items:center; position:relative; min-width:0; gap:4px; }
+.jadera-header-search > input { width:clamp(140px,18vw,300px); height:32px; }
+.jadera-header-search-results { position:absolute; top:calc(100% + 8px); right:0; width:min(420px,calc(100vw - 48px)); padding:12px; background:var(--popover); color:var(--popover-foreground); border:1px solid var(--border); border-radius:var(--radius-md); box-shadow:var(--shadow-md); z-index:var(--z-index-dropdown); }
+.jadera-document-art > .jadera-document-eyebrow { display:flex; align-items:center; gap:8px; }
+.jadera-document-eyebrow > svg { width:12px; height:12px; flex:none; color:inherit; }
+
+/* Read-only project catalog: dedicated index/action columns, flexible business name. */
+.jadera-project-table table { table-layout:fixed; min-width:640px; }
+.jadera-project-table th,.jadera-project-table td { height:56px; padding:12px 16px; box-sizing:border-box; }
+.jadera-project-table th:first-child,.jadera-project-table td:first-child,
+.jadera-project-table th:last-child,.jadera-project-table td:last-child { width:64px; padding-inline:8px; }
+.jadera-project-table th:nth-child(3),.jadera-project-table td:nth-child(3) { width:180px; white-space:nowrap; }
+.jadera-project-table th:nth-child(4),.jadera-project-table td:nth-child(4) { width:160px; white-space:nowrap; }
+.jadera-project-table-name { display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.jadera-project-table tbody tr:last-child td { border-bottom:0; }
+
+/* Open catalog tables share the page surface; only an active row is tinted. */
+.jadera-project-table { background:transparent; border:0; border-radius:0; }
+.jadera-project-table table,.jadera-project-table thead,.jadera-project-table tbody,
+.jadera-project-table tr,.jadera-project-table th,.jadera-project-table td { background:transparent; }
+.jadera-project-table tbody tr:hover,.jadera-project-table tbody tr:focus-within { background:var(--accent); }
+.jadera-collection-toolbar { font-size:12px; }
+.jadera-collection-toolbar :is(button,input,select,[data-slot="input-group"]) { height:32px; min-height:32px; font-size:12px; }
+.jadera-collection-toolbar [data-slot="input-group"] { width:240px; min-width:160px; }
+.jadera-collection-toolbar [data-slot="input-group"] input { width:100%; min-width:0; }
+.jadera-scope-type { display:inline-flex; flex:none; border:1px solid var(--border); border-radius:var(--radius-sm); padding:2px 6px; font-size:12px; font-weight:400; color:var(--muted-foreground); }
+@container jadera-shell (max-width:1100px) {
+  .jadera-header:has(.jadera-header-search[data-open="true"]) .jadera-header-button-group,
+  .jadera-header:has(.jadera-header-search[data-open="true"]) .jadera-assistant-trigger { display:none; }
+}
+@container jadera-shell (max-width:760px) {
+  .jadera-header:has(.jadera-header-search[data-open="true"]) .jadera-brand-button,
+  .jadera-header:has(.jadera-header-search[data-open="true"]) .jadera-scope,
+  .jadera-header:has(.jadera-header-search[data-open="true"]) .jadera-header-divider { display:none; }
+  .jadera-header-search > input { width:clamp(100px,28cqw,220px); }
+}
