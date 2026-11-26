@@ -407,3 +407,24 @@ https://github.com/vxture-platform/vxture-platform/issues/751 . Resource values
 remain unavailable until that contract is delivered; do not substitute C2
 product-specific pool projections. This corrects the earlier overbroad claim
 that the platform lacked display fields or resource computation entirely.
+
+
+## v0.3.10 release verification 2026-11-26
+
+PR #51 merged as 0657777d41974c420a3dfe43f0bded979b7e4779. Exact main required
+checks and Sonar passed; protected deployment 45792898664 succeeded. Public
+health confirms v0.3.10 / 0657777d. Both registries match image digest
+`sha256:e38b1d16707c148bbb360d93ad15c27c7a360e8e5a5b3a3ef814859631e852b6`.
+Isolated startup, approved brand, anonymous refusal and app-only preflight pass.
+Rollback snapshot:
+`/srv/md0/bidproposal/backups/jadera-b7-v0310-20261126T092715Z`.
+
+Live product access response projects the existing organization short name
+Ruyin Studio and logo URL; the logo returns HTTP 200 with an image media type.
+Four projects, 179 product documents, 18 tasks and six source references match
+the encrypted snapshot. Knowledge/templates remain six each with completed
+readings. Environment/master key and database/cache container IDs are retained.
+442 tests, workspace types and DOM account/search checks pass. Browser visual
+and interactive account-selection acceptance remain unverified; no claim that
+the screenshot defects received pixel acceptance. Platform issue #751 owns
+resource-read integration; no platform code/configuration was modified.

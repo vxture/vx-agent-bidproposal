@@ -1,5 +1,18 @@
 # Agent entry point
 
+Live 2026-11-26: Web v0.3.10 / 0657777d deployed by protected run
+45792898664 after PR #51 and exact-main checks/Sonar passed. Platform already
+provides organization short name and logo claims; Jadera now consumes them.
+Live product /api/access confirms Ruyin Studio and the logo (image HTTP 200).
+Header short name/workspace use 14px foreground/12px muted. Account menu drops
+the unrequested workspace-rights entry, restores DS font sizing and adds
+prompt=select_account user switching. 442 tests and DOM checks pass. Existing
+project/library data and environment are retained. Browser visual and actual
+interactive account-selection acceptance remain unverified. Workspace resource
+totals need a product-callable read contract: platform issue #751. Owner allows
+issues only; do not modify platform source/configuration.
+
+
 Live 2026-11-26: Web v0.3.9 / 9c903bd3 is deployed by protected run
 45787181703 after PR #49, exact-main checks and Sonar passed. Shared cards,
 transparent catalog tables/32px controls, inline header search and DS scope/
