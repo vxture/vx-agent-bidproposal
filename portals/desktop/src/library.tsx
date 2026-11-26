@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import { Button, Icon, ThemeProvider } from '@vxture/design-system';
+import { Button, Icon, ThemeProvider, ContentWidthProvider } from '@vxture/design-system';
 import { ResourceCollection } from '@bidproposal/shared/presentation';
 // These two modules are packaged beside this bundle; the host owns transport.
 import { createRuntime } from './environment.mjs';
@@ -10,7 +10,7 @@ function NativeLibrary({ request }: { request: Parameters<typeof ResourceCollect
   const [templates, setTemplates] = useState(false);
   const [selected, setSelected] = useState<string>();
   return (
-    <ThemeProvider defaultMode="system">
+    <ThemeProvider defaultMode="system"><ContentWidthProvider>
       <div className="jadera-native-library">
         <nav aria-label={'\u8d44\u6e90\u677f\u5757'}>
           {[false, true].map(value => (
@@ -25,7 +25,7 @@ function NativeLibrary({ request }: { request: Parameters<typeof ResourceCollect
         <ResourceCollection key={String(templates)} templates={templates} request={request}
           selectedId={selected} onSelect={setSelected} />
       </div>
-    </ThemeProvider>
+    </ContentWidthProvider></ThemeProvider>
   );
 }
 

@@ -503,7 +503,7 @@ function Workspace({ access }: { access: AccessState }) {
   return (
     <div
       ref={shellRegion.ref}
-      data-page-width={projectId ? "1920" : "1536"}
+      data-page-width="preferred"
       className={`bid-workbench ${displayFont.variable} ${textFont.variable}`}
       id="jadera-application"
     >
@@ -514,8 +514,11 @@ function Workspace({ access }: { access: AccessState }) {
             identity={{
               name: displayNameFor(user, "\u5f53\u524d\u8d26\u53f7"),
               email: user?.email || undefined,
+              account: user?.account || undefined,
               avatarSrc: user?.picture || undefined,
               organization: user?.activeOrgName || undefined,
+              organizationId: user?.activeOrg || undefined,
+              workspaceId: user?.activeWorkspace || undefined,
               organizationShortName: user?.activeOrgDisplayName || undefined,
               organizationLogoSrc: user?.activeOrgLogoUrl || undefined,
               workspace: user?.activeWorkspaceName || undefined,

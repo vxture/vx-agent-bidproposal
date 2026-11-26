@@ -89,6 +89,27 @@ function ourStylesheets(): string[] {
     .map((f) => resolvePath(repoRoot, f));
 }
 
+test("product spacing references exist in the installed DS", () => {
+  const ds = dsTokens();
+  const missing: string[] = [];
+  for (const file of ourStylesheets()) {
+    for (const match of readFileSync(file, "utf8").matchAll(/var\((--space-[a-z0-9-]+)/g)) {
+      if (!ds.has(match[1]!)) missing.push(`${file}: ${match[1]}`);
+    }
+  }
+  assert.deepEqual(missing, [], "An unknown token invalidates the whole CSS declaration, including card padding");
+});
+
+test("product preference adapter delegates layout and persistence to DS", () => {
+  const root = resolvePath(import.meta.dirname, "../../..");
+  const adapter = readFileSync(resolvePath(root, "portals/packages/shared/src/presentation/preferences.tsx"), "utf8");
+  assert.match(adapter, /ShellPreferencePanel/);
+  assert.match(adapter, /showContentWidth/);
+  assert.doesNotMatch(adapter, /SegmentedControl|SelectTrigger|ShellPanelControlRow|localStorage|className=/);
+  const appTheme = readFileSync(resolvePath(root, "portals/app/app/ds.tsx"), "utf8");
+  assert.match(appTheme, /<ContentWidthProvider>/);
+});
+
 test("bidproposal defines no token that the design system also defines", () => {
   const ds = dsTokens();
   assert.ok(ds.size > 50, `expected the DS to define many tokens, found ${ds.size}`);

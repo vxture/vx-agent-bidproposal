@@ -33,14 +33,14 @@
   align-items: center;
   gap: var(--space-xs);
   min-width: 0;
-  font-size: var(--body-md-font-size);
+  font-size: var(--body-font-size);
 }
 .jadera-ai-title > svg {
   color: var(--ai-text);
   flex: none;
 }
 .jadera-ai-title > span {
-  font-size: var(--label-sm-font-size);
+  font-size: var(--label-small-font-size);
   color: var(--muted-foreground);
   white-space: nowrap;
 }
@@ -56,7 +56,7 @@
 }
 .jadera-ai-scope {
   padding: var(--space-xs) var(--space-md);
-  font-size: var(--label-sm-font-size);
+  font-size: var(--label-small-font-size);
   color: var(--muted-foreground);
   display: flex;
   flex-direction: column;
@@ -73,7 +73,7 @@
   overflow: auto;
   scrollbar-width: none;
   padding: var(--space-lg) var(--space-md);
-  font-size: var(--body-md-font-size);
+  font-size: var(--body-font-size);
 }
 .jadera-ai-greeting {
   text-align: center;
@@ -92,12 +92,12 @@
   background: var(--ai-muted);
 }
 .jadera-ai-greeting h2 {
-  font-size: var(--title-lg-font-size);
+  font-size: var(--heading-2-font-size);
   font-weight: 500;
   color: var(--foreground);
 }
 .jadera-ai-greeting p {
-  font-size: var(--body-md-font-size);
+  font-size: var(--body-font-size);
   line-height: 1.9;
   color: var(--muted-foreground);
 }
@@ -107,7 +107,7 @@
 }
 .jadera-ai-message > span {
   display: block;
-  font-size: var(--label-sm-font-size);
+  font-size: var(--label-small-font-size);
   color: var(--muted-foreground);
   margin-bottom: var(--space-xs);
 }
@@ -141,7 +141,7 @@
 }
 .jadera-ai-composer > div > span,
 .jadera-ai-composer > p {
-  font-size: var(--label-sm-font-size);
+  font-size: var(--label-small-font-size);
   color: var(--muted-foreground);
 }
 .jadera-session-picker {
@@ -162,7 +162,7 @@
   white-space: nowrap;
 }
 .jadera-session-row > small {
-  font-size: var(--label-sm-font-size);
+  font-size: var(--label-small-font-size);
   color: var(--muted-foreground);
 }
 .jadera-workflow-navigation {
@@ -191,7 +191,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: var(--label-md-font-size);
+  font-size: var(--label-font-size);
 }
 .jadera-version-trigger > svg {
   margin-right: var(--space-xs);
@@ -239,7 +239,7 @@
   text-overflow: ellipsis;
 }
 .jadera-version-option small {
-  font-size: var(--label-sm-font-size);
+  font-size: var(--label-small-font-size);
   color: var(--muted-foreground);
 }
 .jadera-version-option[aria-current="true"] {
@@ -253,7 +253,7 @@
   margin-left: auto;
   margin-right: var(--space-xs);
   color: var(--muted-foreground);
-  font-size: var(--label-sm-font-size);
+  font-size: var(--label-small-font-size);
 }
 .jadera-settings-complete[data-complete="true"] {
   color: var(--success-text);
@@ -323,17 +323,17 @@
   color: var(--primary-text);
 }
 .jadera-requirements-heading h1 {
-  font-size: var(--title-lg-font-size);
+  font-size: var(--heading-2-font-size);
   font-weight: 500;
 }
 .jadera-requirements-heading p,
 .jadera-requirements-note {
-  font-size: var(--body-sm-font-size);
+  font-size: var(--body-small-font-size);
   color: var(--muted-foreground);
   line-height: 1.8;
 }
 .jadera-context-version {
-  font-size: var(--label-sm-font-size);
+  font-size: var(--label-small-font-size);
   color: var(--muted-foreground);
 }
 .jadera-flow-item {
@@ -375,7 +375,7 @@
 .jadera-flow-status {
   margin-left: auto;
   margin-right: var(--space-xs);
-  font-size: var(--label-sm-font-size);
+  font-size: var(--label-small-font-size);
   color: var(--muted-foreground);
 }
 .jadera-flow-item.complete .jadera-flow-status {
@@ -391,7 +391,7 @@
   height: var(--spacing-icon-lg);
   align-items: center;
   justify-content: center;
-  font-size: var(--label-sm-font-size);
+  font-size: var(--label-small-font-size);
   position: relative;
 }
 .jadera-flow-item.collapsed .jadera-flow-symbol {
@@ -414,7 +414,7 @@
       (var(--shell-sidebar-inset) + var(--shell-sidebar-inner-inset)) +
       var(--shell-sidebar-inset));
   color: var(--muted-foreground);
-  font-size: var(--label-sm-font-size);
+  font-size: var(--label-small-font-size);
   line-height: 1.5;
   font-variant-numeric: tabular-nums;
 }
@@ -438,7 +438,7 @@
   padding-bottom: var(--space-xs);
   padding-inline: var(--space-sm);
   line-height: 1.3;
-  font-size: var(--label-sm-font-size);
+  font-size: var(--label-small-font-size);
   color: var(--muted-foreground);
 }
 .jadera-flow-footer [role="progressbar"] {
@@ -458,12 +458,12 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  font-size: var(--label-sm-font-size);
+  font-size: var(--label-small-font-size);
 }
 .jadera-collapsed-progress {
   display: block;
   text-align: center;
-  font-size: var(--label-sm-font-size);
+  font-size: var(--label-small-font-size);
   color: var(--muted-foreground);
 }
 .jadera-resource-grid.jadera-resource-collection-grid {
@@ -484,7 +484,7 @@
   overflow-wrap: anywhere;
   max-height: 50vh;
   overflow: auto;
-  font-size: var(--body-md-font-size);
+  font-size: var(--body-font-size);
   line-height: 1.9;
   padding: var(--space-lg);
   background: var(--muted);
@@ -510,7 +510,7 @@
   margin-top: var(--space-md);
 }
 .jadera-document-art > strong {
-  font-size: var(--title-md-font-size);
+  font-size: var(--heading-3-font-size);
   line-height: 1.8;
   margin: 0;
   overflow-wrap: anywhere;
@@ -518,7 +518,7 @@
   overflow: hidden;
 }
 .jadera-document-art > span {
-  font-size: var(--label-sm-font-size);
+  font-size: var(--label-small-font-size);
 }
 .jadera-document-art.certificate {
   outline: var(--border-width-medium) double var(--warning-border);

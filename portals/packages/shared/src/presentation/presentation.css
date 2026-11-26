@@ -58,13 +58,13 @@
   margin: 0;
 }
 .jadera-scope {
-  font-size: var(--body-md-font-size);
+  font-size: var(--body-font-size);
   font-weight: 400;
   white-space: nowrap;
   color: var(--muted-foreground);
 }
-.jadera-scope > span { display:flex; align-items:baseline; gap:4px; }
-.jadera-header .jadera-scope { max-width:320px; flex-shrink:1; }
+.jadera-scope > span { display:flex; flex:none; align-items:baseline; gap:4px; overflow:visible; }
+.jadera-header .jadera-scope { width:max-content; max-width:none; flex-shrink:0; }
 .jadera-scope .jadera-organization-name { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .jadera-scope .jadera-workspace { flex:none; }
 .jadera-organization-name { font-size:14px; color:var(--foreground); }
@@ -80,7 +80,7 @@
 .jadera-global-nav button {
   height: 32px;
   padding: 0 var(--space-sm);
-  font-size: var(--body-md-font-size);
+  font-size: var(--body-font-size);
   font-weight: 400;
 }
 .jadera-global-nav button.selected {
@@ -113,7 +113,7 @@
     color-mix(in srgb, var(--primary) 15%, var(--border));
 }
 .jadera-launcher-top > span {
-  font-size: var(--label-sm-font-size);
+  font-size: var(--label-small-font-size);
   color: var(--muted-foreground);
 }
 .jadera-launcher-columns {
@@ -122,7 +122,7 @@
   gap: calc(var(--space-xs) + var(--space-2xs));
 }
 .jadera-launcher-columns h2 {
-  font-size: var(--label-sm-font-size);
+  font-size: var(--label-small-font-size);
   font-weight: 400;
   color: var(--muted-foreground);
   margin: 0 0 var(--space-sm);
@@ -153,7 +153,6 @@
 .jadera-home-wrap {
   width: 100%;
   box-sizing: border-box;
-  max-width: var(--bidproposal-center-max, 1536px);
   margin: 0 auto;
   padding: var(--space-xl) clamp(20px, calc(6cqw - 16px), 48px) var(--space-5xl);
 }
@@ -173,7 +172,7 @@
   align-items: center;
   gap: var(--space-xs);
   height: 24px;
-  font-size: var(--body-md-font-size);
+  font-size: var(--body-font-size);
   color: var(--muted-foreground);
 }
 .jadera-home-kicker svg {
@@ -193,7 +192,7 @@
   margin: var(--space-md) 0;
 }
 .jadera-home-hero p {
-  font-size: var(--body-md-font-size);
+  font-size: var(--body-font-size);
   color: var(--muted-foreground);
   line-height: 1.9;
 }
@@ -212,13 +211,13 @@
   margin-bottom: calc(var(--space-md) + var(--space-2xs));
 }
 .jadera-section-heading h2 {
-  font-size: var(--title-lg-font-size);
+  font-size: var(--heading-2-font-size);
   font-weight: 600;
   margin: 0;
 }
 .jadera-section-heading p,
 .jadera-collection-heading p {
-  font-size: var(--body-md-font-size);
+  font-size: var(--body-font-size);
   color: var(--muted-foreground);
   margin-top: calc(var(--space-2xs) * 1.5);
 }
@@ -226,7 +225,7 @@
   margin: var(--space-xs) 0 var(--space-xl);
 }
 .jadera-collection-heading span {
-  font-size: var(--label-sm-font-size);
+  font-size: var(--label-small-font-size);
   color: var(--muted-foreground);
 }
 .jadera-collection-heading h1 {
@@ -251,7 +250,7 @@
   white-space: normal;
   width: 100%;
   height: auto;
-  padding: var(--space-md) var(--space-control-2xs);
+  padding: var(--space-md) calc(var(--space-md) + var(--space-2xs));
   text-align: left;
   border-radius: inherit;
   background: transparent;
@@ -336,21 +335,21 @@
   align-items: center;
   gap: var(--space-xs);
   color: var(--muted-foreground);
-  font-size: var(--label-sm-font-size);
+  font-size: var(--label-small-font-size);
 }
 .jadera-project-card-top small {
   margin-left: auto;
-  font-size: var(--label-sm-font-size);
+  font-size: var(--label-small-font-size);
   color: var(--bidproposal-project-ink);
 }
 .jadera-project-card-button > strong {
-  font-size: var(--title-md-font-size);
+  font-size: var(--heading-3-font-size);
   font-weight: 600;
   line-height: 24px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  margin: calc(var(--space-md) + var(--space-2xs) / 2) 0;
+  margin: calc(var(--space-md) + var(--space-2xs) / 2) 0 6px;
 }
 .jadera-project-stage {
   display: flex;
@@ -358,7 +357,7 @@
   justify-content: space-between;
   gap: calc(var(--space-xs) + var(--space-2xs));
   color: var(--bidproposal-project-ink);
-  font-size: var(--label-sm-font-size);
+  font-size: var(--label-small-font-size);
 }
 .jadera-project-stage > span {
   display: inline-flex;
@@ -374,7 +373,7 @@
 }
 .jadera-project-stage small {
   color: var(--muted-foreground);
-  font-size: var(--label-sm-font-size);
+  font-size: var(--label-small-font-size);
 }
 .jadera-project-track {
   display: flex;
@@ -401,7 +400,7 @@
   background: var(--bidproposal-project-tone);
 }
 .jadera-project-status {
-  font-size: var(--label-sm-font-size);
+  font-size: var(--label-small-font-size);
   color: var(--muted-foreground);
 }
 .jadera-project-card-foot {
@@ -412,7 +411,7 @@
   border-top: 1px solid var(--border);
   margin-top: calc(var(--space-md) + var(--space-2xs) / 2);
   padding-top: calc(var(--space-xs) + var(--space-2xs));
-  font-size: var(--label-sm-font-size);
+  font-size: var(--label-small-font-size);
   color: var(--muted-foreground);
 }
 .jadera-project-card-foot > span {
@@ -432,7 +431,7 @@
   background: var(--card);
 }
 .jadera-project-create label {
-  font-size: var(--body-md-font-size);
+  font-size: var(--body-font-size);
   white-space: nowrap;
 }
 .jadera-project-create input {
@@ -452,7 +451,7 @@
   min-width: 0;
 }
 .jadera-collection-toolbar > div:first-child > span {
-  font-size: var(--label-sm-font-size);
+  font-size: var(--label-small-font-size);
   color: var(--muted-foreground);
   border-right: 1px solid var(--border);
   padding-right: var(--space-md);
@@ -472,13 +471,13 @@
   border-radius: var(--radius-md);
 }
 .jadera-empty h2 {
-  font-size: var(--title-lg-font-size);
+  font-size: var(--heading-2-font-size);
   font-weight: 500;
   margin: var(--space-md) 0 var(--space-xs);
   color: var(--foreground);
 }
 .jadera-empty p {
-  font-size: var(--body-md-font-size);
+  font-size: var(--body-font-size);
   margin-bottom: var(--space-md);
 }
 .jadera-project-table {
@@ -491,10 +490,10 @@
   border-collapse: collapse;
   width: 100%;
   text-align: left;
-  font-size: var(--body-md-font-size);
+  font-size: var(--body-font-size);
 }
 .jadera-project-table th {
-  font-size: var(--label-sm-font-size);
+  font-size: var(--label-small-font-size);
   font-weight: 400;
   color: var(--muted-foreground);
 }
@@ -653,12 +652,12 @@
 }
 .jadera-home-companion small {
   display: block;
-  font-size: var(--label-sm-font-size);
+  font-size: var(--label-small-font-size);
   color: var(--muted-foreground);
   margin-bottom: calc(var(--space-2xs) * 1.5);
 }
 .jadera-home-companion strong {
-  font-size: var(--title-md-font-size);
+  font-size: var(--heading-3-font-size);
   font-weight: 500;
   white-space: nowrap;
 }
@@ -668,7 +667,7 @@
     left: -48px;
   }
   .jadera-home-companion strong {
-    font-size: var(--body-md-font-size);
+    font-size: var(--body-font-size);
   }
   .jadera-home-companion img {
     width: 96px;
@@ -738,7 +737,7 @@
 }
 .jadera-resource-preview > div > span {
   display: block;
-  font-size: var(--label-sm-font-size);
+  font-size: var(--label-small-font-size);
   margin-top: calc(var(--space-xs) + var(--space-2xs));
   color: var(--muted-foreground);
 }
@@ -756,7 +755,7 @@
 }
 .jadera-resource-preview .jadera-document-art > strong {
   margin: 0;
-  font-size: var(--title-md-font-size);
+  font-size: var(--heading-3-font-size);
   line-height: 1.6;
 }
 .jadera-resource-copy {
@@ -768,7 +767,7 @@
     calc(var(--space-md) - var(--space-2xs) / 2) var(--space-sm);
 }
 .jadera-resource-copy h3 {
-  font-size: var(--body-md-font-size);
+  font-size: var(--body-font-size);
   line-height: var(--spacing-icon-xl);
   font-weight: 500;
   margin: 0;
@@ -780,7 +779,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: var(--label-sm-font-size);
+  font-size: var(--label-small-font-size);
   color: var(--muted-foreground);
   margin: var(--space-2xs) 0 0;
   line-height: var(--spacing-icon-xl);
@@ -801,7 +800,7 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--space-xs);
-  font-size: var(--label-sm-font-size);
+  font-size: var(--label-small-font-size);
   color: var(--muted-foreground);
 }
 .jadera-resource-meta > span,
@@ -837,7 +836,7 @@
   color: var(--muted-foreground);
 }
 .jadera-resource-empty p {
-  font-size: var(--body-md-font-size);
+  font-size: var(--body-font-size);
   line-height: 1.9;
   margin: 0;
   max-width: 600px;
@@ -860,7 +859,7 @@
 .jadera-work-area { container: jadera-work-area / inline-size; }
 .jadera-home-scroll { container: jadera-home / inline-size; }
 .jadera-home-wrap { padding-inline: clamp(20px, calc(6cqw - 16px), 48px); }
-.jadera-project-owner { display:flex; align-items:center; gap:8px; color:var(--muted-foreground); font-size:var(--label-sm-font-size); min-width:0; }
+.jadera-project-owner { display:flex; align-items:center; gap:8px; color:var(--muted-foreground); font-size:var(--label-small-font-size); min-width:0; }
 .jadera-project-owner > span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .jadera-project-track i.current { flex:1.3; }
 .jadera-project-stage > span { display:inline-flex; align-items:center; gap:8px; }
@@ -898,8 +897,8 @@
 .jadera-assistant-region[data-wide="true"] .jadera-assistant-dock { width:clamp(480px,46cqw,760px); }
 .jadera-assistant-region[data-drawer="true"] .jadera-assistant-dock { width:100%; }
 
-.jadera-project-summary-row { display:flex; align-items:center; justify-content:space-between; gap:8px; min-width:0; margin-top:12px; }
-.jadera-project-summary-row .jadera-project-owner { flex:1; min-width:0; }
+.jadera-project-summary-row { display:flex; align-items:center; justify-content:flex-start; gap:8px; min-width:0; margin:0 0 16px; }
+.jadera-project-summary-row .jadera-project-owner { flex:0 1 auto; min-width:0; }
 .jadera-project-summary-row .jadera-project-status { flex:none; margin:0; white-space:nowrap; }
 .jadera-home-kicker > svg { color:var(--primary-text,var(--primary)); flex:none; }
 
@@ -947,7 +946,6 @@
 .jadera-collection-toolbar :is(button,input,select,[data-slot="input-group"]) { height:32px; min-height:32px; font-size:12px; }
 .jadera-collection-toolbar [data-slot="input-group"] { width:240px; min-width:160px; }
 .jadera-collection-toolbar [data-slot="input-group"] input { width:100%; min-width:0; }
-.jadera-scope-type { display:inline-flex; flex:none; border:1px solid var(--border); border-radius:var(--radius-sm); padding:2px 6px; font-size:12px; font-weight:400; color:var(--muted-foreground); }
 @container jadera-shell (max-width:1100px) {
   .jadera-header:has(.jadera-header-search[data-open="true"]) .jadera-header-button-group,
   .jadera-header:has(.jadera-header-search[data-open="true"]) .jadera-assistant-trigger { display:none; }
@@ -958,3 +956,6 @@
   .jadera-header:has(.jadera-header-search[data-open="true"]) .jadera-header-divider { display:none; }
   .jadera-header-search > input { width:clamp(100px,28cqw,220px); }
 }
+
+.jadera-organization-identity > div { min-width:0; }
+.jadera-organization-identity p:first-child { white-space:normal; overflow-wrap:anywhere; }

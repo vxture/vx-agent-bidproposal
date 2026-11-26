@@ -2,6 +2,7 @@
 import { ArrowsClockwise } from "@phosphor-icons/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
+  ContentWidthContainer,
   Button,
   Icon,
   Input,
@@ -250,7 +251,7 @@ export function ResourceCollection({
   };
   return (
     <main className="jadera-home-scroll">
-      <div className="jadera-home-wrap">
+      <ContentWidthContainer className="jadera-home-wrap">
         <header className="jadera-collection-heading">
           <div>
             <span>{"\u516c\u5171\u8d44\u6e90"}</span>
@@ -619,7 +620,7 @@ export function ResourceCollection({
               </div>
             )}
             {notice && <p role="status">{notice}</p>}
-            <p className="text-body-sm text-muted-foreground">
+            <p className="text-body-small text-muted-foreground">
               {selected && resourceState(selected)}
               {" \u00b7"} {current?.reading?.units || 0}
               {" \u4e2a\u539f\u6587\u5757"}
@@ -658,7 +659,7 @@ export function ResourceCollection({
             )}
           </DialogContent>
         </Dialog>
-      </div>
+      </ContentWidthContainer>
     </main>
   );
 }

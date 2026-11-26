@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import {
+  ContentWidthContainer,
   Button,
   Icon,
   ShellDock,
@@ -139,7 +140,7 @@ export function ProjectWorkspace({
     <div className="jadera-project-workspace" ref={region.ref} data-context-drawer={drawer}>
       <div className="jadera-business-column">
         <div ref={content} className="jadera-business-scroll">
-          <div className="jadera-center-content">
+          <ContentWidthContainer className="jadera-center-content">
         <div className="jadera-project-context">
           <Button variant="ghost" onClick={() => onNavigate("#projects")}>
             {"\u6807\u4e66\u9879\u76ee"}
@@ -247,7 +248,7 @@ export function ProjectWorkspace({
                   exportView={exportView}
                 />
               )}
-          </div>
+          </ContentWidthContainer>
         </div>
         <div className="jadera-content-scroll-cue">
           {scrollable && !atBottom ? (

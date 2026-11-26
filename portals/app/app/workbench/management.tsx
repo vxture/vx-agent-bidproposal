@@ -2,7 +2,7 @@
 import {
   Button,
   ShellSidebarNav,
-  ShellPageContainer,
+  ContentWidthContainer,
 } from "@vxture/design-system";
 import type { AccessState } from "../access/types";
 import { displayNameFor } from "../auth/lib/display";
@@ -18,7 +18,7 @@ export function Management({
 }) {
   const user = "user" in access ? access.user : undefined;
   return (
-    <ShellPageContainer className="jadera-management-page" width="wide-2xl">
+    <ContentWidthContainer className="jadera-management-page">
       <header>
         <span>{"\u914d\u7f6e\u7ba1\u7406"}</span>
         <h1>
@@ -105,7 +105,7 @@ export function Management({
           </div>
         </section>
       )}
-    </ShellPageContainer>
+    </ContentWidthContainer>
   );
 }
 export function ManagementNavigation({

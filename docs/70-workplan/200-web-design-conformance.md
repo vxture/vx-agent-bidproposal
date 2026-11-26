@@ -428,3 +428,118 @@ readings. Environment/master key and database/cache container IDs are retained.
 and interactive account-selection acceptance remain unverified; no claim that
 the screenshot defects received pixel acceptance. Platform issue #751 owns
 resource-read integration; no platform code/configuration was modified.
+
+
+## Project card content order 2026-11-26
+
+Owner moves the complete owner/status row directly below the project title,
+with adjacent left-aligned content rather than opposite-edge distribution.
+Stage/progress now follows that identity row. Shared ProjectCard applies this
+order to both home and project catalog; retain existing dates/actions and
+workflow facts. Local preview is rebuilt for review before further rollout.
+
+
+## Product scope panel and content-width preferences 2026-11-26
+
+Owner requests intrinsic header scope width, corrected account identity slots,
+DS popup language selection, font labels small/default/large in full Chinese,
+and a final content-width row. Narrow is capped at 1200px for focused reading
+and common laptop layouts; default is 1536px; wide is 1920px. All are maximum
+center widths, shrink within available space, and exclude fixed side panels.
+Preference survives navigation/reload and synchronizes same-origin tabs, with
+a page-local fallback if browser storage is disabled. Writing and catalog
+centers use the same preference instead of automatic per-route caps.
+
+Shared ProductOrganizationPanel composes DS identity/resource/link rows, allows
+full organization names to wrap, and labels pending resource integration as
+connecting. Platform issue #751 remains the external dependency. Account display
+projects preferred_username separately from display name and contact email;
+missing fields remain omitted. Local fixtures no longer show Lin/example.com.
+
+The DS checkout has unrelated existing typography/ViewModeSwitch work. Only
+ShellChrome/ShellPanel and a dedicated regression test are changed for optional
+fitContent scope sizing, popup locale selection and controlled width controls.
+DS type checking and 146 targeted panel tests pass. These additions are not
+published or mixed with the unrelated work. Jadera retains published 12.26.1
+and composes the same DS primitives pending that upstream release. Product
+types and DOM preference persistence/cross-tab/order/search checks pass; pixel
+acceptance remains local owner review, not automated browser verification.
+
+
+## Direct DS panel consumption correction 2026-11-26
+
+Owner rejects reproducing Console composition. Supersedes the earlier
+12.26.1-retention note: Jadera now pins published DS 15.1.0 and consumes
+ShellPanelMeterRow for resource readouts and ShellScopePanel for grouped
+organization/workspace selection. Product code only supplies metrics, tooltip
+content, localized descriptions and auth callbacks. Removed the hand-assembled
+resource row. Total is the numeric readout; meter is used percentage; DS
+Tooltip includes total, used, remaining and overage when applicable. Missing
+resource data is connecting with no fabricated bar or count.
+
+Nested scope popup opens right on wide windows and below on narrow windows.
+Only current verified identity is shown while the cross-product scope-list
+contract is absent. Platform issue #752 tracks that separate dependency:
+https://github.com/vxture-platform/vxture-platform/issues/752 . Other options
+are not fabricated. Future selections go through OIDC tenant_hint/workspace_hint,
+not a client-side identity mutation. Default-entry wording is shown only when
+authoritative option data explicitly identifies the default.
+
+DS 15 typography role changes are migrated in product-owned styles and three
+legacy Section usages. All workspace types and 443 tests pass. DOM checks
+verify actual DS scope menu/current selection and meter readouts/keyboard
+tooltip used/remaining values; these do not establish pixel acceptance.
+The published RUYIN workbench UI 0.2.2 peer range still declares DS 12: DS 15
+compatibility is a release gate, not silently suppressed. This batch is local
+review only, with no platform/RUYIN source or production configuration edits.
+
+
+## DS 15 card inset regression and preview routes 2026-11-26
+
+Owner screenshot found project content touching the border. Root cause:
+padding combined a valid vertical token with removed --space-control-2xs,
+invalidating the entire declaration. Replace with existing inset tokens
+(16px vertical / 20px horizontal at default density). Add a real installed-DS
+spacing-reference guard to prevent unknown tokens silently dropping layout.
+
+The local home acceptance server previously retained home content for template/
+knowledge hashes. Mount the actual ResourceCollection for those routes, with
+six corresponding resources each. This preview-only defect was not a product
+router change. Rebuild local server and verify card owner/status order plus
+template/knowledge route content. No production deployment in this batch.
+
+
+## DS-owned preference contract 2026-11-26
+
+Owner approves moving width defaults and persistence into DS. Supersedes the
+earlier product-owned width notes: DS PR #151 adds ContentWidthProvider,
+ContentWidthContainer and provider-backed optional ShellPreferencePanel width
+row. DS owns default 1200/1536/1920 caps, restoration, same-origin synchronization
+and blocked-storage session fallback. Product controlled values/caps/storage
+keys may override. Jadera removes its own width store, per-row preference
+assembly and geometry CSS; it passes labels/theme callbacks and enables the
+complete panel. Center regions use DS containers; side panels remain outside.
+
+The same DS change gives preferences an opt-in 32px segmented recipe, compact
+locale field using the existing LocaleSelectPanel, inset semantic active state
+and localized accessible names. DS UI 12.8.0 + system 15.9.0 are additive minor
+releases; tokens stay unchanged. DS PR tests: 643 UI and 444 shell tests pass.
+Original dirty DS checkout is preserved; release work uses a clean separate
+checkout. Platform and RUYIN sources/configuration are untouched.
+
+
+DS 15.9.0 is published from main 1f548ca83327e2aead2059af8cb42402c9ca3c19.
+PR #151 passed CI/Sonar; exact-main checks and publication dry run 45809661717
+passed before release 45810126521 succeeded. Jadera pins registry 15.9.0 and
+uses complete ShellPreferencePanel with showContentWidth, one DS provider and
+DS containers for project/catalog/resource/management centers. No local width
+store, per-row preference geometry or alternate language select remains.
+Runtime DOM checks verify DS locale panel/focus, width persistence and storage
+events, current scope selection, resource meters/tooltips, project cards and
+actual knowledge/template routes.
+
+Local Next compilation, type checks and static generation pass; Windows
+standalone packaging fails on EPERM creating symlinks. Do not weaken packaging
+or claim a successful production build from that local run. Linux CI build
+remains the required release evidence. RUYIN UI peer-range mismatch and browser
+pixel acceptance stay explicit; no Jadera release tag is cut for this batch.

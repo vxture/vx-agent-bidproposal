@@ -2,6 +2,7 @@
 import { ArrowsClockwise } from "@phosphor-icons/react";
 import React, { useMemo, useState, type ReactNode } from "react";
 import {
+  ContentWidthContainer,
   Button,
   Input,
   InputGroup,
@@ -91,6 +92,21 @@ function ProjectCard({
           {current && <small>{"\u5f53\u524d\u9879\u76ee"}</small>}
         </span>
         <strong title={project.name}>{project.name}</strong>
+        <span className="jadera-project-summary-row">
+        <span className="jadera-project-owner">
+          <Icon name="user" size="xs" />
+          <span title={project.owner?.name}>{project.owner?.name || "\u672a\u6307\u5b9a\u8d1f\u8d23\u4eba"}</span>
+        </span>
+        <span className="jadera-project-status">
+          {project.archivedAt
+            ? "\u53ef\u67e5\u770b\u4e0e\u5bfc\u51fa"
+            : record?.complete
+              ? "\u6709\u5b8c\u6210\u8bb0\u5f55"
+              : record
+                ? "\u5df2\u6709\u5de5\u4f5c\u8bb0\u5f55"
+                : "\u5f85\u5f00\u59cb\u7f16\u5236"}
+        </span>
+        </span>
         <span className="jadera-project-stage">
           <span>
             {record && !project.archivedAt && workflowStageIcons[record.stageIndex] && (
@@ -118,21 +134,6 @@ function ProjectCard({
               }
             />
           ))}
-        </span>
-        <span className="jadera-project-summary-row">
-        <span className="jadera-project-owner">
-          <Icon name="user" size="xs" />
-          <span title={project.owner?.name}>{project.owner?.name || "\u672a\u6307\u5b9a\u8d1f\u8d23\u4eba"}</span>
-        </span>
-        <span className="jadera-project-status">
-          {project.archivedAt
-            ? "\u53ef\u67e5\u770b\u4e0e\u5bfc\u51fa"
-            : record?.complete
-              ? "\u6709\u5b8c\u6210\u8bb0\u5f55"
-              : record
-                ? "\u5df2\u6709\u5de5\u4f5c\u8bb0\u5f55"
-                : "\u5f85\u5f00\u59cb\u7f16\u5236"}
-        </span>
         </span>
         <span className="jadera-project-card-foot">
           <time dateTime={record?.recordedAt || project.createdAt}>
@@ -222,7 +223,7 @@ export function ProjectCollection({
   };
   return (
     <main className="jadera-home-scroll">
-      <div className="jadera-home-wrap">
+      <ContentWidthContainer className="jadera-home-wrap">
         {catalog ? (
           <header className="jadera-collection-heading">
             <div>
@@ -466,7 +467,7 @@ export function ProjectCollection({
           </section>
         )}
         {!catalog && resources}
-      </div>
+      </ContentWidthContainer>
     </main>
   );
 }

@@ -89,6 +89,7 @@ export interface AuthUser {
 // without an exp check is correct - the short-lived id_token expiring
 // mid-session must not blank the user's name. Never used for authorization.
 export interface IdProfile {
+  account?: string;
   displayName: string | null;
   picture: string | null;
   email: string | null;
@@ -101,6 +102,7 @@ export const EMPTY_PROFILE: IdProfile = { displayName: null, picture: null, emai
 export function profileFromClaims(payload: Record<string, unknown>): IdProfile {
   const s = (v: unknown) => (typeof v === "string" && v.trim() ? v.trim() : null);
   return {
+    ...(s(payload["preferred_username"]) ? { account: s(payload["preferred_username"])! } : {}),
     displayName: s(payload["name"]) ?? s(payload["nickname"]) ?? s(payload["preferred_username"]),
     picture: s(payload["picture"]),
     email: s(payload["email"]),
@@ -126,6 +128,7 @@ export function profileFromIdToken(idToken: string): IdProfile {
 export function mergeProfile(base: IdProfile, extra: IdProfile | null): IdProfile {
   if (!extra) return base;
   return {
+    ...(base.account || extra.account ? { account: base.account || extra.account } : {}),
     displayName: base.displayName ?? extra.displayName,
     picture: base.picture ?? extra.picture,
     email: base.email ?? extra.email,

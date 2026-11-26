@@ -12,15 +12,17 @@ import {
   ShellIconGroup,
   ShellScopeButton,
   ShellPanelContent,
-  ShellPanelHeader,
-  ShellPanelSection,
   ShellPanelRow,
   ShellUserMenu,
-  ShellPreferencePanel,
   ShellThemeToggle,
   ShellFullscreenToggle,
   useTheme,
 } from "@vxture/design-system";
+
+import { ProductOrganizationPanel } from "./organization-panel";
+import type { ProductScopeOption } from "./organization-panel";
+import { ProductPreferences } from "./preferences";
+import type { WorkspaceResourceUsage } from "./resource-meter";
 
 const navigation = [
   ["home", "\u9996\u9875"],
@@ -35,8 +37,13 @@ export interface HeaderIdentity {
   organizationLogoSrc?: string;
   workspace?: string;
   email?: string;
+  account?: string;
   avatarSrc?: string;
   personal?: boolean;
+  resources?: WorkspaceResourceUsage;
+  organizationId?: string;
+  workspaceId?: string;
+  scopeOptions?: ProductScopeOption[];
 }
 export function ApplicationHeader({
   brand,
@@ -190,51 +197,7 @@ export function ApplicationHeader({
               />
             </PopoverTrigger>
             <ShellPanelContent align="start" aria-label={"\u7ec4\u7ec7\u4e0e\u5de5\u4f5c\u7a7a\u95f4"}>
-              <ShellPanelHeader
-                className="jadera-organization-identity"
-                icon="buildings"
-                avatarSrc={identity.organizationLogoSrc}
-                avatarAlt={identity.organization}
-                title={identity.organization || identity.name}
-                titleAside={<span className="jadera-scope-type">{identity.personal ? "\u4e2a\u4eba\u79df\u6237" : "\u7ec4\u7ec7\u79df\u6237"}</span>}
-                metaRows={[
-                  ...(identity.workspace
-                    ? [{ key: "workspace", content: identity.workspace }]
-                    : []),
-                ]}
-              />
-              <ShellPanelSection title={"\u8d44\u6e90"}>
-                <ShellPanelRow
-                  icon="sparkles"
-                  label={"AI \u70b9\u6570"}
-                  description="workspace"
-                  value={<span title={"\u5c1a\u672a\u63a5\u5165\u5de5\u4f5c\u7a7a\u95f4\u8d44\u6e90\u6570\u636e"}>{"\u6682\u4e0d\u53ef\u7528"}</span>}
-                />
-                <ShellPanelRow
-                  icon="database"
-                  label={"\u5b58\u50a8\u5bb9\u91cf"}
-                  description="workspace"
-                  value={<span title={"\u5c1a\u672a\u63a5\u5165\u5de5\u4f5c\u7a7a\u95f4\u8d44\u6e90\u6570\u636e"}>{"\u6682\u4e0d\u53ef\u7528"}</span>}
-                />
-              </ShellPanelSection>
-              <ShellPanelSection>
-                <ShellPanelRow
-                  icon="app-grid"
-                  label={"\u5e94\u7528\u4e2d\u5fc3"}
-                  description={"\u8bbf\u95ee\u5168\u90e8\u5e94\u7528"}
-                  href="https://ruyin.work/"
-                  newTab
-                  trailingIcon="external-link"
-                />
-                <ShellPanelRow
-                  icon="buildings"
-                  label={"\u7ec4\u7ec7\u4fe1\u606f"}
-                  description={"\u7ba1\u7406\u7ec4\u7ec7\u4e0e\u7a7a\u95f4"}
-                  href="https://console.vxture.com/zh-CN/tenant"
-                  newTab
-                  trailingIcon="external-link"
-                />
-              </ShellPanelSection>
+              <ProductOrganizationPanel identity={identity} />
             </ShellPanelContent>
           </Popover>
           <nav
@@ -298,45 +261,10 @@ export function ApplicationHeader({
             user={{
               displayName: identity.name,
               avatarSrc: identity.avatarSrc,
-              uniqueLine: identity.email,
+              uniqueLine: identity.account && identity.account !== identity.name ? identity.account : undefined,
+              meta: identity.email,
             }}
-            settings={
-              <ShellPreferencePanel
-                locale="zh-CN"
-                localeOptions={[
-                  { locale: "zh-CN", label: "\u7b80\u4f53\u4e2d\u6587" },
-                ]}
-                onLocaleChange={() => {}}
-                theme={theme.mode}
-                onThemeChange={theme.setMode}
-                density={theme.density}
-                onDensityChange={theme.setDensity}
-                fontSize={theme.fontSize}
-                onFontSizeChange={theme.setFontSize}
-                labels={{
-                  title: "\u504f\u597d\u8bbe\u7f6e",
-                  locale: "\u8bed\u8a00",
-                  theme: "\u5916\u89c2",
-                  density: "\u754c\u9762\u5bc6\u5ea6",
-                  fontSize: "\u6587\u5b57\u5927\u5c0f",
-                  themeOptions: {
-                    system: "\u7cfb\u7edf",
-                    light: "\u6d45\u8272",
-                    dark: "\u6df1\u8272",
-                  },
-                  densityOptions: {
-                    compact: "\u7d27\u51d1",
-                    default: "\u9ed8\u8ba4",
-                    comfortable: "\u5bbd\u677e",
-                  },
-                  fontSizeOptions: {
-                    small: "\u5c0f",
-                    default: "\u9ed8\u8ba4",
-                    large: "\u5927",
-                  },
-                }}
-              />
-            }
+            settings={<ProductPreferences />}
             links={[
               {
                 key: "profile",

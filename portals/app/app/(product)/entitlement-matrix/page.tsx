@@ -67,7 +67,7 @@ export default function EntitlementMatrixPage() {
       <Stack gap="xs">
         <div className="eyebrow">Verification surface</div>
         <Section
-          level={1}
+          level={2}
           title="Entitlement gating matrix"
           description={
             <span className="block max-w-[62ch]">

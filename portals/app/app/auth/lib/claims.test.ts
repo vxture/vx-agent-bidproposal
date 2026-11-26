@@ -155,3 +155,11 @@ test("profileIsComplete gates the UserInfo call", () => {
   assert.equal(profileIsComplete({ displayName: "Ada", picture: null, email: "e" }), false);
   assert.equal(profileIsComplete(EMPTY_PROFILE), false);
 });
+
+test("profile preserves account separately from display name and contact email", () => {
+  const profile = profileFromClaims({ name: "Ada Lovelace", preferred_username: "ada", email: "ada@example.com" });
+  assert.equal(profile.displayName, "Ada Lovelace");
+  assert.equal(profile.account, "ada");
+  assert.equal(profile.email, "ada@example.com");
+  assert.equal(mergeProfile({ displayName: "Ada", email: null, picture: null }, profile).account, "ada");
+});

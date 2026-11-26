@@ -50,5 +50,10 @@ export async function GET(req: Request): Promise<Response> {
   authorize.searchParams.set("code_challenge", challenge);
   authorize.searchParams.set("code_challenge_method", "S256");
   if (url.searchParams.get("selectAccount") === "true") authorize.searchParams.set("prompt", "select_account");
+  // Hints select an IdP-verified scope; they never establish membership locally.
+  for (const [input, output] of [["tenantId", "tenant_hint"], ["workspaceId", "workspace_hint"]]) {
+    const value = url.searchParams.get(input!);
+    if (value && /^[A-Za-z0-9_-]{1,160}$/.test(value)) authorize.searchParams.set(output!, value);
+  }
   return NextResponse.redirect(authorize.toString());
 }
