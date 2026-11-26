@@ -1,5 +1,18 @@
 # Agent entry point
 
+Live 2026-11-26: Web v0.3.9 / 9c903bd3 is deployed by protected run
+45787181703 after PR #49, exact-main checks and Sonar passed. Shared cards,
+transparent catalog tables/32px controls, inline header search and DS scope/
+avatar panels follow owner feedback. Product implementation takes priority for
+this batch; offline HTML/Figma updates are deferred by the owner. Workspace-wide
+AI/storage balances and organization short names are not exposed by the current
+platform contract: unavailable balances and full-name fallback remain explicit.
+441 tests and DOM interaction checks pass; browser pixel acceptance remains
+unverified. Health/readiness/auth refusal and bundled assets pass after release.
+Four projects, 179 documents, 18 tasks, six source references and all 12 library
+records are preserved. No platform/schema changes. See batch 200 for rollback.
+
+
 Live 2026-11-26: Web v0.3.8 / 38cecf0b is deployed by protected run
 45770957650 after PR #47 and all exact-main checks/Sonar passed. The owner
 accepted the basic Vxtpl v2 framework, including the constrained center title/body,
