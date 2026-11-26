@@ -516,6 +516,8 @@ function Workspace({ access }: { access: AccessState }) {
               email: user?.email || undefined,
               avatarSrc: user?.picture || undefined,
               organization: user?.activeOrgName || undefined,
+              organizationShortName: user?.activeOrgDisplayName || undefined,
+              organizationLogoSrc: user?.activeOrgLogoUrl || undefined,
               workspace: user?.activeWorkspaceName || undefined,
               personal: user?.activeOrgType === "personal",
             }}

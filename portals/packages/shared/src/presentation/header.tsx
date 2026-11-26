@@ -32,6 +32,7 @@ export interface HeaderIdentity {
   name: string;
   organization?: string;
   organizationShortName?: string;
+  organizationLogoSrc?: string;
   workspace?: string;
   email?: string;
   avatarSrc?: string;
@@ -174,9 +175,10 @@ export function ApplicationHeader({
                 icon="buildings"
                 ariaLabel={"\u5f53\u524d\u7ec4\u7ec7\u4e0e\u5de5\u4f5c\u533a"}
                 className="jadera-scope"
+                active={scopeOpen}
                 label={
                   <>
-                    <span title={identity.organization}>{identity.organizationShortName || identity.organization || identity.name}</span>
+                    <span className="jadera-organization-name" title={identity.organization}>{identity.organizationShortName || identity.organization || identity.name}</span>
                     {identity.workspace && (
                       <span className="jadera-workspace">
                         {" "}
@@ -189,7 +191,10 @@ export function ApplicationHeader({
             </PopoverTrigger>
             <ShellPanelContent align="start" aria-label={"\u7ec4\u7ec7\u4e0e\u5de5\u4f5c\u7a7a\u95f4"}>
               <ShellPanelHeader
+                className="jadera-organization-identity"
                 icon="buildings"
+                avatarSrc={identity.organizationLogoSrc}
+                avatarAlt={identity.organization}
                 title={identity.organization || identity.name}
                 titleAside={<span className="jadera-scope-type">{identity.personal ? "\u4e2a\u4eba\u79df\u6237" : "\u7ec4\u7ec7\u79df\u6237"}</span>}
                 metaRows={[
@@ -217,8 +222,9 @@ export function ApplicationHeader({
                   icon="app-grid"
                   label={"\u5e94\u7528\u4e2d\u5fc3"}
                   description={"\u8bbf\u95ee\u5168\u90e8\u5e94\u7528"}
-                  href="https://cospace.ruyin.work/apps"
+                  href="https://ruyin.work/"
                   newTab
+                  trailingIcon="external-link"
                 />
                 <ShellPanelRow
                   icon="buildings"
@@ -226,6 +232,7 @@ export function ApplicationHeader({
                   description={"\u7ba1\u7406\u7ec4\u7ec7\u4e0e\u7a7a\u95f4"}
                   href="https://console.vxture.com/zh-CN/tenant"
                   newTab
+                  trailingIcon="external-link"
                 />
               </ShellPanelSection>
             </ShellPanelContent>
@@ -285,6 +292,7 @@ export function ApplicationHeader({
             />
           </ShellIconGroup>
           <ShellUserMenu
+            contentClassName="jadera-user-panel"
             openLabel={"\u8d26\u53f7\u83dc\u5355"}
             online
             user={{
@@ -312,7 +320,7 @@ export function ApplicationHeader({
                   density: "\u754c\u9762\u5bc6\u5ea6",
                   fontSize: "\u6587\u5b57\u5927\u5c0f",
                   themeOptions: {
-                    system: "\u8ddf\u968f\u7cfb\u7edf",
+                    system: "\u7cfb\u7edf",
                     light: "\u6d45\u8272",
                     dark: "\u6df1\u8272",
                   },
@@ -322,9 +330,9 @@ export function ApplicationHeader({
                     comfortable: "\u5bbd\u677e",
                   },
                   fontSizeOptions: {
-                    small: "\u8f83\u5c0f",
+                    small: "\u5c0f",
                     default: "\u9ed8\u8ba4",
-                    large: "\u8f83\u5927",
+                    large: "\u5927",
                   },
                 }}
               />
@@ -337,15 +345,14 @@ export function ApplicationHeader({
                 icon: "user",
                 newTab: true,
               },
-              {
-                key: "workspace",
-                label: "\u5de5\u4f5c\u533a\u4e0e\u6743\u76ca",
-                href: "https://console.vxture.com/",
-                icon: "buildings",
-                newTab: true,
-              },
             ]}
             actions={[
+              {
+                key: "switch-user",
+                label: "\u5207\u6362\u7528\u6237",
+                icon: "users",
+                onClick: () => { window.location.assign("/auth/login?selectAccount=true&returnTo=%2F"); },
+              },
               {
                 key: "signout",
                 label: "\u9000\u51fa\u767b\u5f55",

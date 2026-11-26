@@ -49,5 +49,6 @@ export async function GET(req: Request): Promise<Response> {
   authorize.searchParams.set("nonce", nonce);
   authorize.searchParams.set("code_challenge", challenge);
   authorize.searchParams.set("code_challenge_method", "S256");
+  if (url.searchParams.get("selectAccount") === "true") authorize.searchParams.set("prompt", "select_account");
   return NextResponse.redirect(authorize.toString());
 }
