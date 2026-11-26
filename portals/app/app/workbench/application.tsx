@@ -528,6 +528,8 @@ function Workspace({ access }: { access: AccessState }) {
               name: displayNameFor(user, "\u5f53\u524d\u8d26\u53f7"),
               email: user?.email || undefined,
               account: user?.account || undefined,
+              phone: user?.phone,
+              realNameVerified: user?.realNameVerified,
               avatarSrc: user?.picture || undefined,
               organization: user?.activeOrgName || undefined,
               organizationId: user?.activeOrg || undefined,

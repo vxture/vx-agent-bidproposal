@@ -25,5 +25,8 @@
     "@types/react": "^19.0.0",
     "@vxture/design-system": "15.11.0",
     "typescript": "^5.7.0"
+  },
+  "dependencies": {
+    "libphonenumber-js": "1.13.17"
   }
 }

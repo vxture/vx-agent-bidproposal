@@ -652,3 +652,10 @@ Owner authorizes legacy projects to be assigned to the owner account. Explicit
 claim-legacy-projects operator migration requires that account's product session;
 viewing a project never claims it. Existing ownership is never overwritten.
 Production backfill remains pending execution against the deployed store.
+
+User panel uses DS structured phone presentation with country calling code and
+national grouping, and omits email/account secondary lines. Existing OIDC phone
+scope flows through display-profile cache/merge into the shared header. Real-name
+statusTag renders only with authoritative boolean state; phone verification is
+never treated as real-name verification. Platform display contract gap filed
+separately; release remains paused at owner's request.

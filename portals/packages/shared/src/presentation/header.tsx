@@ -1,6 +1,7 @@
 "use client";
 /** Host-independent product chrome. Identity and navigation are supplied by the host. */
 import { useState, type ReactNode } from "react";
+import { parsePhoneNumberFromString } from "libphonenumber-js";
 import {
   Button,
   Icon,
@@ -31,7 +32,20 @@ const navigation = [
   ["knowledge", "\u77e5\u8bc6\u8d44\u6599"],
   ["templates", "\u6a21\u677f\u7ba1\u7406"],
 ] as const;
+function phoneParts(raw: string) {
+  const phone = parsePhoneNumberFromString(raw.trim().replace(/^00(?=\d)/, "+"), "CN");
+  if (!phone?.isValid()) return { number: raw };
+  const national = String(phone.nationalNumber);
+  return {
+    callingCode: "+" + phone.countryCallingCode,
+    number: phone.countryCallingCode === "86" && /^1\d{10}$/.test(national)
+      ? national.slice(0, 3) + " " + national.slice(3, 7) + " " + national.slice(7)
+      : phone.formatInternational().slice(phone.countryCallingCode.length + 2),
+  };
+}
 export interface HeaderIdentity {
+  phone?: string;
+  realNameVerified?: boolean;
   name: string;
   organization?: string;
   organizationShortName?: string;
@@ -263,8 +277,8 @@ export function ApplicationHeader({
             user={{
               displayName: identity.name,
               avatarSrc: identity.avatarSrc,
-              uniqueLine: identity.account && identity.account !== identity.name ? identity.account : undefined,
-              meta: identity.email,
+              ...(identity.phone ? { phone: phoneParts(identity.phone) } : { uniqueLine: "\u624b\u673a\u53f7\u5f85\u540c\u6b65" }),
+              ...(typeof identity.realNameVerified === "boolean" ? { statusTag: { label: identity.realNameVerified ? "\u5df2\u5b9e\u540d" : "\u672a\u5b9e\u540d", verified: identity.realNameVerified } } : {}),
             }}
             settings={<ProductPreferences />}
             links={[
