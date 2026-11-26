@@ -1,5 +1,26 @@
 # Web design conformance
 
+## Live v0.3.8 framework release 2026-11-26
+
+PR #47 merged as 38cecf0b; all exact-source required checks and Sonar passed,
+with 320 app, 114 business and seven desktop-adapter tests (441 total). The
+owner accepted the basic framework and directed rollout while deferring fine
+visual details. Protected release 45770957650 succeeded. Verified registry
+digest: `sha256:bf5dc10188b21d868163355e26b52b5242b0d2d678727493012286dd44a431cd`.
+Isolated image startup, unchanged brand, anonymous read/PATCH refusal and
+app-only deployment preview passed before approval. Public health confirms
+v0.3.8 / 38cecf0b; readiness and bundled center/search/recovery code markers pass.
+
+Encrypted rollback inputs are retained at
+`/srv/md0/bidproposal/backups/jadera-b7-v038-20261126T064557Z`.
+Original environment/master key and DB/Redis container identities are unchanged.
+Snapshot comparison confirms four projects, 179 product documents, 18 tasks and
+six source references unchanged. The complete before/after library inventory
+matches: six knowledge records and six templates, all completed. No business
+data or platform source was modified by this release. Browser geometry, keyboard,
+200% zoom and actual account-switch recovery remain follow-up acceptance scope;
+do not equate owner framework review or DOM rendering checks with those gates.
+
 ## Current common-page baseline: Vxtpl v2.0.0
 
 Owner decisions confirmed 2026-11-26: home/management use the 1536 content cap;

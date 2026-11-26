@@ -1,5 +1,17 @@
 # Agent entry point
 
+Live 2026-11-26: Web v0.3.8 / 38cecf0b is deployed by protected run
+45770957650 after PR #47 and all exact-main checks/Sonar passed. The owner
+accepted the basic Vxtpl v2 framework, including the constrained center title/body,
+and deferred fine visual details. Container layout, workspace catalog search,
+six recent projects/daily headlines, per-conversation drafts and session recovery
+are shipped. 441 tests passed. Public health/readiness, artifact markers and
+anonymous refusal pass. Four projects, 179 product documents, 18 tasks, six
+source references and all 12 library records are unchanged. No platform or
+schema edits. Full browser geometry, keyboard/zoom and real-account recovery
+acceptance remain unverified; owner framework review and DOM checks are narrower.
+Read batch 200 for digest, rollback snapshot and remaining acceptance scope.
+
 Owner common-page baseline, 2026-11-26: Vxtpl common product page kit v2.0.0
 at `D:/stonesomker/OneDrive/Vxtpl-通用产品页面套件-v2.0.0`. Read its README,
 docs 01-05 and examples/README. Manifest checksum matches release.lock.json.
