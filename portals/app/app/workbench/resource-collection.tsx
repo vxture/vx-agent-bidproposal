@@ -1,4 +1,5 @@
 "use client";
+import { productFetch } from "./product-fetch";
 import {
   ResourceCollection as SharedResourceCollection,
   type ResourceCollectionProps,
@@ -7,7 +8,7 @@ import {
 export { ResourcePreview } from "@bidproposal/shared/presentation";
 
 export async function libraryRequest(path = "", init?: ResourceRequestOptions) {
-  const r = await fetch("/api/workbench/library" + path, {
+  const r = await productFetch("/api/workbench/library" + path, {
     ...init,
     headers: { "content-type": "application/json" },
     redirect: "error",

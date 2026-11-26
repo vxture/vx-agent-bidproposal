@@ -1,5 +1,5 @@
 "use client";
-import { useMemo, useState, type ReactNode } from "react";
+import React, { useMemo, useState, type ReactNode } from "react";
 import {
   Button,
   Input,
@@ -17,6 +17,7 @@ import {
   EmptyState,
 } from "@vxture/design-system";
 import { workflowStageIcons } from "./workflow-icons";
+import { WorkspaceHeadline } from "./workspace-headline";
 
 export interface ProjectRecord {
   stage: string;
@@ -35,6 +36,7 @@ export interface ProjectCardData {
   productId: string;
   record?: ProjectRecord;
   versionLabel?: string;
+  owner?: { name: string };
 }
 const date = (value: string) => {
   const parsed = Date.parse(value);
@@ -95,8 +97,9 @@ function ProjectCard({
               : record?.stage || "\u5c1a\u65e0\u6d41\u7a0b\u8bb0\u5f55"}
           </span>
           {record && (
-            <small>{String(record.stageIndex + 1).padStart(2, "0")} / 06</small>
+            <small>{Math.round((record.completed / 6) * 100)}%</small>
           )}
+          {!record && <small>{"\u2014"}</small>}
         </span>
         <span className="jadera-project-track" aria-hidden>
           {Array.from({ length: 6 }, (_, i) => (
@@ -111,6 +114,10 @@ function ProjectCard({
               }
             />
           ))}
+        </span>
+        <span className="jadera-project-owner">
+          <Icon name="user" size="xs" />
+          <span title={project.owner?.name}>{project.owner?.name || "\u672a\u6307\u5b9a\u8d1f\u8d23\u4eba"}</span>
         </span>
         <span className="jadera-project-status">
           {project.archivedAt
@@ -233,11 +240,7 @@ export function ProjectCollection({
           <section className="jadera-home-hero">
             <div>
               <div className="jadera-home-kicker">{brand}</div>
-              <h1>
-                {
-                  "\u4ece\u62db\u6807\u8d44\u6599\uff0c\u5230\u5b8c\u6574\u6807\u4e66"
-                }
-              </h1>
+              <WorkspaceHeadline />
               <p>
                 {
                   "\u89e3\u8bfb\u9700\u6c42\u3001\u7ec4\u7ec7\u8d44\u6599\u3001\u5206\u7ae0\u7f16\u5199\uff0c\u8ba9\u4e13\u4e1a\u5224\u65ad\u8d2f\u7a7f\u6bcf\u4e00\u6b65\u3002"
@@ -433,7 +436,7 @@ export function ProjectCollection({
               </div>
             ) : (
               <div className="jadera-project-grid">
-                {(catalog ? rows : rows.slice(0, 3)).map((project) => (
+                {(catalog ? rows : rows.slice(0, 6)).map((project) => (
                   <ProjectCard
                     key={project.id}
                     project={project}

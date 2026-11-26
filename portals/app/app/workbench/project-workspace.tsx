@@ -20,7 +20,7 @@ import {
   PRODUCT_REVIEW_EVENT,
 } from "@vxture/ruyin-workbench-ui";
 import type { TabId } from "@vxture/ruyin-workbench-ui/workspace-tabs";
-import { NameDialog } from "@bidproposal/shared/presentation";
+import { NameDialog, useContainerWidth, usePanelFocus } from "@bidproposal/shared/presentation";
 export function ProjectWorkspace({
   api,
   id,
@@ -66,6 +66,10 @@ export function ProjectWorkspace({
     [operationError, setOperationError] = useState("");
   const [renaming, setRenaming] = useState(false);
   const content = useRef<HTMLDivElement>(null);
+  const region = useContainerWidth();
+  const drawer = region.width !== undefined && region.width <= 1100;
+  const visibleContext = contextOpen && !assistantOpen;
+  const panel = usePanelFocus(visibleContext, drawer, () => setContextOpen(false));
   useEffect(() => {
     setContextOpen(false);
   }, [id]);
@@ -132,8 +136,10 @@ export function ProjectWorkspace({
     </a>
   );
   return (
-    <div className="jadera-project-workspace">
+    <div className="jadera-project-workspace" ref={region.ref} data-context-drawer={drawer}>
       <div className="jadera-business-column">
+        <div ref={content} className="jadera-business-scroll">
+          <div className="jadera-center-content">
         <div className="jadera-project-context">
           <Button variant="ghost" onClick={() => onNavigate("#projects")}>
             {"\u6807\u4e66\u9879\u76ee"}
@@ -225,7 +231,6 @@ export function ProjectWorkspace({
             {operationError}
           </p>
         )}
-        <div ref={content} className="jadera-business-scroll">
           <div
             hidden={tab !== "product"}
             className="jadera-business-frame-slot"
@@ -242,6 +247,7 @@ export function ProjectWorkspace({
                   exportView={exportView}
                 />
               )}
+          </div>
         </div>
         <div className="jadera-content-scroll-cue">
           {scrollable && !atBottom ? (
@@ -264,8 +270,14 @@ export function ProjectWorkspace({
           )}
         </div>
       </div>
+      {drawer && visibleContext && <button className="jadera-drawer-backdrop" aria-label={"\u5173\u95ed\u8f85\u52a9\u680f"} onClick={() => setContextOpen(false)} tabIndex={-1} />}
       <div
-        hidden={!contextOpen || assistantOpen}
+        ref={panel}
+        tabIndex={-1}
+        role={drawer ? "dialog" : "complementary"}
+        aria-modal={drawer && visibleContext ? true : undefined}
+        aria-label={"\u4efb\u52a1\u4e0e\u8d44\u6599"}
+        hidden={!visibleContext}
         className="jadera-context-slot"
       >
         <ShellDock mode="narrow" className="jadera-context-dock">

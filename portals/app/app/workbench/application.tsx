@@ -6,6 +6,7 @@
  * @author AI-Generated
  * @date 2026-11-25
  */
+import { productFetch } from "./product-fetch";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Button,
@@ -35,10 +36,12 @@ import {
   WorkflowNavigation,
   CompilationSelector,
   CompilationRequirements,
-  useMediaQuery,
+  useContainerWidth,
   type ProjectCardData,
 } from "@bidproposal/shared/presentation";
 import { ProjectWorkspace } from "./project-workspace";
+import { WorkspaceSearch } from "./workspace-search";
+import { SessionRecovery } from "./session-recovery";
 import { compilationRequest, useCompilations } from "./compilation-client";
 import { requirementsComplete } from "@bidproposal/shared/compilations";
 import { ResourceCollection } from "./resource-collection";
@@ -98,7 +101,7 @@ const transport: typeof fetch = (input, init) => {
     return Promise.reject(Error("Invalid project request"));
   const headers = new Headers(init?.headers);
   headers.delete("authorization");
-  return fetch("/api/workbench/host" + input, {
+  return productFetch("/api/workbench/host" + input, {
     ...init,
     headers,
     credentials: "same-origin",
@@ -172,7 +175,10 @@ function Workspace({ access }: { access: AccessState }) {
     [collapsed, setCollapsed] = useState(false),
     [pending, setPending] = useState(0);
   const [assistantOpen, setAssistantOpen] = useState(false);
-  const compactWorkflow = useMediaQuery("(max-width: 990px)");
+  const [searchOpen, setSearchOpen] = useState(false);
+  const workRegion = useContainerWidth();
+  const shellRegion = useContainerWidth();
+  const compactWorkflow = shellRegion.width === undefined ? undefined : shellRegion.width <= 990;
   useEffect(() => {
     if (compactWorkflow !== undefined) setCollapsed(compactWorkflow);
   }, [compactWorkflow]);
@@ -496,6 +502,8 @@ function Workspace({ access }: { access: AccessState }) {
   };
   return (
     <div
+      ref={shellRegion.ref}
+      data-page-width={projectId ? "1920" : "1536"}
       className={`bid-workbench ${displayFont.variable} ${textFont.variable}`}
       id="jadera-application"
     >
@@ -514,6 +522,7 @@ function Workspace({ access }: { access: AccessState }) {
             onNavigate={headerNavigate}
             onSignOut={signOut}
             onAssistant={assistant}
+            onSearch={() => setSearchOpen(true)}
           />
         }
         sidebar={
@@ -595,7 +604,7 @@ function Workspace({ access }: { access: AccessState }) {
             projectId ? "workbench-page" : "workbench-page jadera-landing-page"
           }
         >
-          <div className="jadera-work-area">
+          <div className="jadera-work-area" ref={workRegion.ref}>
             {projectId ? (
               <ProjectWorkspace
                 key={projectId}
@@ -747,6 +756,7 @@ function Workspace({ access }: { access: AccessState }) {
               />
             )}
             <AssistantDock
+              drawer={workRegion.width !== undefined && workRegion.width <= 1100}
               open={assistantOpen}
               onClose={() => setAssistantOpen(false)}
               client={assistantClient}
@@ -756,6 +766,8 @@ function Workspace({ access }: { access: AccessState }) {
           </div>
         </ShellPageContainer>
       </ShellViewport>
+      <WorkspaceSearch open={searchOpen} onClose={() => setSearchOpen(false)} projects={projects} onNavigate={navigate} />
+      <SessionRecovery original={access} frame={frame} />
     </div>
   );
 }

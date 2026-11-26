@@ -77,7 +77,7 @@
 }
 .jadera-ai-greeting {
   text-align: center;
-  margin: clamp(var(--space-xl), 12vh, var(--space-7xl)) auto var(--space-xl);
+  margin: var(--space-lg) auto var(--space-xl);
   max-width: 32ch;
   display: flex;
   flex-direction: column;
@@ -559,7 +559,7 @@
 .jadera-resource-meta {
   height: var(--spacing-icon-xl);
 }
-@media (max-width: 1100px) {
+@container jadera-work-area (max-width: 1100px) {
   .jadera-resource-grid.jadera-resource-collection-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
@@ -571,7 +571,7 @@
     z-index: var(--z-index-drawer);
   }
 }
-@media (max-width: 760px) {
+@container jadera-work-area (max-width: 760px) {
   .jadera-resource-grid.jadera-resource-collection-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -590,3 +590,8 @@
 .jadera-resource-card .jadera-resource-title > [data-slot] {
   flex: none;
 }
+
+.jadera-assistant-region { flex:none; min-width:0; height:100%; }
+.jadera-assistant-region .jadera-assistant-dock { position:static; }
+.jadera-ai-message.assistant > span { display:none; }
+.jadera-assistant-region[data-drawer="true"] { position:absolute; right:0; top:0; bottom:0; max-width:100%; z-index:var(--z-index-drawer); }

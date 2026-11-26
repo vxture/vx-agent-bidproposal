@@ -1,5 +1,104 @@
 # Web design conformance
 
+## Current common-page baseline: Vxtpl v2.0.0
+
+Owner decisions confirmed 2026-11-26: home/management use the 1536 content cap;
+the writing workspace uses 1920. Preserve six-stage workflow navigation, with
+resources in the on-demand auxiliary region. Search covers authorized projects,
+knowledge and templates in the current workspace; manuscript full-text search
+is a separate feature. Use daily home headlines with product positioning kept
+as secondary copy. Do not extend the project model for ownership in this batch;
+display the missing-owner state honestly. Include 2440px and 2560x1440 displays
+in acceptance alongside 1920px and narrow containers. At 2440px the 1536 home
+box has 452px outer margins; the 1920 writing box caps the center only after
+actual docked regions have been deducted. Two docked regions of 256/420 leave
+1764px at 2440 and 1884px at 2560; hiding a region returns its width to center.
+
+Implementation checkpoint: shared container observation and drawer focus handling
+replace viewport decisions for workflow and auxiliary docks. Escape, focus
+cycling and trigger return are implemented without moving the center/editor
+to a different React branch. The work header exposes product-scoped catalog
+search using existing authenticated project/library APIs. Recent projects now
+show at most six records, the real completed-stage percentage and an honest
+missing-owner state. Ten local-calendar headlines rotate without repeating
+within a cycle. Assistant drafts are retained separately by conversation or
+new-conversation project scope; closed docks retain their mounted state owner.
+Entry minimum heights align to the 480/440 reference without a fixed maximum.
+
+Web session recovery keeps the original workspace mounted. A 401/403 freezes
+subsequent UI requests, opens a recovery dialog and supports login in a separate
+tab. Explicit confirmation requires product access and the original subject,
+organization and workspace. The original frame accepts block/unblock only from
+its same-origin parent. Neither rejected writes nor successful confirmation
+automatically replay an operation. Server identity, entitlement and storage
+checks are unchanged; no platform source or data model is modified.
+
+Local full phase verification: 319 app + 114 business + seven desktop-adapter
+tests pass, as do all workspace types. A fifth new focused regression additionally
+verifies the actual Web adapter rejects foreign unblock messages and never
+replays a refused operation. Isolated home/workspace preview bundles include
+320/360/580/768/1024/1367/1920/2440/2560 routes. Real rendered geometry, drawer
+focus and 200% zoom remain browser acceptance gates; do not label expected
+large-screen arithmetic as measured browser evidence.
+
+Owner framework review follow-up: the breadcrumb/project actions belong inside
+the constrained center content, not a separate title strip. They now share the
+same center container and scroll region as the body; auxiliary docks remain
+outside it. Actual preview execution in a DOM test environment checks header,
+business content, task-panel expansion and this containment without exceptions.
+The local preview additionally needed complete fixture data and the production
+FullscreenProvider; its 2440px canvas now scales to the viewing window rather
+than adding an outer horizontal scrollbar. These fixture corrections do not
+change production identity or runtime responses. On 2026-11-26 the owner accepted
+the basic framework and directed continued integration, deferring fine details.
+This is owner framework review, not a claim of exhaustive browser geometry,
+keyboard/zoom or real-account recovery acceptance.
+
+Owner direction, 2026-11-26: follow the supplied Vxtpl common product page kit
+v2.0.0 for further common-page architecture and presentation. Local source:
+`D:/stonesomker/OneDrive/Vxtpl-通用产品页面套件-v2.0.0`.
+Read README, docs 01-05 and examples/README before implementing this alignment.
+The release-lock manifest checksum was verified as
+`6e9c81c3850f564886c7c3e105636818bfb3012a3b194214acfc8d566dee650c`.
+The manifest identifies 41 examples, 122 files and application reference
+`vxture/vx-agent-vxtpl@200279a4d740b76b77e96d3603950ae2f110fe96`.
+
+This supersedes earlier B7 common-shell details where they conflict with the
+new kit. Jadera's product identity, six-stage workflow, data contracts and
+authorization remain product-specific. Platform interface authority remains
+the original integration contract referenced by kit docs/02; offline state
+simulation is not production authentication or entitlement behavior.
+
+Register the next implementation against these requirements:
+
+- Full-width shell/header; desktop work header has 48px side insets. Explicit
+  1536/1920 content-box modes include both 48px inner insets. Deduct actual
+  docked regions before measuring center width; hidden regions take no space.
+- Default left region 256px, management collapsed rail 64px and narrow right
+  dock 420px. Use actual container width for adaptation. Narrow auxiliary
+  drawers are mutually exclusive, close with Esc and return focus. Preserve
+  the center/editor node, draft and scroll when regions open or close.
+- Adopt kit header/tool grouping and assistant control order with DS components.
+  Preserve assistant input/messages across close and conversation changes.
+- Work-home headlines rotate by local calendar day, with stable daily selection.
+  Recent work supports at most two desktop rows of three cards. Complete lists
+  remain in the catalog. Cards use real type/status/owner/stage/progress/time;
+  missing totals show a dash. Do not fabricate owner or progress facts.
+- Public home and independent gates alone use the legal footer. Management
+  tables have explicit selection scope and 64px first/last columns.
+- Gate states follow server facts and role differences. Session recovery uses
+  a new login tab, preserves the original draft and route, confirms the same
+  account/workspace, and never automatically retries a write.
+
+Current gaps include viewport-based media hooks, unrestricted shell geometry,
+the three-item recent-project limit, fixed home headline, missing card owner
+projection, and incomplete narrow drawer focus/Esc behavior. Resolve framework
+composition first, then shared chrome/cards, gate recovery and acceptance.
+Verify both content modes at 1920/2440, narrow containers, themes, 200% zoom,
+keyboard/focus, long names and real session/permission changes. The kit's own
+acceptance is reference evidence, not acceptance of Jadera. No runtime change
+or new production release is made by registering this baseline.
+
 Registered 2026-11-26. The owner requires strict Web design acceptance before
 further desktop adaptation. Reusable components remain shared, but an extraction
 must not redefine the design. The separate unmerged RUYIN workflow experiment
