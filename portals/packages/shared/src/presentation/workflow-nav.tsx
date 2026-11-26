@@ -9,7 +9,11 @@ import React, {
   type ReactElement,
   type ReactNode,
 } from "react";
-import { Icon, Progress, ShellSidebarNav } from "@vxture/design-system";
+import {
+  Icon, Progress, ShellSidebarNav,
+  Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,
+} from "@vxture/design-system";
+import { workflowStageIcons } from "./workflow-icons";
 export interface WorkflowStep {
   id: string;
   label: string;
@@ -50,6 +54,23 @@ const duration = (start?: string, end?: string) => {
     ? seconds + " \u79d2"
     : Math.round(seconds / 60) + " \u5206\u949f";
 };
+const fullTime = (value?: string) => {
+  if (!value || !Number.isFinite(Date.parse(value))) return "\u2014";
+  const date = new Date(value);
+  return date.toLocaleDateString("zh-CN", {
+    year: "numeric", month: "long", day: "numeric",
+  }) + " - " + date.toLocaleTimeString("zh-CN", {
+    hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false,
+  });
+};
+const fullDuration = (start?: string, end?: string) => {
+  if (!start || !end) return "\u2014";
+  const seconds = Math.max(0, Math.round((Date.parse(end) - Date.parse(start)) / 1000));
+  if (!Number.isFinite(seconds)) return "\u2014";
+  return Math.floor(seconds / 3600) + " \u5c0f\u65f6 " +
+    Math.floor((seconds % 3600) / 60) + " \u5206\u949f " +
+    (seconds % 60) + " \u79d2";
+};
 function WorkflowLink({
   href,
   children,
@@ -70,16 +91,17 @@ function WorkflowLink({
           completeness !== undefined && (
             <span
               className="jadera-settings-complete"
+              data-complete={completeness === 5}
               title={
                 "\u57fa\u672c\u7f16\u5236\u8981\u6c42 " + completeness + "/5"
               }
             >
               <span
                 style={{
-                  background: `conic-gradient(var(--primary) ${completeness * 72}deg, var(--muted) 0)`,
+                  background: `conic-gradient(var(--jadera-completeness-color, var(--primary)) ${completeness * 72}deg, var(--muted) 0)`,
                 }}
               />
-              {completeness}/5
+              {Math.round((completeness / 5) * 100)}%
             </span>
           )}
       </a>
@@ -128,25 +150,37 @@ function WorkflowLink({
           </span>
         )}
       </a>
-      <div
-        className="jadera-step-time"
-        aria-label={step.label + "\u7684\u73af\u8282\u65f6\u95f4"}
-      >
-        <span className="jadera-step-range">
-        <span title={"\u5f00\u59cb " + time(step.startedAt)}>
-          <Icon name="play" size="xs" />
-          <time>{time(step.startedAt)}</time>
-        </span>
-        <span title={"\u5b8c\u6210 " + time(step.completedAt)}>
-          <Icon name="stop" size="xs" />
-          <time>{time(step.completedAt)}</time>
-        </span>
-        </span>
-        <span className="jadera-step-duration" title={"\u8017\u65f6"}>
-          <Icon name="timer" size="xs" />
-          {duration(step.startedAt, step.completedAt)}
-        </span>
-      </div>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div
+              className="jadera-step-time"
+              aria-label={step.label + "\u7684\u73af\u8282\u65f6\u95f4"}
+              tabIndex={0}
+            >
+              <span className="jadera-step-range">
+              <span>
+                <Icon name="play" size="xs" />
+                <time dateTime={step.startedAt}>{time(step.startedAt)}</time>
+              </span>
+              <span>
+                <Icon name="stop" size="xs" />
+                <time dateTime={step.completedAt}>{time(step.completedAt)}</time>
+              </span>
+              </span>
+              <span className="jadera-step-duration" title={"\u8017\u65f6"}>
+                <Icon name="timer" size="xs" />
+                {duration(step.startedAt, step.completedAt)}
+              </span>
+            </div>
+          </TooltipTrigger>
+          <TooltipContent side="right" className="jadera-step-time-tooltip">
+            <div>{"\u5f00\u59cb\uff1a" + fullTime(step.startedAt)}</div>
+            <div>{"\u5b8c\u6210\uff1a" + fullTime(step.completedAt)}</div>
+            <div>{"\u8017\u65f6\uff1a" + fullDuration(step.startedAt, step.completedAt)}</div>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
     </div>
   );
 }
@@ -179,14 +213,6 @@ export function WorkflowNavigation({
         : 0),
     0,
   );
-  const icons = [
-    "file-text",
-    "list-checks",
-    "tree-structure",
-    "edit",
-    "clipboard",
-    "download",
-  ] as const;
   return (
     <Context.Provider
       value={{ steps, collapsed, versionSelector, completeness }}
@@ -221,7 +247,7 @@ export function WorkflowNavigation({
                 ...steps.map((step, i) => ({
                   href: "#ws/" + projectId + "/product/" + step.id,
                   label: step.label,
-                  icon: icons[i]!,
+                  icon: workflowStageIcons[i]!,
                 })),
               ],
             },

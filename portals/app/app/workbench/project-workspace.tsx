@@ -20,7 +20,7 @@ import {
   PRODUCT_REVIEW_EVENT,
 } from "@vxture/ruyin-workbench-ui";
 import type { TabId } from "@vxture/ruyin-workbench-ui/workspace-tabs";
-import { NameDialog, useMediaQuery } from "@bidproposal/shared/presentation";
+import { NameDialog } from "@bidproposal/shared/presentation";
 export function ProjectWorkspace({
   api,
   id,
@@ -66,10 +66,9 @@ export function ProjectWorkspace({
     [operationError, setOperationError] = useState("");
   const [renaming, setRenaming] = useState(false);
   const content = useRef<HTMLDivElement>(null);
-  const compactContext = useMediaQuery("(max-width: 1280px)");
   useEffect(() => {
-    if (compactContext !== undefined) setContextOpen(!compactContext);
-  }, [compactContext]);
+    setContextOpen(false);
+  }, [id]);
   useEffect(() => {
     const show = (event: Event) => {
       if ((event as CustomEvent).detail?.projectId !== id) return;

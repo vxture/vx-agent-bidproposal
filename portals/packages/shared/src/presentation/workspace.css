@@ -255,6 +255,10 @@
   color: var(--muted-foreground);
   font-size: var(--label-sm-font-size);
 }
+.jadera-settings-complete[data-complete="true"] {
+  color: var(--success-text);
+  --jadera-completeness-color: var(--success);
+}
 .jadera-settings-complete > span {
   position: relative;
   width: var(--spacing-icon-sm);
@@ -304,8 +308,9 @@
   line-height: 1.7;
 }
 .jadera-compilation-requirements {
-  max-width: var(--container-panel-lg);
-  margin-inline: auto;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
   padding: var(--space-xl);
 }
 .jadera-requirements-heading {
@@ -333,6 +338,10 @@
 }
 .jadera-flow-item {
   position: relative;
+}
+.jadera-step-time-tooltip {
+  font-variant-numeric: tabular-nums;
+  line-height: 1.8;
 }
 .jadera-flow-item:not(:last-child):after {
   content: "";

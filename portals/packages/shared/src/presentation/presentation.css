@@ -11,13 +11,13 @@
 .jadera-header-tools {
   display: flex;
   align-items: center;
-  gap: calc(var(--space-xs) + var(--space-2xs));
+  gap: 16px;
   min-width: 0;
 }
 .jadera-leading {
   height: 100%;
   flex: 1;
-  gap: var(--space-xs);
+  gap: 16px;
 }
 .jadera-header-tools {
   flex: none;
@@ -45,11 +45,17 @@
   cursor: pointer;
   white-space: nowrap;
 }
+.jadera-brand-button .bid-product-identity {
+  gap: 8px;
+}
+.jadera-header-button-group {
+  gap: 4px;
+}
 .jadera-header-divider {
   height: 20px;
   width: 1px;
   background: var(--border);
-  margin: 0 var(--space-xs);
+  margin: 0;
 }
 .jadera-scope {
   font-size: var(--body-md-font-size);
@@ -292,6 +298,26 @@
   );
   color: var(--foreground);
 }
+.jadera-project-card:hover {
+  border-color: color-mix(in srgb, var(--bidproposal-project-tone) 40%, var(--border));
+}
+.jadera-project-open-action {
+  min-height: 28px;
+  padding: 3px 7px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--card);
+  color: var(--foreground);
+}
+.jadera-project-card:hover .jadera-project-open-action,
+.jadera-project-card:focus-within .jadera-project-open-action {
+  color: var(--primary-text);
+  border-color: color-mix(in srgb, var(--primary) 25%, var(--border));
+  background: var(--primary-muted);
+}
+.jadera-project-card .jadera-project-open-action:hover {
+  background: color-mix(in srgb, var(--primary) 14%, var(--card));
+}
 .jadera-project-card:focus-within {
   outline: 2px solid var(--primary);
   outline-offset: 2px;
@@ -326,6 +352,9 @@
   font-size: var(--label-sm-font-size);
 }
 .jadera-project-stage > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   border-radius: var(--radius-sm);
   padding: 3px calc(var(--space-2xs) * 1.5);
   background: color-mix(
@@ -534,7 +563,7 @@
     flex-wrap: wrap;
   }
   .jadera-header-tools {
-    gap: var(--space-2xs);
+    gap: 16px;
   }
 }
 @media (max-width: 520px) {
@@ -705,6 +734,18 @@
   margin-top: var(--space-md);
   border: 0;
   border-top: 1px solid var(--border);
+}
+.jadera-resource-preview .jadera-document-art > svg {
+  width: 16px;
+  height: 16px;
+  flex: none;
+  margin-top: 0;
+  color: var(--muted-foreground);
+}
+.jadera-resource-preview .jadera-document-art > strong {
+  margin: 0;
+  font-size: var(--title-md-font-size);
+  line-height: 1.6;
 }
 .jadera-resource-copy {
   display: block;
