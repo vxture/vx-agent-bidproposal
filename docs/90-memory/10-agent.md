@@ -1,5 +1,22 @@
 # Agent entry point
 
+Live 2026-11-26: Web v0.3.7 / e2f599bb is deployed by protected run
+45754202414 after PR #45 and exact main checks, including Sonar. Header spacing,
+full-width requirements, deliberate auxiliary-panel opening, percentage brief
+completion, shared project-stage icons, relative card dates, card hover feedback,
+secondary resource-cover icons and complete timing tooltips are shipped.
+Health/readiness and anonymous refusal pass. Four retained projects, 179 product
+documents, 18 tasks and six file references match the pre-release snapshot;
+the earlier 101-document/eight-output original baseline also passed before release.
+After release, one knowledge original and two editable Word templates were added
+through the existing product session/API and quota path. Knowledge and templates
+now each have six completed items; all nine prior library records are unchanged.
+The new material uses normal business wording, without demonstration markers or
+invented credentials/clients. All 45 extracted units were read back and checked.
+Browser automation is unavailable in this recovery chat: live hover, tooltip and
+responsive visual acceptance remain unverified, despite successful API/artifact
+checks. Keep desktop adaptation parked. Batch 200 records the release evidence.
+
 Live 2026-11-26: Web v0.3.6 / 05ce0bea is deployed by protected run
 45699629981. Batch 200 records workflow design, continuous sources/manuscript/PDF,
 local Tiptap chapter supplementation and the corrected Web form sandbox.

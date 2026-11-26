@@ -176,3 +176,43 @@ unrecorded. Existing short times, recorded facts and collapsed targets survive.
 App types and four existing workflow/projection regressions pass. Local home
 and workspace previews bundle successfully; live visual acceptance and release
 remain pending.
+
+## v0.3.7 release and library completion 2026-11-26
+
+The owner authorized production rollout followed by additive library population,
+with normal business names/content and no demonstration wording. PR #45 merged
+as e2f599bb. All required checks and Sonar passed on the exact main source.
+Protected release 45754202414 succeeded; both registries expose the same digest
+`sha256:4dc60ea37228fb1a3f4e9eff1db1596aec786301bdf0186b54498aa0edb12c5a`.
+The isolated image starts, preserves the approved brand asset, and refuses
+anonymous reads/PATCH with 401. The app-only Compose preview passed before
+production approval. Public https://jadera.ruyin.work/api/health confirms v0.3.7
+and e2f599bb; readiness, original bundled document assets and anonymous refusal
+pass after deployment.
+
+Rollback inputs are retained at
+`/srv/md0/bidproposal/backups/jadera-b7-v037-20261126T041435Z`.
+Operator environment/master key and DB/Redis container IDs are unchanged.
+A read-only comparison against that encrypted snapshot confirms four retained
+projects, 179 product documents, 18 tasks and six source references unchanged.
+The original 101-document/eight-output/14-task/two-source baseline also passed
+before rollout. No project was reset, regenerated or renamed in this release.
+
+After production verification, the existing product session for the selected
+project was resolved only on its own server; no token was printed or exported.
+Normal API authentication, product coverage, same-origin writes, encrypted
+storage and gauge accounting remained in effect. Duplicate-aware import added
+one product-capability knowledge document and two Word templates for service
+and equipment procurement. All nine prior library records match their original
+API representations. Knowledge and templates now each contain six items, all
+with completed extraction. All 45 extracted units of the three new resources
+were read back; none contains demonstration/fiction/synthesis wording. The new
+documents contain reusable writing/checklist guidance rather than invented
+enterprise credentials or customer records. Both Word templates were rendered
+and all four pages visually inspected before import.
+
+Evidence scripts and rendered template review are under the existing local
+shared-workflow artifact directory. Browser access remains unavailable to this
+recovery chat, so production hover/tooltip/responsive visual acceptance is not
+claimed. This section supersedes the earlier pending-release/import statements;
+desktop identity, signing and installation remain outside this Web release.
