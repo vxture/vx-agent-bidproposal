@@ -7,6 +7,12 @@ free -m
 df -h /srv/md0
 docker version --format '{{.Server.Version}}'
 docker ps --format '{{.Names}} {{.Status}}'
+if [ "$mode" = inspect ]; then
+  echo '[office] gateway mounts and networks'
+  docker inspect ruyin-nginx --format '{{json .Mounts}} {{json .NetworkSettings.Networks}}'
+  echo '[office] gateway virtual hosts and certificate paths'
+  docker exec ruyin-nginx nginx -T 2>&1 | grep -E 'configuration file|server_name|ssl_certificate |proxy_pass|listen ' || true
+fi
 if [ "$mode" = inspect ]; then exit 0; fi
 test "$mode" = deploy
 # Leave the currently serving product untouched; refuse inadequate capacity.
