@@ -33,7 +33,7 @@ test("collapsed navigation preserves every source time and target while replacin
   const expanded = render(false, "requirements"), collapsed = render(true, "requirements");
   const values = (html: string, pattern: RegExp) => [...html.matchAll(pattern)].map(match => match[1]);
   assert.deepEqual(values(collapsed, /href="([^"]+)"/g), values(expanded, /href="([^"]+)"/g));
-  assert.deepEqual(values(collapsed, /<time>([^<]+)<\/time>/g), values(expanded, /<time>([^<]+)<\/time>/g));
+  assert.deepEqual(values(collapsed, /<time(?: [^>]*)?>([^<]+)<\/time>/g), values(expanded, /<time(?: [^>]*)?>([^<]+)<\/time>/g));
   assert.match(collapsed, /jadera-flow-symbol selected">2<\/span>/);
   assert.doesNotMatch(collapsed, />\u2713</);
   assert.equal((collapsed.match(/jadera-flow-item collapsed/g) || []).length, 2);

@@ -255,7 +255,10 @@ export function ApplicationHeader({
           >
             <Icon name="sparkles" size="lg" />
           </ShellIconButton>
-          <ShellIconGroup label={"\u663e\u793a\u4e0e\u914d\u7f6e"}>
+          <ShellIconGroup
+            label={"\u663e\u793a\u4e0e\u914d\u7f6e"}
+            className="jadera-header-button-group"
+          >
             <ShellThemeToggle
               currentTheme={theme.mode}
               buttonLabel={"\u5207\u6362\u4e3b\u9898"}

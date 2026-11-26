@@ -16,6 +16,7 @@ import {
   TableCell,
   EmptyState,
 } from "@vxture/design-system";
+import { workflowStageIcons } from "./workflow-icons";
 
 export interface ProjectRecord {
   stage: string;
@@ -37,15 +38,21 @@ export interface ProjectCardData {
 }
 const date = (value: string) => {
   const parsed = Date.parse(value);
-  return Number.isFinite(parsed)
-    ? new Date(parsed).toLocaleString("zh-CN", {
-        month: "2-digit",
-        day: "2-digit",
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: false,
-      })
-    : "\u672a\u8bb0\u5f55";
+  if (!Number.isFinite(parsed)) return "\u672a\u8bb0\u5f55";
+  const recorded = new Date(parsed), now = new Date();
+  // Compare local calendar days, including midnight and daylight-saving changes.
+  const calendarDay = (day: Date) =>
+    Date.UTC(day.getFullYear(), day.getMonth(), day.getDate());
+  const days = (calendarDay(now) - calendarDay(recorded)) / 86400000;
+  if (days === 0 || days === 1) {
+    return (days === 0 ? "\u4eca\u5929 " : "\u6628\u5929 ") +
+      recorded.toLocaleTimeString("zh-CN", {
+        hour: "2-digit", minute: "2-digit", hour12: false,
+      });
+  }
+  return recorded.toLocaleDateString("zh-CN", {
+    year: "numeric", month: "2-digit", day: "2-digit",
+  });
 };
 function ProjectCard({
   project,
@@ -80,6 +87,9 @@ function ProjectCard({
         <strong title={project.name}>{project.name}</strong>
         <span className="jadera-project-stage">
           <span>
+            {record && !project.archivedAt && workflowStageIcons[record.stageIndex] && (
+              <Icon name={workflowStageIcons[record.stageIndex]!} size="sm" />
+            )}
             {project.archivedAt
               ? "\u5df2\u5f52\u6863"
               : record?.stage || "\u5c1a\u65e0\u6d41\u7a0b\u8bb0\u5f55"}
@@ -113,12 +123,9 @@ function ProjectCard({
         </span>
         <span className="jadera-project-card-foot">
           <time dateTime={record?.recordedAt || project.createdAt}>
-            {record?.recordedAt
-              ? "\u6700\u8fd1\u8bb0\u5f55 "
-              : "\u521b\u5efa\u4e8e "}
             {date(record?.recordedAt || project.createdAt)}
           </time>
-          <span>
+          <span className="jadera-project-open-action">
             <Icon name="arrow-right" size="sm" />
             {"\u6253\u5f00\u9879\u76ee"}
           </span>

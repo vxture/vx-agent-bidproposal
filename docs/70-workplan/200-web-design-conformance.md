@@ -142,3 +142,37 @@ and its previous body appeared as history version one. The supplement clarifies
 the synthetic twelve-week schedule; existing unmet evidence remains explicit.
 The batch is paused at one saved chapter out of ten so no remaining generation
 is left unattended. Original project editor acceptance used cancellation only.
+
+## Layout feedback follow-up 2026-11-26
+
+The owner requests the B7 percentage completeness indicator, full-width
+compilation requirements and an auxiliary task/files panel opened only when
+needed. The shared navigation now displays percentage completion and the
+accepted success color for a complete brief. Requirements fill the available
+business column. The Web context panel starts closed for every project;
+explicit expansion and product review events still open it. Resizing no longer
+overrides the user's panel choice. No saved project or workflow data changes.
+
+App TypeScript and both existing workflow presentation regressions pass.
+The isolated updated preview bundles successfully. Automated visual acceptance
+is pending because this recovery chat has no local browser connection. No
+production release or native package change is included in this follow-up.
+
+Additional owner feedback in the same batch: header groups use 16px spacing,
+brand elements 8px and grouped icon buttons 4px. Project cards reuse the
+workflow navigation's single stage-icon map and show local-calendar today /
+yesterday times or a full year/month/day date without redundant prefixes.
+Card border and open-action hover feedback follow the B7 reference. Resource
+cover icons are secondary 16px marks; redundant vertical margins no longer
+push the title below the visible cover. Each home resource group already
+supports six entries. Six knowledge originals and six editable demonstration
+templates are prepared outside the repo for additive, duplicate-aware import;
+no live import has occurred because browser access is unavailable.
+
+Stage timing remains compact in the rail. A keyboard-focusable DS tooltip
+shows start and completion as year/month/day plus hours/minutes/seconds, with
+exact elapsed hours/minutes/seconds on its third line. Missing values remain
+unrecorded. Existing short times, recorded facts and collapsed targets survive.
+App types and four existing workflow/projection regressions pass. Local home
+and workspace previews bundle successfully; live visual acceptance and release
+remain pending.
