@@ -44,4 +44,14 @@ jobs:
             ssh "${opts[@]}" "$target" 'mkdir -p /srv/md0/bidproposal/onlyoffice-validation'
             scp -i ~/.ssh/deploy_key -P "$port" deploy/onlyoffice/compose.yml "$target:/srv/md0/bidproposal/onlyoffice-validation/compose.yml"
           fi
-          ssh "${opts[@]}" "$target" "bash -s -- '$OFFICE_MODE'" < deploy/onlyoffice/validate.sh
+          ssh "${opts[@]}" "$target" "bash -s -- '$OFFICE_MODE'" < deploy/onlyoffice/validate.sh > office-validation-output.txt
+          grep -v '^OFFICE_PREVIEW_CONFIG=' office-validation-output.txt
+          if [ "$OFFICE_MODE" = inspect ]; then
+            sed -n 's/^OFFICE_PREVIEW_CONFIG=//p' office-validation-output.txt > office-preview.json
+          fi
+      - uses: actions/upload-artifact@v4
+        if: inputs.mode == 'inspect'
+        with:
+          name: office-public-sample-preview
+          path: office-preview.json
+          retention-days: 1
