@@ -8,6 +8,16 @@ df -h /srv/md0
 docker version --format '{{.Server.Version}}'
 docker ps --format '{{.Names}} {{.Status}}'
 if [ "$mode" = inspect ]; then
+  # Disposable public sample only: signed config contains no integration secret.
+  python3 - <<'PY'
+import json,base64,hmac,hashlib,time
+secret=open('/srv/md0/bidproposal/onlyoffice-validation/office.env').read().split('JWT_SECRET=',1)[1].splitlines()[0].strip()
+config={'documentType':'word','document':{'fileType':'docx','key':'jadera-visual-'+str(int(time.time())),'title':'DOCX editing preview.docx','url':'https://static.onlyoffice.com/assets/docs/samples/demo.docx','permissions':{'edit':True,'download':True,'print':True}},'editorConfig':{'mode':'edit','lang':'zh-CN','user':{'id':'visual-review','name':'Reviewer'},'customization':{'autosave':False,'forcesave':False}}}
+enc=lambda x:base64.urlsafe_b64encode(json.dumps(x,separators=(',',':')).encode()).decode().rstrip('=')
+payload=enc({'alg':'HS256','typ':'JWT'})+'.'+enc(config)
+config['token']=payload+'.'+base64.urlsafe_b64encode(hmac.new(secret.encode(),payload.encode(),hashlib.sha256).digest()).decode().rstrip('=')
+print('OFFICE_PREVIEW_CONFIG='+json.dumps(config,separators=(',',':')))
+PY
   echo '[office] gateway mounts and networks'
   docker inspect ruyin-nginx --format '{{json .Mounts}} {{json .NetworkSettings.Networks}}'
   echo '[office] gateway virtual hosts and certificate paths'
