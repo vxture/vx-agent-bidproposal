@@ -375,12 +375,18 @@
   color: var(--muted-foreground);
   font-size: var(--label-small-font-size);
 }
+.jadera-project-stage .jadera-project-percent {
+  color: var(--foreground);
+  font-size: var(--heading-2-font-size);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
 .jadera-project-track {
   display: flex;
   align-items: center;
   gap: 2px;
   height: 8px;
-  margin: calc(var(--space-md) - var(--space-2xs) / 2) 0 var(--space-sm);
+  margin: var(--space-2xs) 0 var(--space-sm);
 }
 .jadera-project-track i {
   height: 3px;
@@ -409,7 +415,7 @@
   justify-content: space-between;
   gap: var(--space-xs);
   border-top: 1px solid var(--border);
-  margin-top: calc(var(--space-md) + var(--space-2xs) / 2);
+  margin-top: var(--space-sm);
   padding-top: calc(var(--space-xs) + var(--space-2xs));
   font-size: var(--label-small-font-size);
   color: var(--muted-foreground);
@@ -897,7 +903,7 @@
 .jadera-assistant-region[data-wide="true"] .jadera-assistant-dock { width:clamp(480px,46cqw,760px); }
 .jadera-assistant-region[data-drawer="true"] .jadera-assistant-dock { width:100%; }
 
-.jadera-project-summary-row { display:flex; align-items:center; justify-content:flex-start; gap:8px; min-width:0; margin:0 0 16px; }
+.jadera-project-summary-row { display:flex; align-items:center; justify-content:flex-start; gap:8px; min-width:0; margin:0 0 var(--space-lg); }
 .jadera-project-summary-row .jadera-project-owner { flex:0 1 auto; min-width:0; }
 .jadera-project-summary-row .jadera-project-status { flex:none; margin:0; white-space:nowrap; }
 .jadera-home-kicker > svg { color:var(--primary-text,var(--primary)); flex:none; }

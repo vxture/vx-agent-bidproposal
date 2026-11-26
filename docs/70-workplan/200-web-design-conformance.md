@@ -543,3 +543,32 @@ standalone packaging fails on EPERM creating symlinks. Do not weaken packaging
 or claim a successful production build from that local run. Linux CI build
 remains the required release evidence. RUYIN UI peer-range mismatch and browser
 pixel acceptance stay explicit; no Jadera release tag is cut for this batch.
+
+
+## Project progress grouping refinement 2026-11-26
+
+Owner groups stage/percentage with its progress track: reduce the track top
+margin to DS space-2xs (4px default), and render known percentage with the DS
+heading-2 font size, semibold weight and tabular numerals. Unknown progress
+keeps its subdued dash. Shared cards apply consistently on home and catalog.
+Local preview rebuilt; card/route render checks and diff hygiene pass.
+
+
+## Primary action size contract 2026-11-26
+
+Home create/continue actions and the project-catalog create action explicitly
+select DS Button xl: 32px height, 14px semantic text and 16px icons at default
+font preference. Do not rely on the md default for page-primary actions or
+redefine button geometry in product CSS. Primary/outline variants are retained.
+
+
+## Balanced progress whitespace and locale-code contract 2026-11-26
+
+Keep stage/track as one group with 4px internal gap, but balance the surrounding
+space: owner/status-to-stage uses DS space-lg; footer top margin uses space-sm.
+At default density this leaves 24px above and 20px below the progress group
+(including the track bottom margin), rather than the previous 16px/28px.
+
+DS follow-up PR #152 introduces supported locale-code arrays, DS-owned native
+names/short marks, explicit product display overrides and safe code fallback.
+Jadera supports only zh-CN and must not advertise nonfunctional English.

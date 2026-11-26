@@ -117,7 +117,7 @@ function ProjectCard({
               : record?.stage || "\u5c1a\u65e0\u6d41\u7a0b\u8bb0\u5f55"}
           </span>
           {record && (
-            <small>{Math.round((record.completed / 6) * 100)}%</small>
+            <small className="jadera-project-percent">{Math.round((record.completed / 6) * 100)}%</small>
           )}
           {!record && <small>{"\u2014"}</small>}
         </span>
@@ -236,6 +236,7 @@ export function ProjectCollection({
               </p>
             </div>
             <Button
+              size="xl"
               disabled={state !== "ready"}
               onClick={() => setCreating(true)}
             >
@@ -255,6 +256,7 @@ export function ProjectCollection({
               </p>
               <div className="jadera-home-actions">
                 <Button
+                  size="xl"
                   disabled={state !== "ready"}
                   onClick={() => setCreating(true)}
                 >
@@ -262,7 +264,7 @@ export function ProjectCollection({
                   {"\u65b0\u5efa\u6807\u4e66"}
                 </Button>
                 {onContinue && (
-                  <Button variant="outline" onClick={onContinue}>
+                  <Button size="xl" variant="outline" onClick={onContinue}>
                     <Icon name="arrow-right" size="sm" />
                     {"\u7ee7\u7eed\u5f53\u524d\u9879\u76ee"}
                   </Button>
