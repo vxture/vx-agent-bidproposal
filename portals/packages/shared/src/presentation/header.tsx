@@ -42,6 +42,7 @@ export function ApplicationHeader({
   onNavigate,
   onSignOut,
   onAssistant,
+  onSearch,
 }: {
   brand: ReactNode;
   identity: HeaderIdentity;
@@ -50,6 +51,7 @@ export function ApplicationHeader({
   onNavigate: (page: string) => void;
   onSignOut: () => void;
   onAssistant: () => void;
+  onSearch?: () => void;
 }) {
   const [launcher, setLauncher] = useState(false),
     [scopeOpen, setScopeOpen] = useState(false),
@@ -247,6 +249,7 @@ export function ApplicationHeader({
       }
       trailing={
         <div className="jadera-header-tools">
+          {onSearch && <ShellIconButton icon="search" label={"\u641c\u7d22\u5f53\u524d\u5de5\u4f5c\u533a"} onClick={onSearch} />}
           <ShellIconButton
             icon="sparkles"
             label={"AI \u52a9\u624b"}

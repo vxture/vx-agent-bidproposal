@@ -1,5 +1,14 @@
 # Agent entry point
 
+Owner common-page baseline, 2026-11-26: Vxtpl common product page kit v2.0.0
+at `D:/stonesomker/OneDrive/Vxtpl-通用产品页面套件-v2.0.0`. Read its README,
+docs 01-05 and examples/README. Manifest checksum matches release.lock.json.
+Batch 200 registers its framework, content geometry, container adaptation,
+stable editor/drawer behavior, header/cards and gate recovery requirements.
+Use it over older B7 common-shell details where they disagree. Keep Jadera's
+business workflow and platform authorization contracts. This is registered
+alignment work, not a claim that live v0.3.7 already complies with the kit.
+
 Live 2026-11-26: Web v0.3.7 / e2f599bb is deployed by protected run
 45754202414 after PR #45 and exact main checks, including Sonar. Header spacing,
 full-width requirements, deliberate auxiliary-panel opening, percentage brief

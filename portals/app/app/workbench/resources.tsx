@@ -1,4 +1,5 @@
 "use client";
+import { productFetch } from "./product-fetch";
 import { useEffect, useState } from "react";
 import { Button, Icon } from "@vxture/design-system";
 import { ResourceVisualCard } from "@bidproposal/shared/presentation";
@@ -20,7 +21,7 @@ export function ResourceProgress({
     [state, setState] = useState("loading");
   useEffect(() => {
     const controller = new AbortController();
-    void fetch("/api/workbench/library", {
+    void productFetch("/api/workbench/library", {
       credentials: "same-origin",
       cache: "no-store",
       signal: controller.signal,

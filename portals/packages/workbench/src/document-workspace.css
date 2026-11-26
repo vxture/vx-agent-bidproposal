@@ -101,3 +101,6 @@ body.host-navigation .delivery-controls { background: var(--card, #fff); border-
   .reading-unit { padding: var(--space-md, 16px); }
   .delivery-preview-toolbar small { display: none; }
 }
+
+/* The containing product frame owns the content cap and has already deducted docks. */
+body.host-navigation main { width:100%; max-width:none; padding-inline:clamp(20px,calc(6vw - 16px),48px); }

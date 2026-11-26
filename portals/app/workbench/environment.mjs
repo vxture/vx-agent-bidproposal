@@ -44,7 +44,12 @@ export function createRuntime({
   navigation.select("analysis");
   const downloads = new Map();
   const controller = new AbortController();
+  let accessBlocked = false;
   const receive = (event) => {
+    if (event.source === window.parent && event.origin === page.origin && event.data?.ns === "bid.access") {
+      accessBlocked = event.data.blocked === true;
+      return;
+    }
     if (
       event.source === window.parent &&
       event.origin === page.origin &&
@@ -65,6 +70,7 @@ export function createRuntime({
       const target = libraryMode
         ? path.replace(/^\/items(?=\/|$)/, "/library")
         : path;
+      if (accessBlocked) throw new Error("Session confirmation required; current content is retained");
       const response = await fetcher(new URL(target.slice(1), base).href, {
         method,
         credentials: "same-origin",
@@ -75,6 +81,10 @@ export function createRuntime({
           body === undefined ? {} : { "content-type": "application/json" },
         ...(body === undefined ? {} : { body: JSON.stringify(body) }),
       });
+      if ([401, 403].includes(response.status) && typeof window !== "undefined") {
+        accessBlocked = true;
+        window.parent.postMessage({ ns: "bid.access-recovery" }, page.origin);
+      }
       let value = await response.json();
       if (
         response.ok &&

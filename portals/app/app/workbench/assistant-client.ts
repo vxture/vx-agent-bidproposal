@@ -1,6 +1,7 @@
+import { productFetch } from "./product-fetch";
 import type { AssistantClient } from "@bidproposal/shared/presentation";
 async function request(path: string, body?: unknown) {
-  const response = await fetch("/api/workbench/assistant" + path, {
+  const response = await productFetch("/api/workbench/assistant" + path, {
     credentials: "same-origin",
     cache: "no-store",
     ...(body

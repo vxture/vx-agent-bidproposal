@@ -15,6 +15,7 @@ import {
   Textarea,
 } from "@vxture/design-system";
 import type { AssistantConversation } from "../assistant";
+import { usePanelFocus } from "./use-panel-focus";
 export interface AssistantClient {
   list: () => Promise<Omit<AssistantConversation, "messages">[]>;
   get: (id: string) => Promise<AssistantConversation>;
@@ -33,12 +34,14 @@ export function AssistantDock({
   client,
   projectId,
   projectName,
+  drawer = false,
 }: {
   open: boolean;
   onClose: () => void;
   client: AssistantClient;
   projectId?: string;
   projectName?: string;
+  drawer?: boolean;
 }) {
   const [wide, setWide] = useState(false),
     [conversation, setConversation] = useState<AssistantConversation>(),
@@ -55,6 +58,10 @@ export function AssistantDock({
     retryRequest = useRef<{ message: string; id: string } | undefined>(
       undefined,
     );
+  const drafts = useRef(new Map<string, string>());
+  const draftKey = conversation?.id || "new:" + (projectId || "workspace");
+  const panel = usePanelFocus(open, drawer, onClose);
+  const rememberDraft = () => drafts.current.set(draftKey, draft);
   const reload = () =>
     void client
       .list()
@@ -70,10 +77,11 @@ export function AssistantDock({
   useEffect(() => {
     if (lastProject.current === projectId) return;
     if (busy) return;
+    drafts.current.set(conversation?.id || "new:" + (lastProject.current || "workspace"), draft);
     lastProject.current = projectId;
     if (!busy) {
       setConversation(undefined);
-      setDraft("");
+      setDraft(drafts.current.get("new:" + (projectId || "workspace")) || "");
       setError("");
     }
   }, [projectId, busy]);
@@ -100,7 +108,10 @@ export function AssistantDock({
     try {
       const value = await client.get(id);
       if (sequence !== activeRequest.current) return;
+      rememberDraft();
+      if (conversation?.id !== id) retryRequest.current = undefined;
       setConversation(value);
+      setDraft(drafts.current.get(id) || "");
       setChooser(false);
     } catch {
       setError(
@@ -111,8 +122,9 @@ export function AssistantDock({
   const fresh = () => {
     if (busy) return;
     activeRequest.current++;
+    rememberDraft();
     setConversation(undefined);
-    setDraft("");
+    setDraft(drafts.current.get("new:" + (projectId || "workspace")) || "");
     setError("");
     setChooser(false);
     retryRequest.current = undefined;
@@ -133,7 +145,11 @@ export function AssistantDock({
         projectId: conversation?.projectId || projectId,
       });
       setConversation(value);
-      if (value.state === "ready") setDraft("");
+      if (value.state === "ready") {
+        drafts.current.delete(draftKey);
+        drafts.current.delete(value.id);
+        setDraft("");
+      }
       else
         setError(
           "\u56de\u7b54\u672a\u5b8c\u6210\uff0c\u8f93\u5165\u548c\u4f1a\u8bdd\u5df2\u4fdd\u7559\uff0c\u53ef\u4ee5\u91cd\u8bd5\u3002",
@@ -165,6 +181,11 @@ export function AssistantDock({
   };
   if (!open) return null;
   return (
+    <>
+    {drawer && <button className="jadera-drawer-backdrop" aria-label={"\u5173\u95ed AI \u9762\u677f"} onClick={onClose} tabIndex={-1} />}
+    <div ref={panel} className="jadera-assistant-region" data-drawer={drawer} data-wide={wide}
+      role={drawer ? "dialog" : "complementary"} aria-modal={drawer || undefined}
+      aria-label={"AI \u52a9\u624b"} tabIndex={-1}>
     <ShellDock
       mode={wide ? "wide" : "narrow"}
       className="jadera-assistant-dock"
@@ -185,7 +206,7 @@ export function AssistantDock({
           />
           <ShellIconButton
             icon="plus"
-            label={"\u65b0\u4efb\u52a1"}
+                label={"\u65b0\u5bf9\u8bdd"}
             disabled={busy}
             onClick={fresh}
           />
@@ -336,5 +357,7 @@ export function AssistantDock({
         </div>
       </form>
     </ShellDock>
+    </div>
+    </>
   );
 }

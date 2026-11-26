@@ -1,9 +1,9 @@
 @import "./workspace.css";
 /* B7 product presentation. Shared by browser and native host integrations. */
 .jadera-header {
+  padding-inline: clamp(20px, calc(6cqw - 16px), 48px);
   height: var(--spacing-header-md, 48px);
   min-height: var(--spacing-header-md);
-  padding-inline: var(--space-lg);
   background: color-mix(in srgb, var(--primary) 4%, var(--background));
   border-bottom: 1px solid var(--border);
 }
@@ -141,9 +141,10 @@
 }
 .jadera-home-wrap {
   width: 100%;
-  max-width: var(--container-content-wide-2xl);
+  box-sizing: border-box;
+  max-width: var(--bidproposal-center-max, 1536px);
   margin: 0 auto;
-  padding: var(--space-xl) var(--space-3xl) var(--space-5xl);
+  padding: var(--space-xl) clamp(20px, calc(6cqw - 16px), 48px) var(--space-5xl);
 }
 .jadera-home-hero {
   display: grid;
@@ -498,7 +499,7 @@
 .jadera-project-table td:last-child {
   text-align: right;
 }
-@media (max-width: 1200px) {
+@container jadera-shell (max-width: 1200px) {
   .jadera-global-nav {
     margin-left: var(--space-md);
     gap: 0;
@@ -510,7 +511,7 @@
     display: none;
   }
 }
-@media (max-width: 1100px) {
+@container jadera-shell (max-width: 1100px) {
   .jadera-global-nav {
     display: none;
   }
@@ -525,7 +526,7 @@
       var(--space-4xl);
   }
 }
-@media (max-width: 760px) {
+@container jadera-shell (max-width: 760px) {
   .jadera-project-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -566,7 +567,7 @@
     gap: 16px;
   }
 }
-@media (max-width: 520px) {
+@container jadera-shell (max-width: 520px) {
   .jadera-project-grid {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -654,7 +655,7 @@
   white-space: nowrap;
 }
 
-@media (max-width: 1100px) {
+@container jadera-shell (max-width: 1100px) {
   .jadera-home-companion {
     left: -48px;
   }
@@ -665,7 +666,7 @@
     width: 96px;
   }
 }
-@media (max-width: 640px) {
+@container jadera-shell (max-width: 640px) {
   .jadera-brand-button .bid-product-descriptor {
     display: none;
   }
@@ -828,10 +829,10 @@
   margin: 0;
   max-width: 600px;
 }
-@media (max-width: 1100px) {
+@container jadera-shell (max-width: 1100px) {
   .jadera-resource-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
-@media (max-width: 640px) {
+@container jadera-shell (max-width: 640px) {
   .jadera-resource-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: calc(var(--space-xs) + var(--space-2xs));
@@ -841,3 +842,44 @@
     padding: calc(var(--space-md) + var(--space-2xs));
   }
 }
+
+/* Vxtpl v2 common frame: content caps include their inline gutters. */
+.jadera-work-area { container: jadera-work-area / inline-size; }
+.jadera-home-scroll { container: jadera-home / inline-size; }
+.jadera-home-wrap { padding-inline: clamp(20px, calc(6cqw - 16px), 48px); }
+.jadera-project-owner { display:flex; align-items:center; gap:8px; margin-top:12px; color:var(--muted-foreground); font-size:var(--label-sm-font-size); min-width:0; }
+.jadera-project-owner > span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.jadera-project-track i.current { flex:1.3; }
+.jadera-project-stage > span { display:inline-flex; align-items:center; gap:8px; }
+.jadera-project-table th:first-child,.jadera-project-table td:first-child,
+.jadera-project-table th:last-child,.jadera-project-table td:last-child { width:64px; min-width:64px; text-align:center; }
+.jadera-project-table th,.jadera-project-table td { vertical-align:middle; text-align:center; }
+@container jadera-home (max-width:1100px) { .jadera-project-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } .jadera-home-hero { grid-template-columns:minmax(0,1fr); } .jadera-home-hero > :nth-child(2) { display:none; } }
+@container jadera-home (max-width:420px) { .jadera-project-grid { grid-template-columns:minmax(0,1fr); } }
+@container jadera-work-area (max-width:1100px) { .jadera-assistant-region { position:absolute; inset-block:0; right:0; width:min(420px,100%); z-index:var(--z-index-drawer); } }
+
+.jadera-workspace-search { max-height:85dvh; overflow:hidden; }
+.jadera-search-results { min-height:0; overflow:auto; max-height:55dvh; }
+.jadera-search-results > button { display:flex; width:100%; justify-content:flex-start; gap:8px; }
+.jadera-search-results > button > span { min-width:0; overflow:hidden; text-overflow:ellipsis; }
+.jadera-search-results small { margin-left:auto; flex:none; }
+.jadera-header .jadera-launcher-trigger svg { width:16px !important; height:16px !important; }
+.jadera-header .jadera-assistant-trigger svg { width:24px !important; height:24px !important; }
+.jadera-assistant-trigger { color:color-mix(in srgb,var(--primary-text) 65%,var(--muted-foreground)); }
+.jadera-assistant-trigger:hover,.jadera-assistant-trigger:focus-visible { box-shadow:0 0 0 4px color-mix(in srgb,var(--primary) 9%,transparent); }
+.jadera-drawer-backdrop { position:absolute; inset:0; border:0; background:color-mix(in srgb,var(--foreground) 12%,transparent); z-index:calc(var(--z-index-drawer) - 1); }
+@media (prefers-reduced-motion:reduce) { .bid-workbench *, .bid-workbench *::before, .bid-workbench *::after { scroll-behavior:auto !important; transition:none !important; animation:none !important; } }
+
+@container jadera-shell (max-width:1100px) {
+  .jadera-header { height:auto; min-height:88px; align-items:flex-start; position:relative; }
+  .jadera-header > div { min-height:48px; }
+  .jadera-global-nav { display:flex; position:absolute; left:20px; right:20px; top:48px; height:40px; margin:0; overflow:auto; white-space:nowrap; }
+  .jadera-global-nav button { flex:none; }
+}
+.jadera-header > div:first-child { min-width:0; }
+.jadera-leading { min-width:0; }
+.jadera-scope { min-width:0; overflow:hidden; }
+
+.jadera-assistant-region .jadera-assistant-dock { width:420px; }
+.jadera-assistant-region[data-wide="true"] .jadera-assistant-dock { width:clamp(480px,46cqw,760px); }
+.jadera-assistant-region[data-drawer="true"] .jadera-assistant-dock { width:100%; }

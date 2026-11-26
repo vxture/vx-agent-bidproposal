@@ -1,4 +1,5 @@
 "use client";
+import { productFetch } from "./product-fetch";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type {
   CompilationBrief,
@@ -10,7 +11,7 @@ export async function compilationRequest<T>(
   path: string,
   init?: RequestInit,
 ): Promise<T> {
-  const response = await fetch(
+  const response = await productFetch(
     "/api/workbench/host/projects/" + encodeURIComponent(id) + "/" + path,
     {
       ...init,
