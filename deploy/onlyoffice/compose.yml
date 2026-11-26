@@ -1,0 +1,23 @@
+name: jadera-office-validation
+services:
+  documentserver:
+    image: onlyoffice/documentserver@sha256:ca17889f10b11141cc6441836aebdd2835cf3e1b49681b2fd6e155c94b7850b3
+    container_name: jadera-office-validation
+    restart: unless-stopped
+    env_file: ./office.env
+    environment:
+      JWT_ENABLED: "true"
+      ALLOW_PRIVATE_IP_ADDRESS: "false"
+      ALLOW_META_IP_ADDRESS: "false"
+    shm_size: 1gb
+    mem_limit: 6g
+    cpus: 2
+    volumes:
+      - ./data:/var/www/onlyoffice/Data
+      - ./logs:/var/log/onlyoffice
+      - ./lib:/var/lib/onlyoffice
+    networks: [office]
+    # No host port: expose through an approved HTTPS route after integration.
+networks:
+  office:
+    name: jadera-office-validation
