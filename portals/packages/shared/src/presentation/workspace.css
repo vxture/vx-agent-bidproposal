@@ -257,7 +257,7 @@
 }
 .jadera-settings-complete[data-complete="true"] {
   color: var(--success-text);
-  --jadera-completeness-color: var(--success);
+  --bidproposal-completeness-color: var(--success);
 }
 .jadera-settings-complete > span {
   position: relative;

@@ -98,7 +98,7 @@ function WorkflowLink({
             >
               <span
                 style={{
-                  background: `conic-gradient(var(--jadera-completeness-color, var(--primary)) ${completeness * 72}deg, var(--muted) 0)`,
+                  background: `conic-gradient(var(--bidproposal-completeness-color, var(--primary)) ${completeness * 72}deg, var(--muted) 0)`,
                 }}
               />
               {Math.round((completeness / 5) * 100)}%
