@@ -656,6 +656,16 @@ export class BidRuntime {
     });
     return { revision: next.revision, value };
   }
+  async backgroundTaskRunning(id: string) {
+    return (
+      (await this.runtime.listTaskInstances(id)).some((task) =>
+        ["selecting", "executing", "verifying", "finalizing"].includes(task.state),
+      ) ||
+      this.jobs.list(id, "bidproposal").some((job) => job.state === "running") ||
+      this.renders.list(id, "bidproposal").some((job) => job.state === "running") ||
+      this.readings.list(id, "bidproposal").some((job) => job.state === "running")
+    );
+  }
   private async compilationBusy(id: string) {
     return (
       (await this.runtime.listTaskInstances(id)).some(

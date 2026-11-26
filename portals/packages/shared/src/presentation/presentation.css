@@ -310,15 +310,36 @@
   color: var(--foreground);
 }
 .jadera-project-card:hover {
-  border-color: color-mix(in srgb, var(--bidproposal-project-tone) 40%, var(--border));
+  border-color: color-mix(in srgb, var(--bidproposal-project-tone) 65%, var(--border));
 }
+.jadera-project-card {
+  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+}
+.jadera-project-card:before { transition: width 180ms ease; }
+.jadera-project-card:focus-within {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+}
+@media (hover:hover) and (pointer:fine) {
+  .jadera-project-card:hover { transform:translateY(-4px); box-shadow:var(--shadow-lg); }
+  .jadera-project-card:hover:before { width:64px; }
+}
+.jadera-project-card:focus-within:before { width:64px; }
 .jadera-project-open-action {
   min-height: 28px;
   padding: 3px 7px;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  background: var(--card);
+  background: transparent;
   color: var(--foreground);
+  transition: background-color 180ms ease, color 180ms ease, border-color 180ms ease;
+}
+@media (prefers-reduced-motion:reduce) {
+  .jadera-project-card,
+  .jadera-project-card:before,
+  .jadera-project-open-action { transition:none; }
+  .jadera-project-card:hover,
+  .jadera-project-card:focus-within { transform:none; }
 }
 .jadera-project-card:hover .jadera-project-open-action,
 .jadera-project-card:focus-within .jadera-project-open-action {
@@ -906,6 +927,64 @@
 .jadera-project-summary-row { display:flex; align-items:center; justify-content:flex-start; gap:8px; min-width:0; margin:0 0 var(--space-lg); }
 .jadera-project-summary-row .jadera-project-owner { flex:0 1 auto; min-width:0; }
 .jadera-project-summary-row .jadera-project-status { flex:none; margin:0; white-space:nowrap; }
+.jadera-project-summary-row { flex-wrap:wrap; }
+.jadera-project-assistant { display:inline-flex; align-items:center; gap:var(--space-xs); min-width:0; font-size:var(--label-small-font-size); color:var(--foreground); }
+.jadera-home-companion img[data-agent-state] { width:32px; height:32px; }
+.jadera-project-card[data-executing="true"] .jadera-project-assistant .jadera-project-status { color:var(--primary-text); }
+.jadera-project-card[data-executing="true"] .jadera-project-track { position:relative; overflow:hidden; }
+.jadera-project-card[data-executing="true"] .jadera-project-track:after {
+  content:"";
+  position:absolute;
+  inset:0;
+  background:linear-gradient(105deg,transparent 30%,color-mix(in srgb,var(--primary) 30%,transparent) 43%,var(--primary-muted) 50%,color-mix(in srgb,var(--primary) 30%,transparent) 57%,transparent 70%);
+  background-size:250% 100%;
+  background-position:150% 0;
+  animation:jadera-progress-sweep 2.4s ease-in-out infinite;
+  pointer-events:none;
+  /* Keep the moving light inside the six stage segments, including their gaps. */
+  mask:repeating-linear-gradient(to right,#000 0 calc((100% + 2px) / 6 - 2px),transparent calc((100% + 2px) / 6 - 2px) calc((100% + 2px) / 6));
+  height:3px;
+  top:calc(50% - 1.5px);
+}
+@keyframes jadera-progress-sweep { to { background-position:-150% 0; } }
+
+/* Persistent execution signal, driven only by explicit host task state. */
+@property --bidproposal-execution-angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+.jadera-project-card[data-executing="true"] {
+  border-color: color-mix(in srgb, var(--primary) 45%, var(--border));
+  box-shadow: 0 0 18px color-mix(in srgb, var(--primary) 10%, transparent);
+}
+.jadera-project-card[data-executing="true"]:after {
+  content:"";
+  position:absolute;
+  inset:-1px;
+  border-radius:inherit;
+  padding:2px;
+  background:conic-gradient(from var(--bidproposal-execution-angle), transparent 0deg 230deg, color-mix(in srgb,var(--primary) 18%,transparent) 270deg, var(--primary) 310deg, transparent 360deg);
+  mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);
+  mask-composite:exclude;
+  pointer-events:none;
+  animation:jadera-execution-orbit 4s linear infinite;
+}
+.jadera-background-task {
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  color:var(--primary-text);
+  font-weight:500;
+}
+.jadera-background-task svg { flex:none; animation:jadera-execution-spin 2s linear infinite; }
+@keyframes jadera-execution-orbit { to { --bidproposal-execution-angle:360deg; } }
+@keyframes jadera-execution-spin { to { transform:rotate(360deg); } }
+@media (prefers-reduced-motion:reduce) {
+  .jadera-project-card[data-executing="true"]:after,
+  .jadera-background-task svg { animation:none; }
+  .jadera-project-card[data-executing="true"] .jadera-project-track:after { display:none; }
+}
 .jadera-home-kicker > svg { color:var(--primary-text,var(--primary)); flex:none; }
 
 /* Shared resource geometry applies equally to home and independent catalogs. */

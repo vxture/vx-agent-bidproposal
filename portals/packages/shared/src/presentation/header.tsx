@@ -9,6 +9,7 @@ import {
   PopoverContent,
   ShellHeader,
   ShellIconButton,
+  ShellAgentButton,
   ShellIconGroup,
   ShellScopeButton,
   ShellPanelContent,
@@ -52,6 +53,7 @@ export function ApplicationHeader({
   onNavigate,
   onSignOut,
   onAssistant,
+  assistantRunning = false,
   search,
 }: {
   brand: ReactNode;
@@ -61,6 +63,7 @@ export function ApplicationHeader({
   onNavigate: (page: string) => void;
   onSignOut: () => void;
   onAssistant: () => void;
+  assistantRunning?: boolean;
   search?: ReactNode;
 }) {
   const [launcher, setLauncher] = useState(false),
@@ -221,14 +224,13 @@ export function ApplicationHeader({
       trailing={
         <div className="jadera-header-tools">
           {search}
-          <ShellIconButton
-            icon="sparkles"
+          <ShellAgentButton
             label={"AI \u52a9\u624b"}
             className="jadera-assistant-trigger"
             onClick={onAssistant}
-          >
-            <Icon name="sparkles" size="lg" />
-          </ShellIconButton>
+            size="xl"
+            running={assistantRunning}
+          />
           <ShellIconGroup
             label={"\u663e\u793a\u4e0e\u914d\u7f6e"}
             className="jadera-header-button-group"

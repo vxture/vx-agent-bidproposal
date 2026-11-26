@@ -593,5 +593,5 @@
 
 .jadera-assistant-region { flex:none; min-width:0; height:100%; }
 .jadera-assistant-region .jadera-assistant-dock { position:static; }
-.jadera-ai-message.assistant > span { display:none; }
+.jadera-ai-message.assistant > span { display:block; margin-bottom:var(--space-xs); }
 .jadera-assistant-region[data-drawer="true"] { position:absolute; right:0; top:0; bottom:0; max-width:100%; z-index:var(--z-index-drawer); }

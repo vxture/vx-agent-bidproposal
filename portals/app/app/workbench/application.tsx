@@ -242,6 +242,7 @@ function Workspace({ access }: { access: AccessState }) {
                 id: string;
                 label: string;
                 record?: ProjectCardData["record"];
+                backgroundTaskRunning?: boolean;
               }[];
             };
           let selected = project.id;
@@ -260,6 +261,7 @@ function Workspace({ access }: { access: AccessState }) {
                 ...project,
                 record: version.record,
                 versionLabel: version.label,
+                backgroundTaskRunning: version.backgroundTaskRunning,
               }
             : project;
         }),
@@ -296,6 +298,17 @@ function Workspace({ access }: { access: AccessState }) {
   }, []);
   useEffect(() => {
     void reload();
+  }, [reload, projectId]);
+  useEffect(() => {
+    if (projectId) return;
+    let stopped = false;
+    let timer: ReturnType<typeof setTimeout>;
+    const refresh = async () => {
+      if (document.visibilityState === "visible") await reload();
+      if (!stopped) timer = setTimeout(refresh, 5000);
+    };
+    timer = setTimeout(refresh, 5000);
+    return () => { stopped = true; clearTimeout(timer); };
   }, [reload, projectId]);
   useEffect(() => {
     setItems(initialNavigation);
@@ -529,6 +542,7 @@ function Workspace({ access }: { access: AccessState }) {
             onNavigate={headerNavigate}
             onSignOut={signOut}
             onAssistant={assistant}
+            assistantRunning={projects.some((project) => project.backgroundTaskRunning && !project.archivedAt)}
             search={<WorkspaceSearch open={searchOpen} onOpen={() => setSearchOpen(true)} onClose={() => setSearchOpen(false)} projects={projects} onNavigate={navigate} />}
           />
         }
@@ -756,7 +770,7 @@ function Workspace({ access }: { access: AccessState }) {
                 }
                 companion={
                   <HomeCompanion
-                    imageSrc="/brand/jadera-companion.svg"
+                    running={projects.some((project) => project.backgroundTaskRunning && !project.archivedAt)}
                     onOpen={assistant}
                   />
                 }

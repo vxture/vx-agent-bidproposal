@@ -580,3 +580,68 @@ passes only locales=[zh-CN]; DS supplies native label and CN mark consistently
 in field/menu, retaining the existing locale selection pattern. No unsupported
 English toggle is advertised. Product type/DOM checks are repeated on registry
 bytes; this remains local review, not production release.
+
+
+## Card-level feedback 2026-11-26
+
+Owner permits stronger card feedback. Open action has transparent resting
+background and outline; card hover/focus activates its solid primary state.
+Fine-pointer hover lifts the card 4px, adds the DS large shadow, strengthens
+the status-tone border and extends the top accent. Keyboard focus receives
+the same card-level cue. Reduced-motion disables movement/transitions; touch
+gets no hover lift. Geometry stays fixed and avoids a second nested-button
+hover stage. Local preview rebuilt; no production deployment.
+
+
+## Background execution visual proposal 2026-11-26
+
+Owner asks for visible persistent background-task activity, not only hover.
+Local design fixture marks only the first project as executing. Explicit
+backgroundTaskRunning host input gates a rotating icon and background-task
+label in the existing summary row, plus a slow moving edge accent and subtle
+primary halo. Other cards remain static; archived projects never animate.
+Stage tracks and percentages retain their existing meaning. Reduced-motion
+uses a static edge/label instead of orbit/spin. Initial prototype had no live task source wired
+and no production behavior is claimed; this is local visual review.
+
+## Xiaoyu execution implementation 2026-11-26
+
+Xiaoyu remains visible beside the responsible person below each card title,
+with a compact robot avatar and working/retained-record description. Actual
+execution adds the stage suffix and rotating activity icon inside the stage
+row, preserving the percentage and segmented track. The card edge also moves;
+reduced-motion keeps a static cue. Archived cards never animate.
+
+Project GET now projects current runtime execution and background job, reading
+and render states, independently for each compilation version. Waiting-human,
+suspended, queued, paused and terminal tasks do not trigger animation. Catalog
+views refresh every five seconds while visible, without overlapping timers.
+No platform or RUYIN source changes are involved. Local review only.
+
+Owner-supplied yuzhang.jpeg is the shared Xiaoyu identity asset. The project
+card, header assistant entry, assistant panel title/greeting/messages and home
+companion consume the same embedded image, without external image requests.
+Product wordmark and resource quota semantics stay independent of the assistant.
+
+
+## DS-owned agent identity 2026-11-26
+
+Owner supersedes the supplied JPEG identity with the existing DS robot. DS
+15.11 introduces AgentAvatar and default ShellAgentButton artwork. Products
+pass size and actual running state; static/animated asset selection and live
+reduced-motion handling belong to DS. The native 32px/64-frame GIF and static
+PNG ship in the package; large placements stay 32px until a genuine higher
+resolution source exists. Jadera removes its embedded JPEG and hand-built
+avatar container. Header, project cards, assistant panel and AI resource labels
+share DS identity; execution effects still derive from real job states.
+
+Owner refinement: activity spinner follows Xiaoyu's working label. Stage text
+adds exactly one trailing execution suffix. Running cards sweep a moving light
+across the segmented track, preserving segment gaps and actual progress values;
+reduced-motion disables the sweep. DS 15.11.0 released after PR #153, main CI
+45831101224, dry run 45831106872 and publish 45831869755 passed.
+
+Resource management correction: AI credit and storage retain standard semantic
+icons, not the agent identity. The robot represents Xiaoyu only. Stage execution
+text uses a single trailing suffix and ellipsis; the activity spinner follows
+the working label. Local preview and real registry package checks pass.
