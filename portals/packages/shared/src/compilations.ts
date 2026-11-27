@@ -4,7 +4,7 @@ export interface WritingRequirements {
   figures: "none" | "selective" | "rich";
   mode: "metrics" | "providers";
   providers: string;
-  quality: "very-high" | "high" | "normal";
+  quality: "very-high" | "high" | "normal" | "low";
   volume: "technical" | "commercial" | "combined";
   brief: string;
 }
@@ -23,6 +23,8 @@ export interface CompilationVersion {
   label: string;
   createdAt: string;
   state: "creating" | "ready";
+  startStages?: CompilationStage[];
+  origin?: {sourceId:string;stage:CompilationStage;at:string};
 }
 export interface CompilationList {
   rootId: string;
@@ -43,3 +45,8 @@ export function requirementsComplete(value: WritingRequirements) {
     !!value.brief.trim(),
   ].filter(Boolean).length;
 }
+
+export const COMPILATION_STAGES = [
+ {id:"overview",label:"\u7f16\u5199\u914d\u7f6e"}, {id:"analysis",label:"\u62db\u6807\u89e3\u8bfb"}, {id:"requirements",label:"\u9700\u6c42\u786e\u8ba4"}, {id:"planning",label:"\u7f16\u5199\u89c4\u5212"}, {id:"chapters",label:"\u6807\u4e66\u7f16\u5199"}, {id:"review",label:"\u5ba1\u6838\u4fee\u8ba2"}, {id:"export",label:"\u6210\u679c\u5bfc\u51fa"},
+] as const;
+export type CompilationStage = typeof COMPILATION_STAGES[number]["id"];

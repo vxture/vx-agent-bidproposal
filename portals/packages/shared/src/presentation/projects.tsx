@@ -1,4 +1,5 @@
 "use client";
+import {useRefreshGuard} from "./page-refresh";
 import { ArrowsClockwise } from "@phosphor-icons/react";
 import React, { useMemo, useState, type ReactNode } from "react";
 import {
@@ -154,7 +155,7 @@ function ProjectCard({
           <time dateTime={record?.recordedAt || project.createdAt}>
             {date(record?.recordedAt || project.createdAt)}
           </time>
-          <span className="jadera-project-open-action">
+          <span className="jadera-project-open-action jadera-card-open-action">
             <Icon name="arrow-right" size="sm" />
             {"\u6253\u5f00\u9879\u76ee"}
           </span>
@@ -197,6 +198,7 @@ export function ProjectCollection({
     [name, setName] = useState(""),
     [busy, setBusy] = useState(false),
     [error, setError] = useState("");
+  useRefreshGuard(creating||busy);
   const rows = useMemo(
     () =>
       projects

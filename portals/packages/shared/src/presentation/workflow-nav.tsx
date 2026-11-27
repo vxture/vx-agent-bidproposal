@@ -241,7 +241,7 @@ export function WorkflowNavigation({
                   : []),
                 {
                   href: "#ws/" + projectId + "/overview",
-                  label: "\u7f16\u5236\u8981\u6c42",
+                  label: "\u7f16\u5199\u914d\u7f6e",
                   icon: "settings",
                 },
                 ...steps.map((step, i) => ({
@@ -284,7 +284,7 @@ export function WorkflowNavigation({
                 </div>
                 <Progress value={(completed / 6) * 100} />
                 <p>
-                  {current?.label || "\u7f16\u5236\u8981\u6c42"}
+                  {current?.label || "\u7f16\u5199\u914d\u7f6e"}
                   {pending
                     ? " \u00b7 " + pending + " \u9879\u5f85\u786e\u8ba4"
                     : " \u00b7 \u6309\u73af\u8282\u7ee7\u7eed\u7f16\u5236"}

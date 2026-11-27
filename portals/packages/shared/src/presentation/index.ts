@@ -19,3 +19,7 @@ export { useContainerWidth } from "./use-container-width";
 export { usePanelFocus } from "./use-panel-focus";
 export { ResourceCollection, ResourcePreview } from "./resource-collection";
 export type { ResourceCollectionProps, ResourceRequest, ResourceRequestOptions } from "./resource-collection";
+
+export {ResourceTypeSettings,ResourceMemberDirectory} from "./resource-settings";
+
+export {usePageRefresh,useRefreshGuard,refreshCurrentPage} from "./page-refresh";

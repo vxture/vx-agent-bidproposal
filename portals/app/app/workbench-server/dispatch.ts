@@ -14,6 +14,7 @@ import {
 import type { BidRuntime } from "./service";
 import { projectRecord } from "@bidproposal/shared/project-records";
 import { managedResource, updateResource, importResource, resourceReferences } from "./resource-management";
+import { resourceTypes, changeResourceTypes, rememberResourceMember, resourceMembers } from "./resource-configuration";
 import { allowChatTurn } from "../chat/rate-limit";
 import { WorkbenchError, type WorkbenchAccess } from "./identity";
 
@@ -750,6 +751,7 @@ async function jobsRequest(context: ProjectRequest): Promise<Response> {
                 : service.jobs.list(pid, "bidproposal"),
             },
       );
+    if(method==="POST"&&rest[1]){const origin=service.documents.get(pid,"bidproposal","runtime_compilation_origin");if(origin&&JSON.parse(origin.markdown).documents.some((doc:{id:string})=>doc.id==="runtime_job_"+rest[1]))throw new WorkbenchError(409,"BRANCH_EVIDENCE_READ_ONLY","\u7ee7\u627f\u7684\u524d\u5e8f\u4efb\u52a1\u8bb0\u5f55\u53ea\u8bfb\uff0c\u8bf7\u53d1\u8d77\u65b0\u7684\u4efb\u52a1");}
     if (method === "POST" && !rest[1]) {
       const body = await jsonBody(request);
       return json(
@@ -927,8 +929,15 @@ async function library(
 ): Promise<Response> {
   const scope = service.scope(),
     method = request.method;
+  rememberResourceMember(service, access.principal);
+  if(path[0]==="types"){
+    if(method==="GET"&&path.length===1)return json({...resourceTypes(service),canManage:!!access.principal.canManage});
+    if((method==="POST"&&path.length===1)||(["PATCH","DELETE"].includes(method)&&path.length===2)){const body=await jsonBody(request);return json(await service.configurationMutation(async()=>({...changeResourceTypes(service,access.principal,body,path[1],method==="DELETE"),canManage:true})));}
+    return missing();
+  }
+  if(path[0]==="members"&&path.length===1&&method==="GET")return json(resourceMembers(service));
   if (!path.length && method === "GET")
-    return json({ items: service.library.list(scope).map((item) => managedResource(service, item.id)) });
+    return json({ items: service.library.list(scope).map((item) => managedResource(service, item.id)), types:resourceTypes(service).items });
   if (!path.length && method === "POST") {
     const body = await jsonBody(request, 29 * 1024 * 1024),
       bytes = Buffer.from(text(body, "base64"), "base64");

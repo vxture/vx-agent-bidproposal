@@ -94,7 +94,9 @@
 .jadera-launcher {
   width: 720px;
   max-width: calc(100vw - 32px);
+  --bidproposal-launcher-divider:color-mix(in srgb,var(--primary) 15%,var(--border));
   padding: var(--space-md);
+  font-family:var(--font-sans);
   border-color: color-mix(in srgb, var(--primary) 12%, var(--border));
   background: linear-gradient(
     125deg,
@@ -109,8 +111,7 @@
   justify-content: space-between;
   padding-bottom: calc(var(--space-xs) + var(--space-2xs));
   margin-bottom: var(--space-md);
-  border-bottom: 1px dashed
-    color-mix(in srgb, var(--primary) 15%, var(--border));
+  border-bottom: 1px dashed var(--bidproposal-launcher-divider);
 }
 .jadera-launcher-top > span {
   font-size: var(--label-small-font-size);
@@ -119,11 +120,18 @@
 .jadera-launcher-columns {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: calc(var(--space-xs) + var(--space-2xs));
+  gap: 0;
 }
+.jadera-launcher-columns>section{min-width:0;padding-inline:16px}
+.jadera-launcher-columns>section:first-child{padding-inline-start:0}
+.jadera-launcher-columns>section:last-child{padding-inline-end:0}
+.jadera-launcher-columns>section+section{border-inline-start:1px dashed var(--bidproposal-launcher-divider)}
+.jadera-launcher-home{width:calc(100% / 3);height:32px;min-height:32px;flex:none}
+.jadera-launcher .text-label{font-family:var(--font-sans);font-size:14px;font-weight:var(--vx-font-weight-semibold);line-height:20px}
 .jadera-launcher-columns h2 {
   font-size: var(--label-small-font-size);
-  font-weight: 400;
+  font-family:var(--font-sans);
+  font-weight:var(--label-small-font-weight);
   color: var(--muted-foreground);
   margin: 0 0 var(--space-sm);
   padding: 0 var(--space-sm);
@@ -320,25 +328,40 @@
   .jadera-project-card:hover { transform:translateY(-4px); box-shadow:var(--shadow-lg); }
   .jadera-project-card:hover:before { width:64px; }
 }
-.jadera-project-open-action {
-  min-height: 28px;
-  padding: 3px 7px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  background: transparent;
-  color: var(--foreground);
-  transition: background-color 180ms ease, color 180ms ease, border-color 180ms ease;
+/* One card action appearance across projects, resources and version records. */
+.jadera-card-open-action {
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  flex-shrink:0;
+  box-sizing:border-box;
+  height:32px;
+  min-height:32px;
+  padding:0 12px;
+  gap:4px;
+  border:1px solid var(--border);
+  border-radius:var(--radius-sm);
+  background:transparent;
+  color:var(--foreground);
+  font-size:14px;
+  font-weight:500;
+  line-height:20px;
+  white-space:nowrap;
+  box-shadow:none;
+  transition:background-color 180ms ease,color 180ms ease,border-color 180ms ease;
+}
+:is(.jadera-project-card,.jadera-resource-card,.jadera-resource-version-card):hover .jadera-card-open-action:not(:disabled),
+.jadera-card-open-action:is(:hover,:focus-visible):not(:disabled),
+.jadera-project-card-button:focus-visible .jadera-card-open-action {
+  color:var(--primary-foreground);
+  border-color:var(--primary);
+  background:var(--primary);
 }
 @media (prefers-reduced-motion:reduce) {
   .jadera-project-card,
   .jadera-project-card:before,
-  .jadera-project-open-action { transition:none; }
+  .jadera-card-open-action { transition:none; }
   .jadera-project-card:hover { transform:none; }
-}
-.jadera-project-card:hover .jadera-project-open-action {
-  color: var(--primary-foreground);
-  border-color: var(--primary);
-  background: var(--primary);
 }
 .jadera-project-card-top {
   display: flex;
@@ -535,9 +558,6 @@
   }
 }
 @container jadera-shell (max-width: 1100px) {
-  .jadera-global-nav {
-    display: none;
-  }
   .jadera-leading {
     flex: 1;
   }
@@ -904,12 +924,6 @@
 .jadera-drawer-backdrop { position:absolute; inset:0; border:0; background:color-mix(in srgb,var(--foreground) 12%,transparent); z-index:calc(var(--z-index-drawer) - 1); }
 @media (prefers-reduced-motion:reduce) { .bid-workbench *, .bid-workbench *::before, .bid-workbench *::after { scroll-behavior:auto !important; transition:none !important; animation:none !important; } }
 
-@container jadera-shell (max-width:1100px) {
-  .jadera-header { height:auto; min-height:88px; align-items:flex-start; position:relative; }
-  .jadera-header > div { min-height:48px; }
-  .jadera-global-nav { display:flex; position:absolute; left:24px; right:24px; top:48px; height:40px; margin:0; overflow:auto; white-space:nowrap; }
-  .jadera-global-nav button { flex:none; }
-}
 .jadera-header > div:first-child { min-width:0; }
 .jadera-leading { min-width:0; }
 .jadera-scope { min-width:0; overflow:hidden; }
@@ -1252,10 +1266,14 @@ button.jadera-reference-project:hover{color:var(--primary);text-decoration:under
 .jadera-resource-card .jadera-resource-meta :is(button,a){display:inline-flex;align-items:center;justify-content:center;height:32px;min-height:32px;max-height:32px;min-width:32px;box-sizing:border-box;padding-block:0;line-height:20px;flex-shrink:0}
 /* State lives above the artwork; footer space is reserved for document data. */
 .jadera-resource-card{position:relative}
-.jadera-resource-card>.jadera-resource-status{position:absolute;inset-block-start:12px;inset-inline-end:12px;z-index:1;max-width:calc(100% - 24px);pointer-events:none}
+.jadera-resource-card>.jadera-resource-status{position:absolute;inset-block-start:12px;inset-inline-end:12px;z-index:2;max-width:calc(100% - 24px);pointer-events:none}
 
-/* All decorative content fits inside the fixed 184px preview area. */
-.jadera-resource-card .jadera-document-art{display:grid;grid-template-rows:16px minmax(20px,40px) 16px minmax(0,1fr);gap:8px;align-items:start;justify-items:center;min-height:0;box-sizing:border-box}
+/* Paper continues behind the opaque action area, with an intentionally cropped bottom. */
+.jadera-resource-card{isolation:isolate}
+.jadera-resource-card>.jadera-resource-preview{z-index:0;overflow:visible}
+.jadera-resource-card>.jadera-resource-preview>:is(i,div){height:auto;bottom:-90px}
+.jadera-resource-card>.jadera-resource-copy{position:relative;z-index:1;background:var(--card)}
+.jadera-resource-card .jadera-document-art{display:grid;grid-template-rows:16px minmax(40px,56px) 16px minmax(0,1fr);gap:16px;align-items:start;justify-items:center;min-height:0;box-sizing:border-box}
 .jadera-resource-card .jadera-document-art>.jadera-document-eyebrow{align-self:start;justify-self:start;max-width:100%;font-size:10px;line-height:16px;letter-spacing:.1em;white-space:nowrap;overflow:hidden}
 .jadera-resource-card .jadera-document-eyebrow svg{width:12px;height:12px;flex:none}
 .jadera-resource-card .jadera-document-art>strong{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;font-size:16px;line-height:20px;max-height:40px;overflow:hidden;margin:0}
@@ -1436,3 +1454,67 @@ button.jadera-reference-project:hover{color:var(--primary);text-decoration:under
 }
 
 .jadera-resource-card .jadera-resource-latest{flex:none;padding:0 4px;font-size:10px;line-height:16px;font-weight:500;letter-spacing:.02em}
+
+.jadera-resource-import-dialog{width:min(520px,calc(100vw - 32px));max-width:520px}
+.jadera-resource-import-dialog form{display:flex;flex-direction:column;gap:20px;min-width:0;font-size:14px}
+.jadera-import-type{display:grid;grid-template-columns:80px minmax(0,1fr);gap:16px;align-items:center}
+.jadera-import-type select{height:32px}
+.jadera-import-picker{display:flex;flex-direction:column;align-items:center;gap:12px;padding:24px;border:1px dashed var(--border);border-radius:var(--radius-md);background:var(--muted);min-width:0;text-align:center}
+.jadera-import-picker strong{max-width:100%;overflow-wrap:anywhere;font-size:14px;font-weight:500}
+.jadera-import-picker p{margin:0;color:var(--muted-foreground);font-size:12px}
+.jadera-resource-import-dialog footer{display:flex;justify-content:flex-end;gap:12px}
+.jadera-resource-import-dialog footer button{height:32px;min-height:32px;font-size:14px}
+.jadera-import-progress{display:flex;align-items:center;gap:12px;font-size:12px;color:var(--muted-foreground)}
+.jadera-import-progress progress{width:80px}
+.jadera-creator-picker{max-width:360px;display:grid;gap:8px}
+
+.jadera-type-settings>header{display:flex;align-items:center;justify-content:space-between;gap:24px;margin:24px 0;font-size:14px}
+.jadera-type-settings>header p{max-width:720px;color:var(--muted-foreground)}
+.jadera-settings-table{overflow-x:auto;font-size:14px}
+.jadera-settings-table table{width:100%;border-collapse:collapse;text-align:left}
+.jadera-settings-table th{font-size:12px;color:var(--muted-foreground);font-weight:500}
+.jadera-settings-table th,.jadera-settings-table td{padding:12px 16px;border-bottom:1px solid var(--border)}
+.jadera-settings-row-actions{display:flex;gap:12px}
+.jadera-settings-row-actions button{height:32px;font-size:12px}
+.jadera-type-dialog{max-width:440px}
+.jadera-type-dialog form,.jadera-type-dialog label{display:flex;flex-direction:column;gap:16px}
+.jadera-type-dialog label{gap:8px;font-size:14px}
+.jadera-type-dialog input,.jadera-type-dialog select{height:32px}
+.jadera-type-dialog footer{display:flex;justify-content:flex-end;gap:12px}
+.jadera-type-dialog footer button{height:32px;font-size:14px}
+.jadera-management-entries{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px;margin-top:24px}
+.jadera-management-entries>button{display:flex;align-items:center;gap:16px;text-align:left;border:1px solid var(--border);border-radius:var(--radius-md);padding:24px;background:var(--card)}
+.jadera-management-entries>button:hover{background:var(--muted)}
+.jadera-management-entries>button>span{flex:1;display:grid;gap:8px}
+.jadera-management-entries strong{font-size:16px;font-weight:600}
+.jadera-management-entries small{font-size:12px;color:var(--muted-foreground)}
+.jadera-member-directory{list-style:none;padding:0;display:flex;flex-direction:column;margin:24px 0;gap:16px;font-size:14px}
+@media(max-width:640px){.jadera-management-entries{grid-template-columns:1fr}.jadera-type-settings>header{align-items:flex-start}}
+
+/* Keep one stable header row while inline search and navigation share space. */
+.jadera-header>div:first-child{flex:1}
+.jadera-header .jadera-brand-button{flex-shrink:0}
+.jadera-leading{position:relative}
+.jadera-header .jadera-global-nav{display:flex;flex:none;margin-inline-start:0;width:max-content;white-space:nowrap}
+.jadera-global-nav[data-collapsed="true"]{position:absolute;inset-inline-start:0;inset-block-start:0;visibility:hidden;pointer-events:none}
+.jadera-header-search[data-open="true"]{min-width:0}
+.jadera-header-search>input{width:clamp(160px,20vw,280px);min-width:0}
+@media(max-width:760px){
+ .jadera-launcher-columns{grid-template-columns:minmax(0,1fr)}
+ .jadera-launcher-columns>section{padding:16px 0}
+ .jadera-launcher-columns>section:first-child{padding-top:0}
+ .jadera-launcher-columns>section:last-child{padding-bottom:0}
+ .jadera-launcher-columns>section+section{border-inline-start:0;border-block-start:1px dashed var(--bidproposal-launcher-divider)}
+ .jadera-launcher-home{width:min(240px,60%)}
+ .jadera-launcher{max-height:calc(100dvh - 80px);overflow:auto}
+ .jadera-header:has(.jadera-header-search[data-open="true"]) :is(.jadera-brand-button,.jadera-scope,.jadera-header-divider){display:none}
+ .jadera-header:has(.jadera-header-search[data-open="true"]) .jadera-header-tools{gap:8px}
+}
+@media(max-width:520px){
+ .jadera-header:has(.jadera-header-search[data-open="true"]) .jadera-header-button-group{display:none}
+ .jadera-header-search>input{width:clamp(100px,calc(100vw - 220px),180px)}
+}
+
+.jadera-refresh-feedback{position:fixed;inset-block-start:64px;inset-inline-end:24px;z-index:var(--z-index-toast,100);margin:0;padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius-md);background:var(--popover);color:var(--foreground);box-shadow:var(--shadow-md);font-family:var(--font-sans);font-size:12px;max-width:calc(100vw - 48px)}
+.jadera-page-refresh.refreshing svg{animation:jadera-execution-spin 1s linear infinite}
+@media(prefers-reduced-motion:reduce){.jadera-page-refresh.refreshing svg{animation:none}}

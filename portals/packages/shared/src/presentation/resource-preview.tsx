@@ -1,7 +1,7 @@
 "use client";
 import type {ReactNode} from "react";
 import {Icon} from "@vxture/design-system";
-import {RESOURCE_CATEGORIES,isTemplate,resourceTitle,type ResourceData} from "../resources";
+import {resourceCategoryLabel,isTemplate,resourceTitle,type ResourceData} from "../resources";
 
 export function ResourceArtwork({children,className=""}:{children:ReactNode;className?:string}) {
   return <div className={"jadera-resource-preview "+className} aria-hidden><i/><i/><div>{children}</div></div>;
@@ -11,7 +11,7 @@ export function ResourcePreview({
   item,
   tenantLabel,
 }: {
-  item: Pick<ResourceData, "name" | "shortName" | "category">;
+  item: Pick<ResourceData, "name" | "shortName" | "category" | "categoryLabel" | "coverStyle">;
   tenantLabel?: string;
 }) {
   const template = isTemplate(item.category);
@@ -21,7 +21,7 @@ export function ResourcePreview({
         "jadera-document-art " +
         (template
           ? "template"
-          : item.category === "qualification"
+          : (item.coverStyle === "certificate" || (!item.coverStyle && item.category === "certificate"))
             ? "certificate"
             : "case")
       }
@@ -38,12 +38,12 @@ export function ResourcePreview({
         size="xs"
       />
 
-        {template ? tenantLabel || "\u5f53\u524d\u79df\u6237" : RESOURCE_CATEGORIES[item.category as keyof typeof RESOURCE_CATEGORIES] || item.category}
+        {template ? tenantLabel || "\u5f53\u524d\u79df\u6237" : resourceCategoryLabel(item)}
       </span>
       <strong>
         {resourceTitle(item)}
       </strong>
-      <span>{RESOURCE_CATEGORIES[item.category as keyof typeof RESOURCE_CATEGORIES] || "\u77e5\u8bc6\u8d44\u6599"}</span>
+      <span>{resourceCategoryLabel(item)}</span>
       <div className="jadera-document-lines">
         <i />
         <i />

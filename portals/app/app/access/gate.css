@@ -16,7 +16,7 @@
   flex-direction: column;
   background: radial-gradient(ellipse 80% 60% at 50% 0%, color-mix(in srgb, var(--primary) 10%, transparent), transparent), linear-gradient(180deg, color-mix(in srgb, var(--primary-muted) 80%, var(--background)), var(--background) 90%);
   color: var(--foreground);
-  font-family: var(--bidproposal-entry-text), "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
+  font-family: var(--font-sans);
   font-size: 14px;
   line-height: 1.58;
 }
@@ -27,7 +27,7 @@
 .bid-entry-header > div { min-height: 64px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
 .bid-entry-brands { display: flex; align-items: center; min-width: 0; }
 .bid-entry-brands a { display: inline-flex; align-items: center; flex: none; gap: 8px; text-decoration: none; }
-.bid-entry-platform, .bid-entry-product { font-family: var(--bidproposal-entry-display), sans-serif; font-weight: 600; font-size: 24px; line-height: 1; }
+.bid-entry-platform, .bid-entry-product { font-family: var(--font-brand); font-weight: 600; font-size: 24px; line-height: 1; }
 .bid-entry-shell .bid-entry-platform { color: var(--primary-text); }
 .bid-entry-shell .bid-entry-product { color: var(--foreground); }
 .bid-entry-product > svg { color: var(--primary-text); }

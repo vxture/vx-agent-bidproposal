@@ -9,6 +9,8 @@ import {
 } from "@bidproposal/shared/compilations";
 import { WorkbenchError } from "./identity";
 
+import type {BranchSnapshot} from "./compilation-branch";
+import type {CompilationStage} from "@bidproposal/shared/compilations";
 const prefix = "runtime_auth_compilation_";
 const planPrefix = "# Bid writing plan\n\n```json\n";
 interface Store {
@@ -27,6 +29,7 @@ interface Entry extends CompilationVersion {
   requestId?: string;
   requirements?: WritingRequirements;
   selections?: { id: string; version: number }[];
+  snapshot?: BranchSnapshot;
 }
 interface Group extends Omit<CompilationList, "items"> {
   items: Entry[];
@@ -49,7 +52,7 @@ export function writingRequirements(input: unknown): WritingRequirements {
     v.pages > 3000 ||
     !["none", "selective", "rich"].includes(v.figures) ||
     !["metrics", "providers"].includes(v.mode) ||
-    !["very-high", "high", "normal"].includes(v.quality) ||
+    !["very-high", "high", "normal", "low"].includes(v.quality) ||
     !["technical", "commercial", "combined"].includes(v.volume) ||
     typeof v.providers !== "string" ||
     v.providers.length > 4000 ||
@@ -103,6 +106,7 @@ export class CompilationVersions {
       id: string,
       resource: { id: string; version: number },
     ) => Promise<unknown>,
+    private readonly branch?: {available(id:string):CompilationStage[];restore(id:string,snapshot:BranchSnapshot):Promise<void>},
   ) {}
   private groups(): Group[] {
     return this.store
@@ -143,12 +147,14 @@ export class CompilationVersions {
         rootId: group.rootId,
         projectName: group.projectName,
         revision: group.revision,
-        items: group.items.map(({ id, number, label, createdAt, state }) => ({
+        items: group.items.map(({ id, number, label, createdAt, state,origin }) => ({
           id,
           number,
           label,
           createdAt,
           state,
+          origin,
+          startStages:this.branch?.available(id),
         })),
       };
     const { meta } = await this.runtime.openProject(id);
@@ -163,6 +169,7 @@ export class CompilationVersions {
           label: "V01",
           createdAt: meta.createdAt,
           state: "ready",
+          startStages:this.branch?.available(id),
         },
       ],
     };
@@ -254,6 +261,7 @@ export class CompilationVersions {
       revision: number;
       requirements: unknown;
       selections: { id: string; version: number }[];
+      snapshot?:BranchSnapshot;
     },
   ) {
     if (
@@ -290,6 +298,8 @@ export class CompilationVersions {
         requestId: input.requestId,
         requirements,
         selections: input.selections,
+        snapshot:input.snapshot,
+        ...(input.snapshot?{origin:{sourceId:input.snapshot.sourceId,stage:input.snapshot.stage,at:input.snapshot.at}}:{}),
       };
       group.items.push(entry);
       // Reserve the opaque ID before creating its container. A restart can finish it.
@@ -300,6 +310,7 @@ export class CompilationVersions {
   }
   private async finish(group: Group, entry: Entry) {
     await this.createContainer(entry.id, group.projectName);
+    if(entry.snapshot)await this.branch?.restore(entry.id,entry.snapshot);
     if (!this.docs.get(entry.id, "bidproposal", "bid_plan")) {
       const value = { ...readPlan(), ...entry.requirements };
       if (
@@ -322,6 +333,7 @@ export class CompilationVersions {
     entry.state = "ready";
     delete entry.requirements;
     delete entry.selections;
+    delete entry.snapshot;
     this.save(group);
   }
   async recover() {
