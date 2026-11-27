@@ -229,3 +229,19 @@ test("every token bidproposal defines for itself is namespaced", () => {
       `silently:\n  ${stray.join("\n  ")}\nPrefix them with ${OUR_PREFIX}.`,
   );
 });
+
+
+test("the document loads DS fonts globally for body-portaled panels and real semibold faces",()=>{
+ const root=resolvePath(import.meta.dirname,"../../..");
+ const layout=readFileSync(resolvePath(root,"portals/app/app/layout.tsx"),"utf8");
+ assert.match(layout,/import "@vxture\/design-system\/styles\/fonts.css"/);
+ const pkg=JSON.parse(readFileSync(resolvePath(root,"portals/app/package.json"),"utf8"));
+ for(const family of ["inter","geist-mono","funnel-display"])assert.ok(pkg.dependencies["@fontsource/"+family]);
+ const fonts=readCssGraph(require_.resolve("@vxture/design-system/styles/fonts.css"));
+ for(const family of ["Inter","Geist Mono","Funnel Display"])assert.ok(fonts.includes(family));
+ assert.match(fonts,/font-weight:\s*600/);
+ const css=readFileSync(resolvePath(root,"portals/app/app/globals.css"),"utf8");
+ assert.match(css,/--bidproposal-sans: var\(--font-sans\)/);
+ const workbench=readFileSync(resolvePath(root,"portals/app/app/workbench/workbench.css"),"utf8");
+ assert.doesNotMatch(workbench,/font-family:[^;]*bidproposal-entry/);
+});

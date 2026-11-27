@@ -1,6 +1,7 @@
 "use client";
 import React, { useEffect, useRef, useState, type ReactNode } from "react";
 import { Button, EmptyState, Icon } from "@vxture/design-system";
+import {usePageRefresh,useRefreshGuard} from "./page-refresh";
 import { fileFormat } from "../file-formats";
 import { ImageViewer } from "./image-viewer";
 import { MarkdownViewer } from "./markdown-viewer";
@@ -32,6 +33,8 @@ export function OriginalFile({ id, version, name, access, readOnly = false, rend
   const [attempt,setAttempt]=useState(0),[downloadBusy,setDownloadBusy]=useState(false),[downloadError,setDownloadError]=useState("");
   const [readerError,setReaderError]=useState("");
   const [markdownEditing,setMarkdownEditing]=useState(false),[draft,setDraft]=useState(""),[saving,setSaving]=useState(false),[saveError,setSaveError]=useState("");
+  usePageRefresh(()=>{if((error||officeError||readerError)&&!officeEditable&&!markdownEditing)setAttempt(value=>value+1);});
+  useRefreshGuard(markdownEditing||officeEditable||saving,()=>setSaveError("\u8bf7\u5148\u9000\u51fa\u7f16\u8f91\uff0c\u518d\u5237\u65b0\u3002"));
   const markdownDirty=markdownEditing&&draft!==text,locked=useRef(false);
   locked.current=markdownDirty||saving;
   useEffect(()=>{

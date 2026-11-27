@@ -1,9 +1,9 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Button, Icon } from "@vxture/design-system";
-import { ResourceVisualCard, ResourceActionsMenu, downloadResourceFile, type FileAccess, type ResourceRequest } from "@bidproposal/shared/presentation";
+import { usePageRefresh, ResourceVisualCard, ResourceActionsMenu, downloadResourceFile, type FileAccess, type ResourceRequest } from "@bidproposal/shared/presentation";
 import {
-  RESOURCE_CATEGORIES,
+  resourceCategoryLabel,
   resourceTitle,
   isTemplate,
   type ResourceData,
@@ -27,21 +27,10 @@ export function ResourceProgress({
 }) {
   const [items, setItems] = useState<ResourceData[]>([]),
     [state, setState] = useState("loading"), [error, setError] = useState("");
-  useEffect(() => {
-    const controller = new AbortController();
-    void request("", {
-      signal: controller.signal,
-    })
-      .then((value) => {
-        if (controller.signal.aborted) return;
-        setItems(value.items);
-        setState("ready");
-      })
-      .catch(() => {
-        if (!controller.signal.aborted) setState("failed");
-      });
-    return () => controller.abort();
-  }, [request]);
+  const loaded=useRef(false);
+  const load=async(signal?:AbortSignal)=>{try{const value=await request("",{signal});if(signal?.aborted)return;setItems(value.items);loaded.current=true;setState("ready");}catch{if(!signal?.aborted){if(!loaded.current)setState("failed");else setError("\u8d44\u6599\u5237\u65b0\u5931\u8d25\uff0c\u73b0\u6709\u5185\u5bb9\u5df2\u4fdd\u7559\u3002");}}};
+  usePageRefresh(()=>load());
+  useEffect(()=>{const controller=new AbortController();void load(controller.signal);return()=>controller.abort();},[request]);
   const download = async (item: ResourceData) => {
     const version = item.versions.at(-1); if (!version) return;
     setError("");
@@ -102,9 +91,7 @@ export function ResourceProgress({
                     key={item.id}
                     title={resourceTitle(item)}
                     category={
-                      RESOURCE_CATEGORIES[
-                        item.category as keyof typeof RESOURCE_CATEGORIES
-                      ] || "\u77e5\u8bc6\u8d44\u6599"
+                      resourceCategoryLabel(item)
                     }
                     version={item.versions.at(-1)?.version}
                     updatedAt={item.updatedAt}

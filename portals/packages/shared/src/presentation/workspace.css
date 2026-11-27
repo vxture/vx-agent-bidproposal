@@ -595,3 +595,21 @@
 .jadera-assistant-region .jadera-assistant-dock { position:static; }
 .jadera-ai-message.assistant > span { display:block; margin-bottom:var(--space-xs); }
 .jadera-assistant-region[data-drawer="true"] { position:absolute; right:0; top:0; bottom:0; max-width:100%; z-index:var(--z-index-drawer); }
+
+/* Compilation actions and forms use one compact, accessible row geometry. */
+.jadera-version-popover{display:flex;flex-direction:column;gap:12px;padding:12px}
+.jadera-version-create{min-height:32px;height:32px;gap:12px;flex-shrink:0}
+.jadera-version-list{display:flex;flex-direction:column;gap:12px}
+.jadera-version-option{min-height:48px;gap:12px}
+.jadera-compilation-dialog{width:min(680px,calc(100vw - 32px));max-width:680px}
+.jadera-compilation-dialog form{display:flex;flex-direction:column;gap:16px}
+.jadera-compilation-dialog .jadera-compilation-row,.jadera-requirements-fields label{display:grid;grid-template-columns:100px minmax(0,1fr);align-items:center;gap:16px;font-size:14px}
+.jadera-requirements-fields{grid-template-columns:minmax(0,1fr);gap:16px;margin-block:0}
+.jadera-compilation-dialog input,.jadera-compilation-dialog select,.jadera-compilation-requirements input,.jadera-compilation-requirements select{height:32px;min-height:32px;font-size:14px}
+.jadera-requirements-actions{gap:12px;padding-block:8px 0}
+.jadera-requirements-actions button{height:32px;min-height:32px;font-size:14px}
+.jadera-compilation-confirm{font-size:14px}
+.jadera-compilation-confirm dl{display:grid;grid-template-columns:100px minmax(0,1fr);gap:16px;margin-block:16px}
+.jadera-compilation-confirm dd{margin:0;overflow-wrap:anywhere}
+.jadera-compilation-confirm dt,.jadera-compilation-confirm p{color:var(--muted-foreground)}
+@media(max-width:480px){.jadera-compilation-dialog .jadera-compilation-row,.jadera-requirements-fields label{grid-template-columns:80px minmax(0,1fr);gap:12px}}

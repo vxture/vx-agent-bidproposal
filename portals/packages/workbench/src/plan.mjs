@@ -68,7 +68,7 @@ export class PlanSession {
     for (const [key, choices] of Object.entries({
       figures: ['none', 'selective', 'rich'],
       mode: ['metrics', 'providers'],
-      quality: ['very-high', 'high', 'normal'],
+      quality: ['very-high', 'high', 'normal', 'low'],
       volume: ['technical', 'commercial', 'combined'],
     }))
       if (!choices.includes(v[key])) throw new Error('Invalid plan option');

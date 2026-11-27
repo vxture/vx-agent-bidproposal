@@ -30,17 +30,22 @@ import {
   EmptyState,
   Label,
 } from "@vxture/design-system";
+import {usePageRefresh} from "./page-refresh";
 import { ResourceActionsMenu } from "./resource-actions";
 import { downloadResourceFile } from "./original-file";
 import { ResourceVisualCard } from "./resource-card";
 import { MarkdownViewer } from "./markdown-viewer";
 import { FILE_ACCEPT, FILE_UPLOAD_MAX_BYTES, fileFormat } from "../file-formats";
 import { OriginalFile, type FileAccess } from "./original-file";
+import {ResourceImportDialog} from "./resource-import-dialog";
 import { ResourcePage } from "./resource-page";
 import { ResourcePreview } from "./resource-preview";
 export { ResourcePreview } from "./resource-preview";
 import {
   RESOURCE_CATEGORIES,
+  DEFAULT_RESOURCE_TYPES,
+  resourceCategoryLabel,
+  type ResourceType,
   resourceTitle,
   isTemplate,
   resourceState,
@@ -50,7 +55,7 @@ import {
 
 /** Scoped access supplied by the Web or native host. */
 export interface ResourceRequestOptions {
-  method?: "GET" | "POST" | "PATCH";
+  method?: "GET" | "POST" | "PATCH" | "DELETE";
   body?: string;
   signal?: AbortSignal;
 }
@@ -73,6 +78,7 @@ export interface ResourceCollectionProps {
   loadCompilations?: (
     id: string,
   ) => Promise<import("../compilations").CompilationList>;
+  onConfigureTypes?():void;
   onUse?: (
     resource: ResourceData,
     version: number,
@@ -100,7 +106,9 @@ export function ResourceCollection({
   organizationName,
   workspaceName,
   fileAccess,
+  onConfigureTypes,
 }: ResourceCollectionProps) {
+  const [types,setTypes]=useState<ResourceType[]>(DEFAULT_RESOURCE_TYPES);
   const [items, setItems] = useState<ResourceData[]>([]),
     [state, setState] = useState("loading"),
     [error, setError] = useState("");
@@ -153,18 +161,22 @@ export function ResourceCollection({
       active = false;
     };
   }, [useProject, loadCompilations]);
+  const hasLoaded=useRef(false);
   const load = useCallback(async () => {
     try {
       const value = await request();
-      setItems(value.items);
-      setState("ready");
+      const registry:ResourceType[]=value.types||DEFAULT_RESOURCE_TYPES;
+      setTypes(registry);
+      setItems(value.items.map((item:ResourceData)=>{const type=registry.find(type=>type.id===item.category);return {...item,categoryLabel:type?.label||item.categoryLabel,coverStyle:type?.coverStyle||item.coverStyle};}));
+      hasLoaded.current=true;setState("ready");
     } catch (e) {
-      setState("failed");
+      if(!hasLoaded.current)setState("failed");
       setError(
         e instanceof Error ? e.message : "\u8d44\u6599\u65e0\u6cd5\u8bfb\u53d6",
       );
     }
   }, [request]);
+  usePageRefresh(load);
   useEffect(() => {
     setCategory("");
     setQuery("");
@@ -227,9 +239,9 @@ export function ResourceCollection({
       (!category || item.category === category) &&
       item.name.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()),
   );
-  const choices = Object.entries(RESOURCE_CATEGORIES).filter(
-    ([key]) => isTemplate(key) === templates,
-  );
+  const collectionTypes=types.filter(type=>type.collection===(templates?"templates":"knowledge"));
+  const choices = collectionTypes.map(type=>[type.id,type.label]);
+  useEffect(()=>{if(!collectionTypes.some(type=>type.id===uploadCategory))setUploadCategory(collectionTypes[0]?.id||"");if(category&&!collectionTypes.some(type=>type.id===category))setCategory("");},[types,templates,uploadCategory,category]);
   const showDetails = (item: ResourceData, action: ResourceDetailAction = "info") => { setLocalDocumentVersion(undefined); setDetailTab(action); onSelect(item.resourceNumber || item.id, action === "info" ? undefined : action); };
   const openFile = (item: ResourceData) => {
     setDetailTab("info");
@@ -313,7 +325,8 @@ export function ResourceCollection({
     }
   };
   const loadReferences = useCallback(async (id: string, signal: AbortSignal) => (await request("/" + id + "/references", { signal })).items, [request]);
-  if (selected) return <ResourcePage key={selected.id} item={selected} loadReferences={loadReferences} onOpenProject={onOpenProject} initialAction={detailAction || detailTab} tenantLabel={tenantLabel} documentVersion={documentVersion ?? localDocumentVersion} onOpenFile={onOpenFile ? version => onOpenFile(selected.resourceNumber || selected.id, version) : undefined} onCloseFile={() => {setLocalDocumentVersion(undefined);onCloseFile?.(selected.resourceNumber || selected.id);}} organizationName={organizationName || tenantLabel} workspaceName={workspaceName} fileAccess={fileAccess} parsedText={text} onBack={() => { setDetailTab("info"); onSelect(); }}
+  const loadMembers=useCallback(async (signal:AbortSignal)=>(await request("/members",{signal})).items,[request]);
+  if (selected) return <ResourcePage key={selected.id} item={selected} types={types} loadMembers={loadMembers} loadReferences={loadReferences} onOpenProject={onOpenProject} initialAction={detailAction || detailTab} tenantLabel={tenantLabel} documentVersion={documentVersion ?? localDocumentVersion} onOpenFile={onOpenFile ? version => onOpenFile(selected.resourceNumber || selected.id, version) : undefined} onCloseFile={() => {setLocalDocumentVersion(undefined);onCloseFile?.(selected.resourceNumber || selected.id);}} organizationName={organizationName || tenantLabel} workspaceName={workspaceName} fileAccess={fileAccess} parsedText={text} onBack={() => { setDetailTab("info"); onSelect(); }}
     onUpdate={async (input) => { const saved = await request("/" + selected.id, { method: "PATCH", body: JSON.stringify(input) }); await load(); if (saved.resourceNumber && saved.resourceNumber !== selectedId) onSelect(saved.resourceNumber); }}
     onUpload={async (newFile) => {
       if (!newFile.size || newFile.size > FILE_UPLOAD_MAX_BYTES || !fileFormat(newFile.name)) throw Error("\u8bf7\u9009\u62e9\u652f\u6301\u7684\u6587\u4ef6\uff0c\u4e0d\u8d85\u8fc7 20 MiB");
@@ -387,6 +400,7 @@ export function ResourceCollection({
                 </option>
               ))}
             </NativeSelect>
+            {onConfigureTypes&&<Button variant="ghost" size="icon-md" title={"\u7ba1\u7406\u7c7b\u578b"} aria-label={"\u7ba1\u7406\u7c7b\u578b"} onClick={onConfigureTypes}><Icon name="settings" size="sm"/></Button>}
             <Button
               variant="ghost"
               size="icon-md"
@@ -439,7 +453,7 @@ export function ResourceCollection({
               <ResourceVisualCard
                 key={item.id}
                 title={resourceTitle(item)}
-                category={categoryName(item.category)}
+                category={resourceCategoryLabel(item)}
                 version={item.versions.at(-1)?.version}
                 updatedAt={item.updatedAt}
                 status={resourceState(item)}
@@ -473,67 +487,14 @@ export function ResourceCollection({
                       {" \u00b7"}{" "}
                       {new Date(item.updatedAt).toLocaleDateString("zh-CN")}
                     </TableCell>
-                    <TableCell><div className="jadera-resource-list-actions"><Button className="jadera-resource-open" variant="default" disabled={!item.versions.length} onClick={()=>openFile(item)}>{"\u6253\u5f00"}</Button>{resourceActions(item)}</div></TableCell>
+                    <TableCell><div className="jadera-resource-list-actions"><Button className="jadera-resource-open jadera-card-open-action" variant="outline" disabled={!item.versions.length} onClick={()=>openFile(item)}>{"\u6253\u5f00"}</Button>{resourceActions(item)}</div></TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
           </div>
         )}
-        {intake && <section className="jadera-resource-intake" aria-label="\u5bfc\u5165\u6587\u4ef6">
-            <header>
-              <h2>
-                {target
-                  ? "\u6dfb\u52a0\u65b0\u7248\u672c"
-                  : templates
-                    ? "\u5bfc\u5165\u6a21\u677f"
-                    : "\u5bfc\u5165\u77e5\u8bc6\u8d44\u6599"}
-              </h2>
-              <p>
-                {
-                  "\u539f\u4ef6\u52a0\u5bc6\u4fdd\u5b58\uff0c\u6b63\u6587\u5728\u540e\u53f0\u8bfb\u53d6\uff1b\u540c\u4e00\u8d44\u6599\u7684\u5386\u53f2\u7248\u672c\u4f1a\u4fdd\u7559\u3002"
-                }
-              </p>
-            </header>
-            <Label htmlFor="resource-category">
-              {"\u8d44\u6599\u7c7b\u578b"}
-            </Label>
-            <NativeSelect
-              id="resource-category"
-              disabled={!!target || uploading}
-              value={uploadCategory}
-              onChange={(e) => setUploadCategory(e.target.value)}
-            >
-              {choices.map(([key, label]) => (
-                <option key={key} value={key}>
-                  {label}
-                </option>
-              ))}
-            </NativeSelect>
-            <Input
-              ref={file}
-              type="file"
-              accept={FILE_ACCEPT}
-              disabled={uploading}
-              aria-label={"\u9009\u62e9\u8d44\u6599\u6587\u4ef6"}
-              onChange={(e) => {
-                const selected = e.target.files?.[0];
-                if (selected) { setPendingFile(selected); setError(""); }
-              }}
-            />
-            {target && <p className="text-body-small">{target.name}{" \u00b7 v"}{target.versions.at(-1)?.version}{" \u2192 v"}{target.versions.length + 1}</p>}
-            {pendingFile && <p className="text-body-small">{pendingFile.name}{" \u00b7 "}{(pendingFile.size / 1024 / 1024).toFixed(2)} MiB</p>}
-            <div className="jadera-file-tools">
-              <Button disabled={!pendingFile || uploading} onClick={() => pendingFile && void upload(pendingFile)}>{uploading ? "\u4e0a\u4f20\u4e2d\u2026" : "\u786e\u8ba4\u4e0a\u4f20"}</Button>
-              <Button variant="ghost" disabled={uploading} onClick={() => setIntake(false)}>{"\u53d6\u6d88"}</Button>
-            </div>
-            {uploading && (
-              <p role="status">
-                {"\u6b63\u5728\u4e0a\u4f20\u5e76\u4fdd\u5b58\u539f\u4ef6\u2026"}
-              </p>
-            )}
-            {error && <p role="alert">{error}</p>}
-        </section>}
+        <ResourceImportDialog open={intake} onOpenChange={setIntake} title={target?"\u4e0a\u4f20\u65b0\u7248\u672c":templates?"\u5bfc\u5165\u6a21\u677f":"\u5bfc\u5165\u77e5\u8bc6\u8d44\u6599"} file={pendingFile} onFile={selected=>{setPendingFile(selected);setError("");}} busy={uploading} error={error} category={uploadCategory} onCategory={target?undefined:setUploadCategory} types={collectionTypes} onSubmit={()=>{if(pendingFile)void upload(pendingFile);}}/>
       </ContentWidthContainer>
     </main>
   );

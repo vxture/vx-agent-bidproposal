@@ -8,7 +8,6 @@
  * @date 2026-11-24
  */
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
-import { displayFont, textFont } from "./fonts";
 import { useTheme } from "next-themes";
 import { Globe, House, Moon, Sun } from "@phosphor-icons/react";
 import { BRAND } from "@bidproposal/shared/brand";
@@ -71,7 +70,7 @@ export function EntryShell({ children }: Readonly<{ children: ReactNode }>) {
   useEffect(() => { setMounted(true); }, []);
 
   return <LocaleContext.Provider value={locale}>
-    <div className={`bid-entry-shell ${displayFont.variable} ${textFont.variable}`} lang={locale}>
+    <div className="bid-entry-shell" lang={locale}>
       <EntryBackdrop />
       <a className="bid-entry-skip" href="#bid-entry-main">{zh ? "\u8df3\u81f3\u4e3b\u8981\u5185\u5bb9" : "Skip to content"}</a>
       <header className="bid-entry-header">

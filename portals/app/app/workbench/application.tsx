@@ -6,6 +6,8 @@
  * @author AI-Generated
  * @date 2026-11-25
  */
+import {syncFrameTypography} from "./frame-typography";
+import {WorkspaceLoading} from "./workspace-loading";
 import { productFetch } from "./product-fetch";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -30,6 +32,8 @@ import { EntryCard } from "../access/entry-card";
 import { entryKindFor, gateLoginUrl } from "../access/entry-content";
 import {
   ApplicationHeader,
+  usePageRefresh,
+  useRefreshGuard,
   PageScrollHint,
   ProjectCollection,
   HomeCompanion,
@@ -52,7 +56,6 @@ import { resourceDetailAction } from "@bidproposal/shared/resources";
 import { Management, ManagementNavigation } from "./management";
 import { displayNameFor } from "../auth/lib/display";
 import { ProductMark } from "../access/product-mark";
-import { displayFont, textFont } from "../access/fonts";
 import "@bidproposal/shared/presentation.css";
 import { BRAND } from "@bidproposal/shared/brand";
 import { ProductIdentity } from "../access/product-identity";
@@ -126,6 +129,7 @@ export function WorkbenchApplication() {
       .catch(() => setFailed(true));
   }, []);
   useEffect(refresh, [refresh]);
+  if(!access&&!failed)return <WorkspaceLoading/>;
   if (!access || !isThrough(access)) {
     const kind = failed
       ? "access-unavailable"
@@ -210,7 +214,7 @@ function Workspace({ access }: { access: AccessState }) {
   const library = parts[0] === "#library" || parts[0] === "#knowledge",
     catalog = hash === "#projects",
     management = parts[0] === "#admin",
-    adminPage = ["account", "members"].includes(parts[1] || "")
+    adminPage = ["account", "members", "resource-types", "template-types"].includes(parts[1] || "")
       ? parts[1]!
       : "overview";
   const [lastProject, setLastProject] = useState<string>();
@@ -234,7 +238,8 @@ function Workspace({ access }: { access: AccessState }) {
     }
     window.location.hash = href;
   }, []);
-  const reload = useCallback(async () => {
+  const projectsLoaded=useRef(false);
+  const reload = useCallback(async (notify=false) => {
     try {
       const response = await api.projects();
       setProjects(
@@ -273,11 +278,14 @@ function Workspace({ access }: { access: AccessState }) {
             : project;
         }),
       );
-      setState("ready");
+      projectsLoaded.current=true;setState("ready");
     } catch {
-      setState("failed");
+      if(!projectsLoaded.current)setState("failed");
+      if(notify)throw Error("Projects could not be refreshed");
     }
   }, [api, lastKey, user?.sub, user?.picture]);
+  usePageRefresh(async()=>{if(projectId||["#home","#projects", ""].includes(parts[0]||""))await reload(true);if(projectId&&tab==="product")frame.current?.contentWindow?.location.reload();});
+  useEffect(()=>{const guard=(event:Event)=>{const frameWindow=frame.current?.contentWindow,frameDocument=frame.current?.contentDocument;if(!frameWindow||!frameDocument)return;const pending=frameDocument.documentElement.dataset.unsaved==="true";const probe=new Event("beforeunload",{cancelable:true});if(pending||!frameWindow.dispatchEvent(probe)){event.preventDefault();frameDocument.dispatchEvent(new Event("bid.unsaved"));}};window.addEventListener("jadera:before-refresh",guard);return()=>window.removeEventListener("jadera:before-refresh",guard);},[]);
   useEffect(() => {
     let acceptedHash = window.location.hash;
     const update = () => {
@@ -440,6 +448,7 @@ function Workspace({ access }: { access: AccessState }) {
   const syncFrameTheme = () => {
     const target = frame.current?.contentDocument?.documentElement;
     if (!target) return;
+    syncFrameTypography(document,frame.current!.contentDocument!);
     const values = getComputedStyle(document.documentElement);
     for (const token of [
       "background",
@@ -525,7 +534,7 @@ function Workspace({ access }: { access: AccessState }) {
     <div
       ref={shellRegion.ref}
       data-page-width="preferred"
-      className={`bid-workbench ${displayFont.variable} ${textFont.variable}`}
+      className="bid-workbench"
       id="jadera-application"
     >
       <ShellViewport
@@ -580,7 +589,7 @@ function Workspace({ access }: { access: AccessState }) {
                   loading={compilation.loading}
                   failed={compilation.failed}
                   onReload={() => void compilation.reload()}
-                  onSelect={(id) => navigate("#ws/" + id + "/product/analysis")}
+                  onSelect={(id) => navigate("#ws/" + id + "/overview")}
                   onRetry={async (id) => {
                     const result = await compilationRequest<{
                       selectedId: string;
@@ -608,7 +617,7 @@ function Workspace({ access }: { access: AccessState }) {
                       method: "POST",
                       body: JSON.stringify(input),
                     });
-                    navigate("#ws/" + result.selectedId + "/overview");
+                    navigate("#ws/" + result.selectedId + (input.startStage==="overview"?"/overview":"/product/"+input.startStage));
                   }}
                 />
               }
@@ -688,6 +697,7 @@ function Workspace({ access }: { access: AccessState }) {
                 tenantLabel={user?.activeOrgDisplayName || user?.activeOrgName || undefined}
                 loadCompilations={loadCompilations}
                 templates={page === "templates"}
+                onConfigureTypes={()=>navigate("#admin/"+(page==="templates"?"template-types":"resource-types"))}
                 projects={projects}
                 onUse={async (resource, version, pid) => {
                   const selected = await transport(

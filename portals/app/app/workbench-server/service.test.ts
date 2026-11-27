@@ -1541,3 +1541,85 @@ test("resource references reflect pinned versions, responsible people and unpinn
     assert.equal((await (await call(service, ["library", item.id, "references"])).json()).items.length, 0);
   } finally { service.close(); rmSync(root, { recursive: true, force: true }); }
 });
+
+
+test("configured resource types enforce governance, revision and in-use deletion across reopen", async()=>{
+ const root=mkdtempSync(join(tmpdir(),"bid-types-"));let service=make(root);const manager=access({...principal,canManage:true,displayName:"Manager"});
+ try{
+  const initial=await(await call(service,["library","types"])).json();
+  await assert.rejects(call(service,["library","types"],"POST",{revision:0,label:"Custom",collection:"knowledge"}),/permission|\u7ba1\u7406\u6743\u9650/);
+  let data=await(await call(service,["library","types"],"POST",{revision:0,label:"Custom",collection:"knowledge",coverStyle:"document"},manager)).json();
+  const type=data.items.find((item:{label:string})=>item.label==="Custom");assert.match(type.id,/^resource_/);assert.equal(data.canManage,true);
+  await assert.rejects(call(service,["library","types"],"POST",{revision:0,label:"Stale",collection:"knowledge"},manager));
+  await assert.rejects(call(service,["library","types"],"POST",{revision:data.revision,label:"Custom",collection:"knowledge"},manager));
+  const item=await(await call(service,["library"],"POST",{name:"custom.md",category:type.id,base64:Buffer.from("# Immutable custom content").toString("base64")},manager)).json();
+  assert.equal(item.categoryLabel,"Custom");assert.equal(item.coverStyle,"document");
+  data=await(await call(service,["library","types",type.id],"PATCH",{revision:data.revision,label:"Renamed",coverStyle:"certificate"},manager)).json();
+  const resources=await(await call(service,["library"])).json();assert.equal(resources.items[0].categoryLabel,"Renamed");assert.equal(resources.items[0].coverStyle,"certificate");
+  await assert.rejects(call(service,["library","types",type.id],"DELETE",{revision:data.revision},manager),/\u4f7f\u7528/);
+  assert.equal(initial.items.find((row:{id:string})=>row.id==="qualification").coverStyle,"document");
+  assert.equal(initial.items.find((row:{id:string})=>row.id==="certificate").coverStyle,"certificate");
+  await service.run(manager,async()=>{const current=managedResource(service,item.id);updateResource(service,item.id,{revision:current.revision,name:current.name,category:"case"},principal.sub);});
+  data=await(await call(service,["library","types",type.id],"DELETE",{revision:data.revision},manager)).json();assert.ok(!data.items.some((row:{id:string})=>row.id===type.id));
+  service.close();service=make(root);const restored=await(await call(service,["library","types"])).json();assert.equal(restored.revision,data.revision);
+ }finally{service.close();rmSync(root,{recursive:true,force:true});}
+});
+
+test("missing creator selects another known workspace actor once and never accepts forged updater",async()=>{
+ const root=mkdtempSync(join(tmpdir(),"bid-creator-"));let service=make(root);const coworker=access({...principal,sub:"user-colleague",displayName:"Colleague"}),editor=access({...principal,displayName:"Editor"});
+ try{
+  await call(service,["library","members"],"GET",undefined,coworker);
+  const item=await(await call(service,["library"],"POST",{name:"legacy.md",category:"case",base64:Buffer.from("# Kept original").toString("base64")},editor)).json();
+  await service.run(editor,async()=>{const scope=service.scope(),store=service.storage.openLibraryStore(scope.workspaceId,scope.productId).store;const row=store.getProductDocument(scope.productId,"library_item_"+item.id)!;const value=JSON.parse(row.markdown);delete value.createdBy;store.putProductDocument(scope.productId,row.id,JSON.stringify(value),row.revision);const current=managedResource(service,item.id),input={revision:current.revision,name:current.name,category:current.category};
+   assert.throws(()=>updateResource(service,item.id,{...input,createdById:"unknown-member"},principal.sub));
+   assert.throws(()=>updateResource(service,item.id,{...input,updatedBy:{id:"forged"}},principal.sub));
+   const saved=updateResource(service,item.id,{...input,createdById:"user-colleague"},principal.sub,"Editor");assert.equal(saved.createdBy?.name,"Colleague");assert.equal(saved.updatedBy?.id,principal.sub);assert.deepEqual(saved.versions,current.versions);
+   assert.throws(()=>updateResource(service,item.id,{...input,revision:saved.revision,createdById:principal.sub},principal.sub),/already recorded/);
+  });
+  service.close();service=make(root);await service.run(editor,async()=>assert.equal(managedResource(service,item.id).createdBy?.id,"user-colleague"));
+  const outsider=make(root,{...principal,workspaceId:"other-workspace"});try{const members=await(await call(outsider,["library","members"],"GET",undefined,access({...principal,workspaceId:"other-workspace"}))).json();assert.equal(members.items.length,0);}finally{outsider.close();}
+ }finally{service.close();rmSync(root,{recursive:true,force:true});}
+});
+
+test("stage branches freeze preceding results, preserve revision bindings and originals, isolate edits and retry after reopen",async()=>{
+ const root=mkdtempSync(join(tmpdir(),"bid-branch-"));let service=make(root);
+ try{
+  const project=await(await call(service,["projects"],"POST",{name:"Independent branches"})).json(),pid=project.id;
+  const file=await service.upload(pid,"source.md",Buffer.from("# Original tender"),principal);
+  const resource=await(await call(service,["library"],"POST",{name:"evidence.md",category:"case",base64:Buffer.from("# Enterprise evidence").toString("base64")})).json();
+  for(let n=0;n<50&&service.library.get(service.scope(),resource.id)?.versions[0]?.reading?.state!=="completed";n++)await new Promise(done=>setTimeout(done,10));
+  await call(service,["projects",pid,"library-selection"],"POST",{id:resource.id,version:1,revision:0});
+  const sourcePin=service.library.selections(pid,"bidproposal").items[0];
+  service.documents.put(pid,"bidproposal","bid_source_review_saved",JSON.stringify({spec:{id:"88888888-8888-4888-8888-888888888888"}}),0);
+  service.documents.put(pid,"bidproposal","runtime_job_88888888-8888-4888-8888-888888888888",JSON.stringify({id:"88888888-8888-4888-8888-888888888888",state:"completed",steps:[],sources:[]}),0);
+  service.documents.put(pid,"bidproposal","bid_plan_request",JSON.stringify({spec:{id:"99999999-9999-4999-8999-999999999999"}}),0);
+  service.documents.put(pid,"bidproposal","runtime_job_99999999-9999-4999-8999-999999999999",JSON.stringify({id:"99999999-9999-4999-8999-999999999999",state:"cancelled",steps:[],sources:[]}),0);
+  const matrix="# Bid requirements\n\n| ID | Category | Requirement | Source quote | Location | Origin | Confirmed |\n| --- | --- | --- | --- | --- | --- | --- |\n| R1 | technical | Deliver service | Exact tender | Section 1 | manual | yes |\n";
+  await service.document(pid,"bid_requirements",{markdown:matrix,revision:0});await service.document(pid,"bid_requirements",{markdown:matrix,revision:1});
+  const plan="# Bid writing plan\n\n\x60\x60\x60json\n"+JSON.stringify({...DEFAULT_REQUIREMENTS,quality:"low",outline:[{id:"chapter-a",title:"Service delivery",requirementIds:["R1"]}],approved:true,requirementsRevision:2,template:null})+"\n\x60\x60\x60\n";
+  await service.document(pid,"bid_plan",{markdown:plan,revision:0});await service.document(pid,"bid_plan",{markdown:plan,revision:1});await service.document(pid,"bid_plan",{markdown:plan,revision:2});
+  await service.document(pid,"bid_draft",{markdown:"Downstream must be excluded",revision:0});
+  const versions=await(await call(service,["projects",pid,"compilations"])).json();assert.ok(versions.items[0].startStages.includes("chapters"));
+  const input={requestId:"55555555-5555-4555-8555-555555555555",label:"From approved plan",revision:0,sourceId:pid,startStage:"chapters",reuseLibrary:false,requirements:DEFAULT_REQUIREMENTS};
+  const created=await(await call(service,["projects",pid,"compilations"],"POST",input)).json(),child=created.selectedId;
+  assert.equal(service.documents.get(child,"bidproposal","bid_plan_request"),undefined,"cancelled source requests cannot restart on branch reopen");
+  assert.equal(service.documents.get(child,"bidproposal","bid_plan")!.revision,3);assert.equal(service.documents.get(child,"bidproposal","bid_requirements")!.revision,2);assert.equal(service.documents.get(child,"bidproposal","bid_plan")!.markdown,plan);assert.equal(service.documents.get(child,"bidproposal","bid_draft"),undefined);
+  assert.equal(service.storage.openHostStore(child)!.getFile(file.id)!.hash,file.hash);assert.equal((await service.storage.openFileStore(child)!.read(file.hash)).toString(),"# Original tender");
+  assert.deepEqual(service.library.selections(child,"bidproposal").items[0],sourcePin,"pin identities stay unchanged in an independent store");
+  assert.equal(service.readings.get(child,"bidproposal",sourcePin.readingId)?.state,"completed");
+  assert.equal(service.jobs.get(child,"bidproposal","88888888-8888-4888-8888-888888888888")?.state,"completed");
+  await assert.rejects(call(service,["projects",child,"jobs","88888888-8888-4888-8888-888888888888","control"],"POST",{action:"retry"}),/\u53ea\u8bfb/);
+  assert.deepEqual(await service.runtime.listTaskInstances(child),[]);assert.deepEqual(service.renders.list(child,"bidproposal"),[]);
+  await service.document(child,"bid_plan",{markdown:plan.replace('"pages":80','"pages":100'),revision:3});assert.equal(service.documents.get(child,"bidproposal","bid_plan")!.revision,4);assert.equal(service.documents.get(pid,"bidproposal","bid_plan")!.markdown,plan);
+  await assert.rejects(service.document(child,"bid_plan",{markdown:plan,revision:3}));
+  const retry=await(await call(service,["projects",pid,"compilations"],"POST",input)).json();assert.equal(retry.selectedId,child);assert.equal(retry.items.length,2);
+  await assert.rejects(call(service,["projects",pid,"compilations"],"POST",{...input,requestId:"66666666-6666-4666-8666-666666666666",revision:retry.revision,sourceId:"outside-project"}));
+  const originalPin=service.library.pin;service.library.pin=async()=>{throw Error("Interrupted branch initialization");};
+  await assert.rejects(call(service,["projects",pid,"compilations"],"POST",{...input,label:"From matrix",startStage:"planning",requestId:"77777777-7777-4777-8777-777777777777",revision:retry.revision}),/Interrupted/);service.library.pin=originalPin;
+  const pending=(await service.compilations.list(pid)).items.find(item=>item.state==="creating")!;
+  await service.document(pid,"bid_requirements",{markdown:matrix.replace("Deliver service","Changed source requirement"),revision:2});
+  service.close();service=make(root);await service.run(access(),async()=>{});
+  assert.equal(service.documents.get(pending.id,"bidproposal","bid_requirements")!.markdown,matrix,"restart uses reserved snapshot, not later source edits");
+  assert.equal((await service.compilations.list(pid)).items.find(item=>item.id===pending.id)?.state,"ready");assert.equal(service.documents.get(child,"bidproposal","bid_plan")!.revision,4);assert.equal((await service.compilations.list(pid)).items[1].origin?.stage,"chapters");
+ }finally{service.close();rmSync(root,{recursive:true,force:true});}
+});

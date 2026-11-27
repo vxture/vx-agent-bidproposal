@@ -1,4 +1,5 @@
 "use client";
+import {usePageRefresh} from "@bidproposal/shared/presentation";
 import { productFetch } from "./product-fetch";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type {
@@ -37,23 +38,23 @@ export function useCompilations(id?: string) {
   const generation = useRef(0),
     activeId = useRef(id);
   activeId.current = id;
+  const loadedId=useRef<string|undefined>(undefined);
   const reload = useCallback(async () => {
     const sequence = ++generation.current;
-    setData(undefined);
-    setBrief(undefined);
+    if(loadedId.current!==id){setData(undefined);setBrief(undefined);}
     setFailed(false);
     if (!id) {
       setLoading(false);
       return;
     }
-    setLoading(true);
+    setLoading(loadedId.current!==id);
     try {
       const [list, requirements] = await Promise.all([
         compilationRequest<CompilationList>(id, "compilations"),
         compilationRequest<CompilationBrief>(id, "compilation-brief"),
       ]);
       if (sequence !== generation.current) return;
-      setData(list);
+      loadedId.current=id;setData(list);
       setBrief(requirements);
     } catch {
       if (sequence === generation.current) setFailed(true);
@@ -61,6 +62,7 @@ export function useCompilations(id?: string) {
       if (sequence === generation.current) setLoading(false);
     }
   }, [id]);
+  usePageRefresh(reload);
   useEffect(() => {
     void reload();
     return () => {

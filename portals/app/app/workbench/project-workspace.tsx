@@ -21,7 +21,7 @@ import {
   PRODUCT_REVIEW_EVENT,
 } from "@vxture/ruyin-workbench-ui";
 import type { TabId } from "@vxture/ruyin-workbench-ui/workspace-tabs";
-import { NameDialog, useContainerWidth, usePanelFocus } from "@bidproposal/shared/presentation";
+import { usePageRefresh, useRefreshGuard, NameDialog, useContainerWidth, usePanelFocus } from "@bidproposal/shared/presentation";
 export function ProjectWorkspace({
   api,
   id,
@@ -64,6 +64,9 @@ export function ProjectWorkspace({
   const [operationBusy, setOperationBusy] = useState(false),
     [operationError, setOperationError] = useState("");
   const [renaming, setRenaming] = useState(false);
+  const [refreshRevision,setRefreshRevision]=useState(0);
+  usePageRefresh(()=>setRefreshRevision(value=>value+1));
+  useRefreshGuard(operationBusy||renaming);
   const region = useContainerWidth();
   const drawer = region.width !== undefined && region.width <= 1100;
   const visibleContext = contextOpen && !assistantOpen;
@@ -195,7 +198,7 @@ export function ProjectWorkspace({
           {tab === "overview" && requirementsView
             ? requirementsView
             : tab !== "product" && (
-                <ProjectPanel
+                <ProjectPanel key={refreshRevision}
                   api={api}
                   id={id}
                   tab={tab}
@@ -242,7 +245,7 @@ export function ProjectWorkspace({
               />
             </div>
             <div hidden={rightTab !== "files"}>
-              <ProjectFilesSection
+              <ProjectFilesSection key={refreshRevision}
                 api={api}
                 projectId={id}
                 grants={[]}

@@ -1,9 +1,17 @@
 "use client";
 import {
   Button,
+  ViewHeader,
+  Icon,
   ShellSidebarNav,
   ContentWidthContainer,
 } from "@vxture/design-system";
+import {
+  ResourceTypeSettings,
+  ResourceMemberDirectory,
+} from "@bidproposal/shared/presentation";
+import { libraryRequest } from "./resource-collection";
+import type { ResourceRequest } from "@bidproposal/shared/presentation";
 import type { AccessState } from "../access/types";
 import { displayNameFor } from "../auth/lib/display";
 
@@ -11,7 +19,9 @@ export function Management({
   access,
   page,
   onNavigate,
+  request = libraryRequest,
 }: {
+  request?: ResourceRequest;
   access: AccessState;
   page: string;
   onNavigate: (hash: string) => void;
@@ -19,22 +29,32 @@ export function Management({
   const user = "user" in access ? access.user : undefined;
   return (
     <ContentWidthContainer className="jadera-management-page" data-page-scroll>
-      <header>
-        <span>{"\u914d\u7f6e\u7ba1\u7406"}</span>
-        <h1>
-          {page === "account"
-            ? "\u4e2a\u4eba\u4fe1\u606f"
-            : page === "members"
-              ? "\u6210\u5458\u4e0e\u6743\u9650"
-              : "\u6982\u89c8"}
-        </h1>
-        <p>
-          {
-            "\u5f53\u524d\u5de5\u4f5c\u533a\u7684\u4ea7\u54c1\u8d44\u6e90\u4e0e\u7ba1\u7406\u8303\u56f4\u3002"
-          }
-        </p>
-      </header>
-      {page === "account" ? (
+      <ViewHeader
+        icon="settings"
+        title={
+          page === "resource-types"
+            ? "\u8d44\u6599\u7c7b\u578b"
+            : page === "template-types"
+              ? "\u6a21\u677f\u7c7b\u578b"
+              : page === "members"
+                ? "\u5de5\u4f5c\u533a\u6210\u5458"
+                : page === "account"
+                  ? "\u4e2a\u4eba\u4fe1\u606f"
+                  : "\u914d\u7f6e\u7ba1\u7406"
+        }
+        description={
+          "\u7ef4\u62a4\u5de5\u4f5c\u533a\u8d44\u6599\u5206\u7c7b\u4e0e\u4ea7\u54c1\u4f7f\u7528\u4fe1\u606f\u3002"
+        }
+        divider
+      />
+      {page === "resource-types" || page === "template-types" ? (
+        <ResourceTypeSettings
+          request={request}
+          collection={page === "template-types" ? "templates" : "knowledge"}
+        />
+      ) : page === "members" ? (
+        <ResourceMemberDirectory request={request} />
+      ) : page === "account" ? (
         <section>
           <h2>{"\u5f53\u524d\u8d26\u53f7"}</h2>
           <dl>
@@ -67,43 +87,57 @@ export function Management({
             </a>
           </Button>
         </section>
-      ) : page === "members" ? (
-        <section>
-          <h2>{"\u6210\u5458\u4e0e\u6743\u9650"}</h2>
-          <p>
-            {
-              "\u7ec4\u7ec7\u6210\u5458\u5173\u7cfb\u3001\u5de5\u4f5c\u533a\u6743\u9650\u4e0e\u672c\u4ea7\u54c1\u4f7f\u7528\u8d44\u683c\u5206\u522b\u7ba1\u7406\u3002\u9879\u76ee\u8bbf\u95ee\u7ee7\u7eed\u7531\u5f53\u524d\u5de5\u4f5c\u533a\u4e0e\u4ea7\u54c1\u8eab\u4efd\u6821\u9a8c\u3002"
-            }
-          </p>
-          <Button asChild variant="outline">
-            <a
-              href="https://console.vxture.com/"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              {"\u524d\u5f80\u5de5\u4f5c\u533a\u7ba1\u7406"}
-            </a>
-          </Button>
-        </section>
       ) : (
-        <section>
-          <h2>
-            {user?.activeWorkspaceName || "\u5f53\u524d\u5de5\u4f5c\u533a"}
-          </h2>
-          <p>
+        <div className="jadera-management-entries">
+          {[
             {
-              "\u77e5\u8bc6\u8d44\u6599\u4e0e\u6807\u4e66\u9879\u76ee\u5c5e\u4e8e\u524d\u53f0\u5de5\u4f5c\u6a21\u5757\u3002\u5957\u9910\u3001\u6743\u76ca\u548c\u8d26\u5355\u7ee7\u7eed\u5728\u5e73\u53f0\u5de5\u4f5c\u533a\u7ba1\u7406\u3002"
-            }
-          </p>
-          <div className="jadera-management-actions">
-            <Button variant="outline" onClick={() => onNavigate("#projects")}>
-              {"\u67e5\u770b\u6807\u4e66\u9879\u76ee"}
-            </Button>
-            <Button variant="outline" onClick={() => onNavigate("#library")}>
-              {"\u67e5\u770b\u77e5\u8bc6\u8d44\u6599"}
-            </Button>
-          </div>
-        </section>
+              page: "resource-types",
+              title: "\u8d44\u6599\u7c7b\u578b",
+              description:
+                "\u77e5\u8bc6\u8d44\u6599\u7684\u5206\u7c7b\u540d\u79f0\u4e0e\u5c01\u9762\u6837\u5f0f",
+              icon: "book-open",
+            },
+            {
+              page: "template-types",
+              title: "\u6a21\u677f\u7c7b\u578b",
+              description:
+                "\u6807\u4e66\u6a21\u677f\u7684\u5206\u7c7b\u4e0e\u7b5b\u9009\u9009\u9879",
+              icon: "file-text",
+            },
+            {
+              page: "members",
+              title: "\u5de5\u4f5c\u533a\u6210\u5458",
+              description:
+                "\u8d44\u6599\u5f52\u5c5e\u5019\u9009\u6210\u5458\u4e0e\u5de5\u4f5c\u533a\u7ba1\u7406",
+              icon: "users",
+            },
+            {
+              page: "account",
+              title: "\u4e2a\u4eba\u4fe1\u606f",
+              description:
+                "\u5f53\u524d\u8d26\u53f7\u3001\u6240\u5c5e\u7ec4\u7ec7\u4e0e\u5de5\u4f5c\u533a",
+              icon: "user",
+            },
+          ].map((entry) => (
+            <button
+              key={entry.page}
+              type="button"
+              onClick={() => onNavigate("#admin/" + entry.page)}
+            >
+              <Icon
+                name={
+                  entry.icon as "book-open" | "file-text" | "users" | "user"
+                }
+                size="lg"
+              />
+              <span>
+                <strong>{entry.title}</strong>
+                <small>{entry.description}</small>
+              </span>
+              <Icon name="chevron-right" size="sm" />
+            </button>
+          ))}
+        </div>
       )}
     </ContentWidthContainer>
   );
@@ -125,6 +159,16 @@ export function ManagementNavigation({
           title: "\u5de5\u4f5c\u533a",
           items: [
             { href: "#admin", label: "\u6982\u89c8", icon: "home" },
+            {
+              href: "#admin/resource-types",
+              label: "\u8d44\u6599\u7c7b\u578b",
+              icon: "book-open",
+            },
+            {
+              href: "#admin/template-types",
+              label: "\u6a21\u677f\u7c7b\u578b",
+              icon: "file-text",
+            },
             {
               href: "#admin/account",
               label: "\u4e2a\u4eba\u4fe1\u606f",

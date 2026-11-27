@@ -20,6 +20,7 @@ import {
 } from "../capability/access";
 import { hasDataAccess, type Entitlement } from "../entitlement/types";
 import { workbenchCoverage } from "./coverage-cache";
+import { canManageWorkspace } from "../auth/lib/claims";
 
 export class WorkbenchError extends Error {
   constructor(
@@ -33,6 +34,7 @@ export class WorkbenchError extends Error {
 export interface Principal {
   displayName?: string;
   avatarSrc?: string;
+  canManage?: boolean;
   sessionId: string;
   sub: string;
   orgId: string;
@@ -129,12 +131,14 @@ export async function authorizeWorkbench(
     );
   let displayName: string | undefined;
   let avatarSrc: string | undefined;
-  if (method === "POST" || method === "PATCH") {
+  let canManage = false;
+  {
     const cfg = getOidcConfig();
     const context = await getAuthContext(cfg, sessionId);
-    if (!context || context.user.sub !== caller.sub)
+    if (!context || context.user.sub !== caller.sub || context.user.activeOrg !== caller.orgId || context.user.activeWorkspace !== caller.workspaceId)
       throw new WorkbenchError(401, "AUTH_REQUIRED", "Sign in again");
     const profile = await resolveDisplayProfile(cfg, sessionId, context);
+    canManage = canManageWorkspace(context.user.roles);
     avatarSrc = profile.picture || undefined;
     displayName = profile.displayName || profile.account || undefined;
   }
@@ -145,6 +149,7 @@ export async function authorizeWorkbench(
     workspaceId: caller.workspaceId,
     ...(displayName ? { displayName } : {}),
     ...(avatarSrc ? { avatarSrc } : {}),
+    canManage,
   };
   return {
     principal,

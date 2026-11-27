@@ -1,3 +1,5 @@
+import {availableBranchStages,captureBranch,restoreBranch,BRANCH_REVISIONS} from "./compilation-branch";
+import {COMPILATION_STAGES,type CompilationStage} from "@bidproposal/shared/compilations";
 /**
  * @package @bidproposal/app
  * @layer Application
@@ -204,23 +206,24 @@ export class BidRuntime {
         }
       },
     };
+    const branchOffsets=new Map<string,Record<string,number>>();
+    const revisionOffset=(pid:string,product:string,id:string)=>{const key=pid+":"+product;let offsets=branchOffsets.get(key);if(!offsets){const saved=this.storage.openHostStore(pid)?.getProductDocument(product,BRANCH_REVISIONS);if(saved){offsets=JSON.parse(saved.markdown);branchOffsets.set(key,offsets!);}}return offsets?.[id]||0;};
     this.documents = {
-      get: (pid, product, id) =>
-        this.storage.openHostStore(pid)?.getProductDocument(product, id),
+      get: (pid, product, id) => {const row=this.storage.openHostStore(pid)?.getProductDocument(product,id);return row?{...row,revision:row.revision+revisionOffset(pid,product,id)}:undefined;},
       put: (pid, product, id, markdown, revision) => {
         const saved = this.storage
           .openHostStore(pid)
-          ?.putProductDocument(product, id, markdown, revision);
+          ?.putProductDocument(product, id, markdown, revision-revisionOffset(pid,product,id));
         if (saved && id.startsWith("runtime_output_"))
           void this.serial(() => this.observeStorage()).catch(() =>
             console.warn("Bid storage observation is pending reconciliation"),
           );
-        return saved;
+        return saved?{...saved,revision:saved.revision+revisionOffset(pid,product,id)}:undefined;
       },
       list: (pid, product, prefix) =>
         this.storage
           .openHostStore(pid)
-          ?.listProductDocuments(product, prefix) ?? [],
+          ?.listProductDocuments(product, prefix).map(row=>({...row,revision:row.revision+revisionOffset(pid,product,row.id)})) ?? [],
     };
     this.runtime = new ProjectRuntime({
       storage,
@@ -351,6 +354,7 @@ export class BidRuntime {
           ...resource,
           revision: this.library.selections(id, "bidproposal").revision,
         }),
+      {available:id=>availableBranchStages(this,id),restore:(id,snapshot)=>restoreBranch(this,id,snapshot)},
     );
     this.assistant = new AssistantSessions(
       this.storage.openLibraryStore(this.workspaceId, "bidproposal").store,
@@ -500,6 +504,7 @@ export class BidRuntime {
     await this.ready;
     return this.principal.run(access.principal, operation);
   }
+  configurationMutation<T>(operation:()=>Promise<T>){return this.serial(operation);}
   private serial<T>(operation: () => Promise<T>): Promise<T> {
     const next = this.mutation.then(operation, operation);
     this.mutation = next.catch(() => undefined);
@@ -619,15 +624,22 @@ export class BidRuntime {
   async createCompilation(id: string, body: Record<string, unknown>) {
     return this.serial(async () => {
       await this.checkProject(id, true);
-      const selected =
-        body.reuseLibrary === true
-          ? this.library.selections(id, "bidproposal").items
-          : [];
+      const existing=this.compilations.group(id)?.items.find(item=>item.requestId===body.requestId);
+      if(existing){const result=await this.compilations.retry(id,existing.id);await this.observeStorage();return result;}
+      const sourceId=body.sourceId===undefined?id:body.sourceId;
+      const stage=body.startStage===undefined?"overview":body.startStage;
+      const group=await this.compilations.list(id);
+      if(typeof sourceId!=="string"||!group.items.some(item=>item.id===sourceId&&item.state==="ready")||!COMPILATION_STAGES.some(item=>item.id===stage))throw new WorkbenchError(400,"INVALID_BRANCH","Invalid source version or stage");
+      await this.checkProject(sourceId);
+      const snapshot=stage==="overview"?undefined:await captureBranch(this,sourceId,stage as CompilationStage);
+      const frozenPins=snapshot?.documents.find(document=>document.id==="runtime_library_selection");
+      const selected: {id:string;version:number}[]=snapshot?(frozenPins?JSON.parse(frozenPins.markdown):[]):body.reuseLibrary===true?this.library.selections(sourceId,"bidproposal").items:[];
       const result = await this.compilations.create(id, {
         label: body.label as string,
         requestId: body.requestId as string,
         revision: body.revision as number,
         requirements: body.requirements,
+        snapshot,
         selections: selected.map((item) => ({
           id: item.id,
           version: item.version,

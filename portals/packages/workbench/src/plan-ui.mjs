@@ -85,9 +85,10 @@ export async function mountPlanning(bridge, workflow) {
       'quality',
       '\u8d28\u91cf\u8981\u6c42',
       [
-        ['very-high', '\u5f88\u9ad8'],
+        ['very-high', '\u66f4\u9ad8'],
         ['high', '\u8f83\u9ad8'],
-        ['normal', '\u666e\u901a'],
+        ['normal', '\u6807\u51c6'],
+        ['low', '\u8f83\u4f4e'],
       ],
     ],
     [

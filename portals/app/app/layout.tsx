@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { BRAND } from "@bidproposal/shared/brand";
 import { AppTheme } from "./ds";
+import "@vxture/design-system/styles/fonts.css";
 import "./globals.css";
 
 export const metadata = {

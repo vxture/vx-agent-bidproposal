@@ -4,7 +4,7 @@
   align-items: center;
   min-width: 0;
   gap: 8px;
-  font-family: var(--bidproposal-entry-text, var(--font-sans, sans-serif));
+  font-family: var(--font-sans);
   font-size: 18px;
   font-weight: 600;
   line-height: 28px;

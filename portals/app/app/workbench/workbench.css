@@ -4,11 +4,10 @@
   overflow: hidden;
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--bidproposal-entry-text), var(--font-sans), sans-serif;
+  font-family: var(--font-sans);
 }
 .jadera-home-hero h1 {
-  font-family:
-    var(--bidproposal-entry-display), var(--bidproposal-entry-text), sans-serif;
+  font-family: var(--font-brand);
 }
 .bid-workbench-frame {
   display: block;
@@ -287,3 +286,5 @@
 .bid-workbench [data-slot="shell-sidebar-frame"]:has(.jadera-workflow-navigation:not([data-collapsed="true"])) { width:256px; }
 .bid-workbench [data-slot="shell-sidebar-frame"]:has(.jadera-workflow-navigation[data-collapsed="true"]) { width:64px; }
 .jadera-management-page { width:100%;  margin-inline:auto; box-sizing:border-box; }
+
+.jadera-management-page > .jadera-type-settings { padding:0; border:0; background:transparent; border-radius:0; }

@@ -15,7 +15,7 @@ export function ResourceVersionCard({entry,onOpen,onDownload}:{
     <p className="jadera-resource-version-file">{format}{" \u00b7 "}{(entry.bytes/1024).toFixed(1)} KB</p>
     <div className="jadera-resource-version-person"><ResourcePersonLabel person={entry.uploadedBy} via={entry.source}/></div>
     <div className="jadera-resource-version-footer"><time dateTime={entry.addedAt} title={date?.toLocaleString("zh-CN")}>{date?.toLocaleString("zh-CN")||"\u672a\u8bb0\u5f55"}</time><div>
-      <Button className="jadera-resource-open" size="md" onClick={onOpen} aria-label={"\u6253\u5f00 v"+entry.version+"\uff1a"+entry.name}>{"\u6253\u5f00"}</Button>
+      <Button className="jadera-resource-open jadera-card-open-action" variant="outline" size="md" onClick={onOpen} aria-label={"\u6253\u5f00 v"+entry.version+"\uff1a"+entry.name}>{"\u6253\u5f00"}</Button>
       {onDownload&&<ResourceActionsMenu title={"v"+entry.version+" "+entry.name} onDownload={onDownload} downloadLabel={"\u4e0b\u8f7d\u6b64\u7248\u672c"}/>}
     </div></div>
   </Card>;

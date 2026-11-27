@@ -468,3 +468,134 @@ historical read-only opening. Collection category labels pass for cases,
 qualifications, products, solutions and people; template tenant is unchanged.
 Both HTML examples pass single/three-version checks. All package type checks,
 HTML inventory/five kit tests and diff whitespace checks pass.
+
+## Configuration review batch (2026-11-28, local only)
+
+Owner requests local edits and design-kit updates only; no commit, PR, merge,
+release tag or deployment until an explicit Publish instruction.
+
+Use Yucer's DS management navigation and overview composition in a smaller
+Jadera configuration area: resource types, template types, members and account.
+Type keys remain stable workspace/product metadata; support add/rename/delete,
+revision conflicts and refuse deletion while a resource uses the type. Render
+category labels from the registry everywhere. Certificate covers require an
+explicit certificate type/style; legacy qualification material uses plain paper.
+
+Use one DS Dialog/FileTrigger import panel for knowledge, templates and new
+versions, with validation, retained selection/errors and actual pending status.
+Never append intake to the collection page. Missing creators can be backfilled
+once using a selected known workspace person; existing creator ids are immutable
+and updater always comes from authenticated principal. Log this attribution
+change and preserve timestamps/original bytes/history. The platform currently
+has no product-callable full member roster; use only verified product identity
+snapshots within the exact workspace and label this limited directory, never
+claim complete/live platform membership. Do not modify platform sources.
+
+### Compilation review additions (2026-11-28, local only)
+
+- Version actions: minimum 32px height, 12px separation; row-aligned dialog fields, 32px controls, 32px/14px footer actions and a creation review step.
+- Four quality levels: low, normal, high and very-high in UI and validators.
+- Independent branches select a source version and starting workflow stage. Freeze preceding documents and originals before initialization, retain provenance and source revisions through branch offsets, exclude tasks and downstream results.
+- Existing version selection returns to compilation configuration.
+- No release, remote write or production data modification in this batch.
+
+### Local implementation and verification checkpoint
+
+- Implemented shared DS import dialog, configurable workspace resource/template
+  types, explicit certificate covers and write-once missing-creator selection.
+- Implemented simplified configuration overview/navigation and type CRUD.
+- Implemented row-aligned compilation creation, four quality levels, source and
+  stage selection, creation review and configuration-first version navigation.
+- Branches freeze upstream documents, completed evidence records, originals and
+  exact pinned reading identities. Source revision bindings survive independent
+  edits via persisted offsets. No tasks, session grants, downstream results or
+  output files are copied. Failed/cancelled request pointers cannot restart.
+- Encrypted reopen, interruption recovery after source edits, source isolation,
+  idempotency, stale writes, in-use type deletion, creator lock, forged updater
+  and cross-workspace directory checks pass. App suite: 336 tests; business
+  workflow suite: 114 tests; all package type checks pass. Last branch follow-up
+  also passes after completed-evidence/pointer filtering.
+- Local preview DOM interaction checks pass for import/configuration, creation
+  review, four quality levels, stage inheritance and coworker creator selection.
+  This is not visual/browser acceptance. The version preview route uses explicit
+  interaction-only sample data; real branching is tested against the server.
+- HTML kit updated in the existing Vxtpl v2.0.0 directory: 45 offline examples,
+  128 checksummed files and five kit tests pass. Added configuration and
+  compilation-version examples; offline changes remain page-memory only.
+- No commits, remote writes, PR, merge, tags or deployment performed. Full
+  platform member roster remains unavailable; known-product-member selection
+  is explicitly labeled. Office session integration remains separately gated.
+
+### Card action consistency follow-up (2026-11-28, local only)
+
+Unify resource Open and project Enter/Open actions: outlined neutral default,
+primary fill when their card is hovered, the same 32px geometry and keyboard
+focus treatment. Apply through shared presentation to home, collections, detail
+and historical cards; mirror the HTML kit. Keep action destinations unchanged.
+No publication authorized.
+
+### Resource cover crop follow-up (2026-11-28, local only)
+
+Owner clarifies that paper artwork continues behind the opaque card footer,
+with its bottom intentionally hidden rather than scaled to fit the preview.
+Retain the shared 276px card and 184px artwork viewport; extend paper layers
+90px below that viewport and stack the unchanged footer above them. Apply to
+home, knowledge, template and detail cover cards and mirror the HTML kit.
+
+### Header typography, search and refresh follow-up (2026-11-28, local only)
+
+- Launcher Home uses the same DS panel-row icon/text grid as its entries.
+  Three groups use dashed dividers matching the top separator; narrow layouts
+  stack the groups and convert dividers to horizontal rules.
+- Load the published DS font stylesheet globally, with direct fontsource deps;
+  use DS font families for body, headings and body-portaled popovers. Remove the
+  workbench-only font-loader override. Preview must serve the same font bytes.
+- Expanded search removes the search trigger and its reserved slot; insufficient
+  header width collapses navigation into the existing gradient launcher. No
+  overlap and no extra header row; preserve keyboard close/focus restoration.
+- Owner scope clarified: unify Jadera pages first, no website/platform changes.
+  Application refresh keeps chrome/data while revalidating current reads; a
+  browser document reload shows a neutral structured loading surface. Local
+  preview style changes must replace CSS without document reload; new app bundles
+  are offered explicitly so pending edits are never discarded automatically.
+
+### Header/refresh verification checkpoint
+
+Implemented aligned DS launcher rows, three dashed group separators and narrow
+stacking, measured navigation collapse, search trigger removal and focus return.
+The document imports the public DS fonts stylesheet with direct locked fontsource
+dependencies; body-portal panels and same-origin workflow frames share the DS
+font families and actual semibold faces. No platform/website files were changed.
+
+Added one shared current-page refresh dispatch with duplicate-request suppression
+and draft guards, wired to project/library/version/configuration pages and an
+explicit header action/F5. Reads retain the current shell and last loaded data.
+Current workflow iframe refresh stays inside the content area and respects all
+existing before-unload draft guards. Immutable open originals are not reloaded
+unless their viewer failed. Native browser document reload uses a structured
+neutral loading frame, without caching identity or business data.
+
+Local preview now serves all 28 referenced DS font files. CSS revision changes
+replace only the stylesheet and preserve the mounted header/input; script changes
+show an explicit Load update action and respect draft guards. DOM interaction
+checks pass for header alignment, search collapse/focus, refresh retention and
+blocked dirty forms. This does not claim visual browser acceptance.
+
+338 app tests and all package type checks pass. Font loading and asynchronous
+refresh/deduplication/guards have regression coverage. Prior card action/cropped
+cover checks still pass. HTML kit inventory/five tests and interactive header
+pattern checks pass. No commit, push, PR, tag or publication performed.
+
+## Release authorization (2026-11-28)
+
+Owner explicitly authorizes publishing the accumulated configuration, compilation,
+card, typography, search and refresh batch. This supersedes the local-only release
+restriction above for this batch. Use a protected PR and squash merge, verify the
+five required checks on the exact main commit, then tag and pass the production
+environment gate. Preserve existing product configuration, project data, original
+files and version history. Local preview tools/data and the offline HTML kit are
+outside the product release. No platform, worker01 or RUYIN checkout changes.
+
+The full platform member roster and Office session adapter remain unavailable;
+the product keeps the explicit known-member scope and fail-closed Office behavior.
+Local tests and DOM checks do not establish visual browser acceptance.

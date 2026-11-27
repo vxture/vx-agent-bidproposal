@@ -5,6 +5,7 @@ export const RESOURCE_CATEGORIES = {
   product: "\u4f01\u4e1a\u4ea7\u54c1",
   solution: "\u65b9\u6848\u8d44\u6599",
   case: "\u9879\u76ee\u6848\u4f8b",
+  certificate: "\u8d44\u8d28\u8bc1\u4e66",
   template_business: "\u901a\u7528\u5546\u52a1\u6807\u4e66",
   template_technical: "\u901a\u7528\u6280\u672f\u6807\u4e66",
   template_software: "\u8f6f\u4ef6\u6280\u672f\u6807\u4e66",
@@ -38,13 +39,19 @@ export interface ResourceMetadataInput {
   usageNotes?: string;
   tags?: string[];
   revision?: number;
+  createdById?: string;
 }
+export interface ResourceType { id: string; label: string; collection: "knowledge" | "templates"; coverStyle: "document" | "certificate"; usage?: number }
+export const DEFAULT_RESOURCE_TYPES: ResourceType[] = Object.entries(RESOURCE_CATEGORIES).map(([id,label]) => ({id,label,collection:isTemplate(id)?"templates":"knowledge",coverStyle:id==="certificate"?"certificate":"document"}));
+export function resourceCategoryLabel(item: Pick<ResourceData,"category"|"categoryLabel">) { return item.categoryLabel || RESOURCE_CATEGORIES[item.category as keyof typeof RESOURCE_CATEGORIES] || item.category; }
 export interface ResourceData {
   id: string;
   name: string;
   resourceNumber?: string;
   shortName?: string;
   category: string;
+  categoryLabel?: string;
+  coverStyle?: "document" | "certificate";
   updatedAt: string;
   revision?: number;
   description?: string;

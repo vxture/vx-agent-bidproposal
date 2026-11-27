@@ -1,8 +1,9 @@
 import type { BidRuntime } from "./service";
 import { WorkbenchError } from "./identity";
-import { RESOURCE_CATEGORIES, isTemplate, type ResourceData, type ResourceChangeSource, type ResourceReference } from "@bidproposal/shared/resources";
+import { isTemplate, type ResourceData, type ResourceChangeSource, type ResourceReference } from "@bidproposal/shared/resources";
 import { randomUUID } from "node:crypto";
 import { fileFormat } from "@bidproposal/shared/file-formats";
+import { assertResourceType, resourceTypes, resourceMembers } from "./resource-configuration";
 
 const UUID = /^(?:[a-f0-9]{32}|[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})$/i;
 /** Reverse the existing immutable pins; never infer use from names or text. */
@@ -43,8 +44,9 @@ export async function importResource(service: BidRuntime, input: Record<string, 
   const scope = service.scope();
   const name = typeof input.name === "string" ? input.name.trim() : "";
   const format = fileFormat(name);
-  if (!format || !name || name.length > 200 || /[\x00-\x1f\\/]/.test(name) || !Object.hasOwn(RESOURCE_CATEGORIES, String(input.category)))
+  if (!format || !name || name.length > 200 || /[\x00-\x1f\\/]/.test(name))
     throw new WorkbenchError(400, "INVALID_FILE", "Unsupported file or resource type");
+  assertResourceType(service,input.category);
   const old = typeof input.id === "string" ? managedResource(service, input.id) : undefined;
   if (old && (input.expectedVersion !== old.versions.length || input.revision !== old.revision || input.category !== old.category))
     throw new WorkbenchError(409, "RESOURCE_CONFLICT", "Resource changed; reload before uploading");
@@ -113,9 +115,11 @@ export function managedResource(service: BidRuntime, id: string) {
     }
   }
   const metadata = JSON.parse(saved?.markdown || "{}") as ResourceData;
+  const type=resourceTypes(service).items.find(type=>type.id===item.category);
   return { ...item, versions: item.versions.map(entry => ({ ...entry,
       uploadedBy: metadata.versions?.find(version => version.version === entry.version)?.uploadedBy,
       source: metadata.versions?.find(version => version.version === entry.version)?.source })),
+    categoryLabel:type?.label,coverStyle:type?.coverStyle||"document",
     resourceNumber: metadata.resourceNumber, shortName: metadata.shortName || "", description: metadata.description || "", usageNotes: metadata.usageNotes || "", tags: metadata.tags || [],
     createdAt: metadata.createdAt, createdBy: metadata.createdBy, updatedBy: metadata.updatedBy,
     createdVia: metadata.createdVia, updatedVia: metadata.updatedVia, revision: saved?.revision || 0 };
@@ -129,9 +133,17 @@ export function updateResource(service: BidRuntime, id: string, input: Record<st
   if (!Number.isSafeInteger(input.revision) || input.revision !== saved.revision)
     throw new WorkbenchError(409, "RESOURCE_CONFLICT", "Resource changed; reload before saving");
   const name = typeof input.name === "string" ? input.name.trim() : "";
-  if (!name || name.length > 200 || /[\x00-\x1f\\/]/.test(name) || !Object.hasOwn(RESOURCE_CATEGORIES, String(input.category)))
+  if (!name || name.length > 200 || /[\x00-\x1f\\/]/.test(name))
     throw new WorkbenchError(400, "INVALID_INPUT", "Enter a name and valid resource type");
+  assertResourceType(service,input.category);
   const item = JSON.parse(saved.markdown);
+  if(Object.hasOwn(input,"updatedBy")||Object.hasOwn(input,"updatedAt")||Object.hasOwn(input,"createdBy")||Object.hasOwn(input,"createdAt"))throw new WorkbenchError(400,"ACTOR_READ_ONLY","Actor records are server-managed");
+  let creator=item.createdBy;
+  if(Object.hasOwn(input,"createdById")){
+    if(item.createdBy?.id)throw new WorkbenchError(409,"CREATOR_LOCKED","Creator is already recorded");
+    creator=resourceMembers(service).items.find(member=>member.id===input.createdById);
+    if(!creator)throw new WorkbenchError(400,"INVALID_CREATOR","Select a known member of this workspace");
+  }
   if (isTemplate(item.category) !== isTemplate(String(input.category)))
     throw new WorkbenchError(400, "COLLECTION_MISMATCH", "Choose a type in the same collection");
   const fields = { resourceNumber: item.resourceNumber || allocateResourceNumber(service, item.category), shortName: item.shortName || "", description: item.description || "", usageNotes: item.usageNotes || "", tags: item.tags || [] };
@@ -161,9 +173,9 @@ export function updateResource(service: BidRuntime, id: string, input: Record<st
   }
   const previous = { name: item.name, category: item.category, resourceNumber: item.resourceNumber || "", shortName: item.shortName || "", description: item.description || "", usageNotes: item.usageNotes || "", tags: item.tags || [] };
   const changed = { name, category: input.category, ...fields };
-  if (JSON.stringify(previous) === JSON.stringify(changed)) return managedResource(service, id);
-  const next = { ...item, ...changed, updatedAt: new Date().toISOString(), updatedBy: { id: actorId, ...(actorName ? { name: actorName } : {}), ...(actorAvatarSrc ? { avatarSrc: actorAvatarSrc } : {}) }, updatedVia: "metadata",
-    metadataHistory: [...(item.metadataHistory || []), { actorId, at: new Date().toISOString(), before: previous, after: changed }] };
+  if (JSON.stringify(previous) === JSON.stringify(changed)&&JSON.stringify(creator)===JSON.stringify(item.createdBy)) return managedResource(service, id);
+  const next = { ...item, ...changed,...(creator?{createdBy:creator}:{}), updatedAt: new Date().toISOString(), updatedBy: { id: actorId, ...(actorName ? { name: actorName } : {}), ...(actorAvatarSrc ? { avatarSrc: actorAvatarSrc } : {}) }, updatedVia: "metadata",
+    metadataHistory: [...(item.metadataHistory || []), { actorId, at: new Date().toISOString(), before: {...previous,createdBy:item.createdBy}, after: {...changed,createdBy:creator} }] };
   if (!store.putProductDocument(scope.productId, "library_item_" + id, JSON.stringify(next), saved.revision))
     throw new WorkbenchError(409, "RESOURCE_CONFLICT", "Resource changed; reload before saving");
   return managedResource(service, id);

@@ -19,11 +19,14 @@ import {
 } from "@vxture/design-system";
 import {
   DEFAULT_REQUIREMENTS,
+  COMPILATION_STAGES,
+  type CompilationStage,
   requirementsComplete,
   type CompilationList,
   type CompilationBrief,
   type WritingRequirements,
 } from "../compilations";
+import {useRefreshGuard} from "./page-refresh";
 import { NameDialog } from "./name-dialog";
 
 export function RequirementsFields({
@@ -81,8 +84,9 @@ export function RequirementsFields({
           value={value.quality}
           onChange={(e) => set("quality", e.target.value)}
         >
+          <option value="low">{"\u8f83\u4f4e"}</option>
           <option value="normal">{"\u6807\u51c6"}</option>
-          <option value="high">{"\u9ad8"}</option>
+          <option value="high">{"\u8f83\u9ad8"}</option>
           <option value="very-high">{"\u66f4\u9ad8"}</option>
         </NativeSelect>
       </Label>
@@ -156,6 +160,8 @@ export function CompilationSelector({
     reuseLibrary: boolean;
     requestId: string;
     revision: number;
+    sourceId: string;
+    startStage: CompilationStage;
   }) => Promise<void>;
   onRetry?: (id: string) => Promise<void>;
   readOnly?: boolean;
@@ -169,7 +175,12 @@ export function CompilationSelector({
     [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
     [requestId, setRequestId] = useState("");
+  const [sourceId, setSourceId] = useState(selectedId),
+    [startStage, setStartStage] = useState<CompilationStage>("overview"),
+    [confirming, setConfirming] = useState(false);
+  const source = data?.items.find((item) => item.id === sourceId);
   const [renaming, setRenaming] = useState(false);
+  useRefreshGuard(create||renaming||busy,()=>setError("\u8bf7\u5148\u5b8c\u6210\u6216\u5173\u95ed\u7248\u672c\u64cd\u4f5c\uff0c\u518d\u5237\u65b0\u3002"));
   const current = data?.items.find((item) => item.id === selectedId);
   return (
     <>
@@ -207,6 +218,9 @@ export function CompilationSelector({
                 "V" + String((data?.items.length ?? 0) + 1).padStart(2, "0"),
               );
               setError("");
+              setSourceId(selectedId);
+              setStartStage("overview");
+              setConfirming(false);
               setRequestId(crypto.randomUUID());
               setValue({ ...DEFAULT_REQUIREMENTS });
               setOpen(false);
@@ -312,7 +326,7 @@ export function CompilationSelector({
             <DialogTitle>{"\u65b0\u5efa\u7f16\u5236\u7248\u672c"}</DialogTitle>
             <DialogDescription>
               {
-                "\u6bcf\u4e2a\u7248\u672c\u72ec\u7acb\u7f16\u5236\u3002\u5df2\u9009\u77e5\u8bc6\u8d44\u6599\u53ef\u590d\u7528\uff0c\u62db\u6807\u539f\u4ef6\u8bf7\u5728\u65b0\u7248\u672c\u9009\u7528\u6216\u4e0a\u4f20\u3002"
+                "\u9009\u62e9\u6765\u6e90\u4e0e\u8d77\u70b9\uff0c\u524d\u5e8f\u6210\u679c\u5c06\u4fdd\u5b58\u4e3a\u72ec\u7acb\u526f\u672c\u3002\u540e\u7eed\u4fee\u6539\u4e92\u4e0d\u5f71\u54cd\u3002"
               }
             </DialogDescription>
           </DialogHeader>
@@ -320,6 +334,10 @@ export function CompilationSelector({
             onSubmit={async (e) => {
               e.preventDefault();
               if (!data || busy) return;
+              if (!confirming) {
+                setConfirming(true);
+                return;
+              }
               setBusy(true);
               setError("");
               try {
@@ -329,6 +347,8 @@ export function CompilationSelector({
                   reuseLibrary: reuse,
                   requestId,
                   revision: data.revision,
+                  sourceId,
+                  startStage,
                 });
                 setCreate(false);
               } catch (err) {
@@ -342,35 +362,142 @@ export function CompilationSelector({
               }
             }}
           >
-            <Label>
-              {"\u7248\u672c\u540d\u79f0"}
-              <Input
-                required
-                maxLength={60}
-                value={label}
-                disabled={busy}
-                onChange={(e) => setLabel(e.target.value)}
-              />
-            </Label>
-            <RequirementsFields
-              value={value}
-              onChange={setValue}
-              disabled={busy}
-            />
-            <Label className="jadera-version-reuse">
-              <Checkbox
-                checked={reuse}
-                disabled={busy}
-                onCheckedChange={(next) => setReuse(next === true)}
-              />
-              {
-                "\u590d\u7528\u5f53\u524d\u7248\u672c\u5df2\u9009\u77e5\u8bc6\u8d44\u6599\u53ca\u6a21\u677f\u7684\u56fa\u5b9a\u7248\u672c"
-              }
-            </Label>
+            {confirming ? (
+              <section
+                className="jadera-compilation-confirm"
+                aria-label={"\u521b\u5efa\u786e\u8ba4"}
+              >
+                <h3>{"\u786e\u8ba4\u521b\u5efa\u7248\u672c"}</h3>
+                <dl>
+                  <dt>{"\u7248\u672c\u540d\u79f0"}</dt>
+                  <dd>{label}</dd>
+                  <dt>{"\u6765\u6e90\u7248\u672c"}</dt>
+                  <dd>{source?.label}</dd>
+                  <dt>{"\u7248\u672c\u8d77\u70b9"}</dt>
+                  <dd>
+                    {
+                      COMPILATION_STAGES.find((item) => item.id === startStage)
+                        ?.label
+                    }
+                  </dd>
+                  <dt>{"\u7ee7\u627f\u8303\u56f4"}</dt>
+                  <dd>
+                    {startStage === "overview"
+                      ? reuse
+                        ? "\u5df2\u9009\u77e5\u8bc6\u8d44\u6599\u548c\u6a21\u677f\uff0c\u91cd\u65b0\u7f16\u5236"
+                        : "\u7a7a\u767d\u914d\u7f6e\uff0c\u91cd\u65b0\u7f16\u5236"
+                      : "\u8d77\u70b9\u4e4b\u524d\u5df2\u4fdd\u5b58\u7684\u6210\u679c\u3001\u62db\u6807\u539f\u4ef6\u53ca\u5df2\u9009\u8d44\u6599\uff1b\u4e0d\u7ee7\u627f\u6267\u884c\u4e2d\u7684\u4efb\u52a1\u6216\u5bfc\u51fa\u6587\u4ef6"}
+                  </dd>
+                </dl>
+                <p>
+                  {
+                    "\u539f\u7248\u672c\u4fdd\u6301\u4e0d\u53d8\u3002\u521b\u5efa\u540e\u8fdb\u5165\u6240\u9009\u8d77\u70b9\u3002"
+                  }
+                </p>
+              </section>
+            ) : (
+              <>
+                <Label className="jadera-compilation-row">
+                  {"\u7248\u672c\u540d\u79f0"}
+                  <Input
+                    required
+                    maxLength={60}
+                    value={label}
+                    disabled={busy}
+                    onChange={(e) => setLabel(e.target.value)}
+                  />
+                </Label>
+                <Label className="jadera-compilation-row">
+                  {"\u6765\u6e90\u7248\u672c"}
+                  <NativeSelect
+                    value={sourceId}
+                    onChange={(e) => {
+                      setSourceId(e.target.value);
+                      setStartStage("overview");
+                    }}
+                  >
+                    {data?.items
+                      .filter((item) => item.state === "ready")
+                      .map((item) => (
+                        <option key={item.id} value={item.id}>
+                          {item.label}
+                        </option>
+                      ))}
+                  </NativeSelect>
+                </Label>
+                <Label className="jadera-compilation-row">
+                  {"\u7248\u672c\u8d77\u70b9"}
+                  <NativeSelect
+                    value={startStage}
+                    onChange={(e) =>
+                      setStartStage(e.target.value as CompilationStage)
+                    }
+                  >
+                    {COMPILATION_STAGES.map((stage) => (
+                      <option
+                        key={stage.id}
+                        value={stage.id}
+                        disabled={
+                          !(source?.startStages || ["overview"]).includes(
+                            stage.id,
+                          )
+                        }
+                      >
+                        {stage.label}
+                        {!(source?.startStages || ["overview"]).includes(
+                          stage.id,
+                        )
+                          ? " \u00b7 \u524d\u5e8f\u6210\u679c\u672a\u5c31\u7eea"
+                          : ""}
+                      </option>
+                    ))}
+                  </NativeSelect>
+                </Label>
+                {startStage !== "overview" ? (
+                  <p className="jadera-requirements-note">
+                    {
+                      "\u7ee7\u627f\u6765\u6e90\u7248\u672c\u7684\u7f16\u5199\u914d\u7f6e\u53ca\u8d77\u70b9\u4e4b\u524d\u7684\u6210\u679c\u3002\u8fdb\u5165\u65b0\u7248\u672c\u540e\u53ef\u5355\u72ec\u8c03\u6574\uff1b\u53d8\u66f4\u914d\u7f6e\u9700\u91cd\u65b0\u786e\u8ba4\u89c4\u5212\u3002"
+                    }
+                  </p>
+                ) : (
+                  <RequirementsFields
+                    value={value}
+                    onChange={setValue}
+                    disabled={busy}
+                  />
+                )}
+                {startStage === "overview" && (
+                  <Label className="jadera-version-reuse">
+                    <Checkbox
+                      checked={reuse}
+                      disabled={busy}
+                      onCheckedChange={(next) => setReuse(next === true)}
+                    />
+                    {
+                      "\u590d\u7528\u5f53\u524d\u7248\u672c\u5df2\u9009\u77e5\u8bc6\u8d44\u6599\u53ca\u6a21\u677f\u7684\u56fa\u5b9a\u7248\u672c"
+                    }
+                  </Label>
+                )}
+              </>
+            )}
             {error && <p role="alert">{error}</p>}
             <div className="jadera-requirements-actions">
-              <Button type="submit" disabled={busy}>
-                {busy ? "\u521b\u5efa\u4e2d\u2026" : "\u521b\u5efa\u7248\u672c"}
+              <Button
+                type="button"
+                variant="ghost"
+                disabled={busy}
+                onClick={() =>
+                  confirming ? setConfirming(false) : setCreate(false)
+                }
+              >
+                {confirming ? "\u8fd4\u56de\u4fee\u6539" : "\u53d6\u6d88"}
+              </Button>
+              <Button type="submit" disabled={busy || !label.trim()}>
+                {busy
+                  ? "\u521b\u5efa\u4e2d\u2026"
+                  : confirming
+                    ? "\u786e\u8ba4\u521b\u5efa"
+                    : "\u521b\u5efa\u7248\u672c"}
               </Button>
             </div>
           </form>
@@ -400,13 +527,14 @@ export function CompilationRequirements({
     [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
     [saved, setSaved] = useState(false);
+  useRefreshGuard(!!value||busy,()=>setError("\u5f53\u524d\u914d\u7f6e\u5c1a\u672a\u4fdd\u5b58\uff0c\u8bf7\u5148\u4fdd\u5b58\u540e\u518d\u5237\u65b0\u3002"));
   const draft = value ?? snapshot?.value;
   return (
     <section className="jadera-compilation-requirements">
       <div className="jadera-requirements-heading">
         <Icon name="settings" size="lg" />
         <div>
-          <h1>{"\u7f16\u5236\u8981\u6c42"}</h1>
+          <h1>{"\u7f16\u5199\u914d\u7f6e"}</h1>
           <p>
             {versionLabel}
             {
