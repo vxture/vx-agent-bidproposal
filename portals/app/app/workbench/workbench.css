@@ -187,25 +187,6 @@
   min-height: 0;
   height: 100%;
 }
-.jadera-content-scroll-cue {
-  min-height: var(--spacing-icon-xl);
-  height: var(--spacing-icon-xl);
-  flex: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--muted-foreground);
-  font-size: var(--label-small-font-size);
-}
-.jadera-content-scroll-cue > span {
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
-}
-.jadera-content-scroll-cue i {
-  width: var(--space-xl);
-  border-top: var(--border-width-thin) solid var(--border);
-}
 .jadera-context-slot {
   display: flex;
   flex: none;

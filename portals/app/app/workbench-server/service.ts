@@ -570,7 +570,7 @@ export class BidRuntime {
         name: this.compilations.group(project.id)?.projectName ?? project.name,
       }));
   }
-  private projectResponsibility(id: string): { creator?: { id: string; name: string }; owner?: { id: string; name: string } } {
+  private projectResponsibility(id: string): { creator?: { id: string; name: string; avatarSrc?: string }; owner?: { id: string; name: string; avatarSrc?: string } } {
     const saved = this.documents.get(id, "bidproposal", "runtime_project_responsibility");
     return saved ? JSON.parse(saved.markdown) : {};
   }
@@ -587,7 +587,7 @@ export class BidRuntime {
       for (const id of ids) {
         const saved = this.projectResponsibility(id);
         if (saved.owner || saved.creator) continue;
-        const value = { owner: { id: principal.sub, name: name.trim() || "\u9879\u76ee\u8d1f\u8d23\u4eba" } };
+        const value = { owner: { id: principal.sub, ...(principal.avatarSrc ? { avatarSrc: principal.avatarSrc } : {}), name: name.trim() || "\u9879\u76ee\u8d1f\u8d23\u4eba" } };
         this.documents.put(id, "bidproposal", "runtime_project_responsibility", JSON.stringify(value), 0);
       }
       return this.listProjects();
@@ -756,7 +756,7 @@ export class BidRuntime {
         name.trim(),
         this.workspaceId,
       );
-      const creator = { id: principal.sub, name: creatorName.trim() || "\u9879\u76ee\u521b\u5efa\u4eba" };
+      const creator = { id: principal.sub, ...(principal.avatarSrc ? { avatarSrc: principal.avatarSrc } : {}), name: creatorName.trim() || "\u9879\u76ee\u521b\u5efa\u4eba" };
       if (!this.documents.put(project.id, "bidproposal", "runtime_project_responsibility", JSON.stringify({ creator, owner: creator }), 0))
         throw new WorkbenchError(409, "OWNER_CONFLICT", "Project responsibility could not be saved");
       return { ...project, creator, owner: creator };

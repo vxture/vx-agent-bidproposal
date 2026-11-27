@@ -316,15 +316,10 @@
   transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
 }
 .jadera-project-card:before { transition: width 180ms ease; }
-.jadera-project-card:focus-within {
-  transform: translateY(-4px);
-  box-shadow: var(--shadow-lg);
-}
 @media (hover:hover) and (pointer:fine) {
   .jadera-project-card:hover { transform:translateY(-4px); box-shadow:var(--shadow-lg); }
   .jadera-project-card:hover:before { width:64px; }
 }
-.jadera-project-card:focus-within:before { width:64px; }
 .jadera-project-open-action {
   min-height: 28px;
   padding: 3px 7px;
@@ -338,18 +333,12 @@
   .jadera-project-card,
   .jadera-project-card:before,
   .jadera-project-open-action { transition:none; }
-  .jadera-project-card:hover,
-  .jadera-project-card:focus-within { transform:none; }
+  .jadera-project-card:hover { transform:none; }
 }
-.jadera-project-card:hover .jadera-project-open-action,
-.jadera-project-card:focus-within .jadera-project-open-action {
+.jadera-project-card:hover .jadera-project-open-action {
   color: var(--primary-foreground);
   border-color: var(--primary);
   background: var(--primary);
-}
-.jadera-project-card:focus-within {
-  outline: 2px solid var(--primary);
-  outline-offset: 2px;
 }
 .jadera-project-card-top {
   display: flex;
@@ -716,6 +705,8 @@
   overflow: hidden;
   min-width: 0;
   height: 276px;
+  min-height:276px;
+  flex-shrink:0;
   box-sizing: border-box;
 }
 .jadera-resource-preview {
@@ -729,8 +720,10 @@
 .jadera-resource-preview > i,
 .jadera-resource-preview > div {
   position: absolute;
-  height: 320px;
-  top: 24px;
+  height:auto;
+  bottom:12px;
+  box-sizing:border-box;
+  top:24px;
   left: 24px;
   right: 24px;
   border: 1px solid color-mix(in srgb, var(--primary) 14%, var(--border));
@@ -738,21 +731,23 @@
   background: var(--card);
 }
 .jadera-resource-preview > i:first-child {
-  top: 8px;
-  left: 30px;
+  top:8px;
+  bottom:20px;
+  left:30px;
   right: 18px;
-  transform: rotate(3deg);
+  transform:rotate(1deg);
   background: color-mix(in srgb, var(--primary) 6%, var(--card));
 }
 .jadera-resource-preview > i:nth-child(2) {
-  top: 16px;
-  left: 18px;
+  top:16px;
+  bottom:16px;
+  left:18px;
   right: 26px;
-  transform: rotate(-2deg);
+  transform:rotate(-1deg);
 }
 .jadera-resource-preview > div {
-  padding: var(--space-lg) calc(var(--space-xs) + var(--space-2xs));
-  text-align: center;
+  padding:12px 16px;
+  text-align:center;
 }
 .jadera-resource-preview strong {
   display: block;
@@ -790,8 +785,7 @@
   height: 90px;
   flex: 0 0 90px;
   box-sizing: border-box;
-  padding: calc(var(--space-xs) + var(--space-2xs))
-    calc(var(--space-md) - var(--space-2xs) / 2) var(--space-sm);
+  padding: 12px 16px 16px;
 }
 .jadera-resource-copy h3 {
   font-size: var(--body-font-size);
@@ -948,28 +942,6 @@
 }
 @keyframes jadera-progress-sweep { to { background-position:-150% 0; } }
 
-/* Persistent execution signal, driven only by explicit host task state. */
-@property --bidproposal-execution-angle {
-  syntax: "<angle>";
-  initial-value: 0deg;
-  inherits: false;
-}
-.jadera-project-card[data-executing="true"] {
-  border-color: color-mix(in srgb, var(--primary) 45%, var(--border));
-  box-shadow: 0 0 18px color-mix(in srgb, var(--primary) 10%, transparent);
-}
-.jadera-project-card[data-executing="true"]:after {
-  content:"";
-  position:absolute;
-  inset:-1px;
-  border-radius:inherit;
-  padding:2px;
-  background:conic-gradient(from var(--bidproposal-execution-angle), transparent 0deg 230deg, color-mix(in srgb,var(--primary) 18%,transparent) 270deg, var(--primary) 310deg, transparent 360deg);
-  mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);
-  mask-composite:exclude;
-  pointer-events:none;
-  animation:jadera-execution-orbit 4s linear infinite;
-}
 .jadera-background-task {
   display:inline-flex;
   align-items:center;
@@ -978,10 +950,8 @@
   font-weight:500;
 }
 .jadera-background-task svg { flex:none; animation:jadera-execution-spin 2s linear infinite; }
-@keyframes jadera-execution-orbit { to { --bidproposal-execution-angle:360deg; } }
 @keyframes jadera-execution-spin { to { transform:rotate(360deg); } }
 @media (prefers-reduced-motion:reduce) {
-  .jadera-project-card[data-executing="true"]:after,
   .jadera-background-task svg { animation:none; }
   .jadera-project-card[data-executing="true"] .jadera-project-track:after { display:none; }
 }
@@ -999,10 +969,11 @@
 }
 
 /* Shared card slots must not inherit page-specific DS footer spacing. */
-.jadera-resource-card .jadera-resource-copy { margin:0; width:100%; min-width:0; height:90px; flex:0 0 90px; box-sizing:border-box; }
-.jadera-resource-card .jadera-resource-title { min-height:32px; }
+.jadera-resource-card .jadera-resource-copy { display:flex; flex-direction:column; align-items:stretch; gap:8px; margin:0; padding:12px 16px 16px; width:100%; min-width:0; height:90px; flex:0 0 90px; box-sizing:border-box; }
+.jadera-resource-card .jadera-resource-title { height:20px; min-height:20px; flex:0 0 20px; }
+.jadera-resource-card .jadera-resource-title h3 { line-height:20px; }
 .jadera-resource-card .jadera-resource-title > [data-slot] { flex:none; }
-.jadera-resource-card .jadera-resource-meta { height:32px; }
+.jadera-resource-card .jadera-resource-meta { height:32px; min-height:32px; flex:0 0 32px; margin-top:auto; }
 .jadera-resource-card .jadera-resource-meta > div { flex:none; }
 .jadera-resource-card .jadera-resource-meta > span { overflow:hidden; white-space:nowrap; }
 
@@ -1044,3 +1015,422 @@
 
 .jadera-organization-identity > div { min-width:0; }
 .jadera-organization-identity p:first-child { white-space:normal; overflow-wrap:anywhere; }
+
+.jadera-office-editor,.jadera-office-surface { width:100%; height:100%; min-height:480px; }
+.jadera-file-tools { display:flex; align-items:center; flex-wrap:wrap; gap:var(--space-xs); padding:var(--space-sm); border-bottom:1px solid var(--border); }
+.jadera-image-viewer { display:flex; flex-direction:column; min-height:0; height:100%; }
+.jadera-image-stage { display:grid; place-items:center; flex:1; min-height:320px; overflow:auto; padding:var(--space-lg); }
+.jadera-image-stage img,.jadera-image-stage canvas { max-width:100%; max-height:65vh; object-fit:contain; }
+.jadera-resource-detail { width:calc(100vw - 48px); max-width:var(--container-7xl,1280px); max-height:92dvh; padding:var(--space-lg); gap:var(--space-md); }
+.jadera-resource-detail-toolbar { flex-wrap:wrap; padding-bottom:var(--space-md); border-bottom:1px solid var(--border); }
+.jadera-resource-source:has(.jadera-markdown-viewer) { padding:0; white-space:normal; max-height:60dvh; background:var(--background); border:1px solid var(--border); }
+.jadera-markdown-panes { display:grid; grid-template-columns:minmax(0,1fr); }
+.jadera-markdown-panes[data-split="true"] { grid-template-columns:repeat(2,minmax(0,1fr)); }
+.jadera-markdown-panes > * { margin:0; padding:var(--space-lg); min-width:0; overflow:auto; max-height:54dvh; }
+.jadera-markdown-panes>.jadera-markdown-source { white-space:pre-wrap; overflow-wrap:anywhere; background:var(--muted); font-family:var(--font-mono); font-size:var(--body-small-font-size); }
+.jadera-markdown-content { line-height:1.8; overflow-wrap:anywhere; }
+.jadera-markdown-content table { border-collapse:collapse; width:100%; }
+.jadera-markdown-content :is(th,td) { border:1px solid var(--border); padding:var(--space-xs); }
+.jadera-resource-edit-form { display:flex; flex-direction:column; gap:var(--space-sm); }
+.jadera-original-file { min-height:420px; border:1px solid var(--border); border-radius:var(--radius-md); overflow:hidden; background:var(--background); }
+.jadera-pdf-original { display:block; border:0; width:100%; height:65dvh; }
+.jadera-resource-page { height:100%; min-height:0; display:flex; flex-direction:column; overflow:hidden; padding:var(--space-lg); }
+.jadera-resource-page-heading { flex:none; padding-bottom:var(--space-md); }
+.jadera-resource-page-tabs { flex:1; min-height:0; display:flex; flex-direction:column; gap:var(--space-md); }
+.jadera-resource-page-body { flex:1; min-height:0; overflow:auto; margin:0; }
+.jadera-resource-page-body .jadera-original-file { height:100%; border:0; }
+.jadera-resource-page-body .jadera-pdf-original { height:calc(100% - 48px); min-height:480px; }
+.jadera-resource-maintenance { display:flex; flex-direction:column; align-items:flex-start; gap:var(--space-sm); max-width:720px; padding:var(--space-lg) 0; }
+.jadera-resource-maintenance :is(input,select) { width:100%; }
+.jadera-version-history { padding:0; list-style:none; }
+.jadera-version-history li { display:flex; align-items:center; flex-wrap:wrap; gap:var(--space-md); padding:var(--space-md) 0; border-bottom:1px solid var(--border); }
+@media(max-width:640px) { .jadera-resource-detail { width:calc(100vw - 16px); padding:var(--space-md); } .jadera-markdown-panes[data-split="true"] { grid-template-columns:minmax(0,1fr); } }
+/* Approved shared resource workspace. */
+.jadera-resource-page{box-sizing:border-box}
+.jadera-resource-info-layout{display:grid;grid-template-columns:minmax(0,1.65fr) minmax(260px,1fr);gap:48px;max-width:1440px;margin:0;padding:32px 0;font-size:12px}
+.jadera-resource-info-form{display:flex;flex-direction:column;gap:28px}
+.jadera-resource-info-layout h2,.jadera-resource-section-heading h2{font-size:14px;font-weight:600;margin:0 0 8px}
+.jadera-resource-info-layout header p,.jadera-resource-section-heading p,.jadera-resource-help{font-size:12px;color:var(--muted-foreground);line-height:1.7;margin:8px 0}
+.jadera-resource-info-fields{display:grid;grid-template-columns:96px minmax(0,1fr);gap:24px 16px;align-items:start}
+.jadera-resource-info-fields>label{padding-top:8px;font-size:12px}
+.jadera-resource-info-fields :is(input,select){height:32px;font-size:12px;width:100%}
+.jadera-resource-info-form footer{display:flex;gap:8px;border-top:1px solid var(--border);padding-top:20px}
+.jadera-resource-info-aside{border-left:1px solid var(--border);padding-left:32px;display:flex;flex-direction:column;gap:32px;overflow-wrap:anywhere}
+.jadera-resource-info-aside section+section{border-top:1px solid var(--border);padding-top:24px}
+.jadera-resource-info-aside dl{display:grid;grid-template-columns:80px minmax(0,1fr);gap:16px 12px;font-size:12px}
+.jadera-resource-info-aside dt{color:var(--muted-foreground)}
+.jadera-resource-info-aside dd{margin:0}
+.jadera-resource-versions{max-width:none;margin:0;padding:32px 0;font-size:12px}
+.jadera-resource-section-heading{display:flex;justify-content:space-between;align-items:start;gap:24px;margin-bottom:24px}
+.jadera-resource-section-heading small{font-size:12px;font-weight:400;color:var(--muted-foreground);margin-left:8px}
+.jadera-resource-versions :is(th,td){background:transparent;font-size:12px;padding:16px}
+.jadera-resource-versions th{color:var(--muted-foreground);font-weight:400}
+.jadera-version-action{text-align:right!important;width:80px}
+.jadera-resource-version-tag{margin-left:8px;color:var(--primary);font-size:11px}
+.jadera-resource-upload-state,.jadera-resource-feedback{padding:12px 16px;background:var(--accent);font-size:12px;display:flex;justify-content:space-between;gap:16px;margin:0 0 16px}
+.jadera-resource-upload-picker{display:flex;flex-direction:column;gap:16px;padding:24px;border:1px dashed var(--border);border-radius:8px;font-size:12px}
+.jadera-resource-upload-picker span{font-size:12px;color:var(--muted-foreground)}
+.jadera-reading-space-tools{display:flex;justify-content:flex-end;gap:4px;flex:none;padding:4px 0}
+.jadera-reading-space-tools button{height:32px;width:32px;padding:0}
+.jadera-resource-page-body:has(.jadera-reading-space-tools){display:flex;flex-direction:column}
+.jadera-resource-page-body .jadera-original-file{flex:1;min-height:0;height:auto}
+.jadera-resource-space-expanded>.jadera-resource-page-heading,.jadera-resource-space-focused>.jadera-resource-page-heading,.jadera-resource-space-expanded .jadera-resource-page-tabs>[role=tablist],.jadera-resource-space-focused .jadera-resource-page-tabs>[role=tablist]{display:none}
+.jadera-resource-space-expanded,.jadera-resource-space-focused{padding:8px 16px}
+body:has(.jadera-resource-space-focused) .jadera-header{display:none!important}
+body:has(.jadera-resource-space-focused) .jadera-assistant-region{display:none}
+@media(max-width:760px){.jadera-resource-info-layout{grid-template-columns:1fr;gap:32px}.jadera-resource-info-aside{border-left:0;border-top:1px solid var(--border);padding:24px 0 0}.jadera-resource-info-fields{grid-template-columns:1fr;gap:8px}.jadera-resource-info-fields>label{padding-top:12px}}
+/* Match the approved HTML workspace geometry and control density. */
+.jadera-resource-page{padding:0;background:var(--background);width:100%}
+.jadera-resource-page-heading{padding:16px 0 24px}
+.jadera-resource-breadcrumb{font-size:12px!important;height:24px!important;padding:0!important;color:var(--muted-foreground);margin-bottom:20px}
+.jadera-resource-page-tabs{gap:0}
+.jadera-resource-info-layout{padding:32px 0;width:100%;box-sizing:border-box}
+.jadera-resource-versions{padding:32px 0;width:100%;box-sizing:border-box}
+.jadera-resource-page :is(button,input,select){font-size:12px}
+.jadera-resource-page button{height:32px}
+.jadera-resource-versions table{background:transparent}
+.jadera-resource-versions tbody tr{background:transparent}
+.jadera-resource-versions tbody tr:hover{background:var(--accent)}
+.jadera-resource-upload-dialog .jadera-resource-upload-picker{position:relative;align-items:center;text-align:center;padding:32px 20px;margin-block:16px}
+.jadera-resource-upload-picker input{position:absolute;inset:0;opacity:0;height:100%;cursor:pointer}
+.jadera-resource-upload-picker>svg{height:24px;width:24px;color:var(--muted-foreground)}
+.jadera-resource-upload-picker:focus-within{outline:2px solid var(--ring)}
+.jadera-reading-space-tools{padding:8px 24px;border-bottom:1px solid var(--border);background:var(--card)}
+.jadera-resource-space-expanded .jadera-resource-page-body,.jadera-resource-space-focused .jadera-resource-page-body{padding:0}
+@media(max-width:640px){.jadera-resource-info-layout{padding:24px 0}.jadera-resource-versions{padding:24px 0}.jadera-resource-page-heading{padding:16px 0}.jadera-resource-page-tabs>[role=tablist]{padding-inline:16px}}
+.jadera-original-file{display:flex;flex-direction:column}
+.jadera-document-reading-tools{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:8px 24px;font-size:12px;background:var(--card);border-bottom:1px solid var(--border);flex:none}
+.jadera-document-reading-options,.jadera-document-reading-options>[role=group]{display:flex;align-items:center;gap:4px}
+.jadera-document-reading-options>[role=group]{padding-left:12px;margin-left:8px;border-left:1px solid var(--border)}
+.jadera-document-reading-options button{width:32px;height:32px;padding:0}
+.jadera-pdf-viewer{display:flex;flex-direction:column;flex:1;min-height:0}
+.jadera-pdf-body{display:flex;flex:1;min-height:0;background:var(--muted)}
+.jadera-pdf-pages{width:96px;flex:none;overflow:auto;display:flex;flex-direction:column;gap:16px;padding:16px;box-sizing:border-box}
+.jadera-pdf-pages button{height:92px;min-height:92px;width:64px;display:flex;flex-direction:column;gap:12px;align-items:center;justify-content:center;background:var(--card);border:1px solid var(--border);border-radius:2px;font-size:12px;color:var(--muted-foreground)}
+.jadera-pdf-pages button[aria-current=page]{border-color:var(--primary);color:var(--primary)}
+.jadera-pdf-scroll{flex:1;min-width:0;overflow:auto;padding:24px}
+.jadera-pdf-stack{display:grid;grid-template-columns:max-content;justify-content:center;gap:24px;width:max-content;min-width:100%}
+.jadera-pdf-stack[data-dual=true]{grid-template-columns:repeat(2,max-content)}
+.jadera-pdf-stack canvas{background:white;box-shadow:0 2px 12px #0001;scroll-margin-top:24px}
+@media(max-width:640px){.jadera-pdf-pages{display:none}.jadera-document-reading-tools{padding:8px;flex-wrap:wrap}}
+
+/* Resource page navigation follows the approved HTML underline tabs. */
+.jadera-resource-page-tabs > .jadera-resource-tab-list {
+  display:flex; width:100%; box-sizing:border-box; flex:0 0 auto;
+  align-items:stretch; justify-content:flex-start; gap:24px;
+  height:44px; padding:0; background:transparent; border-radius:0;
+  border-bottom:1px solid var(--border);
+}
+.jadera-resource-tab-list > .jadera-resource-tab {
+  flex:0 0 auto; width:auto; min-width:0; height:44px;
+  padding:0; border:0; border-bottom:2px solid transparent;
+  border-radius:0; background:transparent; box-shadow:none;
+  color:var(--muted-foreground); font-size:14px; font-weight:600;
+}
+.jadera-resource-tab-list > .jadera-resource-tab[data-state=active] {
+  color:var(--primary); border-bottom-color:var(--primary);
+  background:transparent; box-shadow:none; font-weight:600;
+}
+.jadera-resource-tab-list > .jadera-resource-tab:hover { color:var(--primary); }
+@media(max-width:640px){.jadera-resource-page-tabs > .jadera-resource-tab-list{padding-inline:0;gap:24px}}
+
+/* The complete resource page shares the DS content-width preference. */
+.jadera-resource-page-frame{height:100%;min-height:0;display:flex;flex-direction:column;padding-inline:clamp(20px,calc(6cqw - 16px),48px);overflow:hidden}
+.jadera-resource-version-select{width:184px;min-width:184px;height:32px;font-size:12px}
+.jadera-resource-file-empty{flex:1;min-height:280px;align-self:center;margin:auto;max-width:560px;padding:48px 24px}
+.jadera-resource-space-expanded .jadera-resource-page-frame,.jadera-resource-space-focused .jadera-resource-page-frame{padding-inline:0}
+.jadera-resource-space-expanded .jadera-resource-page-heading,.jadera-resource-space-focused .jadera-resource-page-heading{display:none}
+@media(max-width:640px){.jadera-resource-page-frame{padding-inline:20px}}
+
+.jadera-resource-info-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:24px}
+.jadera-resource-info-heading>button{flex:none}
+.jadera-resource-info-readonly{display:flex;flex-direction:column;gap:24px;margin:0;font-size:12px}
+.jadera-resource-info-readonly>div{display:grid;grid-template-columns:96px minmax(0,1fr);gap:16px;line-height:1.7}
+.jadera-resource-info-readonly dt{color:var(--muted-foreground)}
+.jadera-resource-info-readonly dd{margin:0;overflow-wrap:anywhere}
+@media(max-width:640px){.jadera-resource-info-readonly>div{grid-template-columns:1fr;gap:8px}}
+.jadera-resource-info-fields textarea{width:100%;min-height:88px;font-size:12px;line-height:1.7;resize:vertical}
+.jadera-resource-info-readonly dd{white-space:pre-wrap}
+.jadera-resource-tags{display:flex;flex-wrap:wrap;gap:8px}
+.jadera-resource-tags>span{display:inline-flex;padding:2px 8px;border-radius:4px;background:var(--muted);font-size:12px}
+.jadera-resource-info-aside .jadera-resource-filetype-preview{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;height:144px;width:100%;padding:24px;margin:16px 0;background:var(--muted);border:0;color:var(--muted-foreground)}
+.jadera-resource-filetype-preview svg{width:40px;height:40px}
+.jadera-resource-filetype-preview span{font-size:12px;letter-spacing:.08em}
+/* One metadata page, followed by version history. No nested reader or tabs. */
+.jadera-resource-detail-page .jadera-resource-page-heading{border-bottom:1px solid var(--border)}
+.jadera-resource-detail-scroll{flex:1;min-height:0;overflow:auto;padding-bottom:48px;scrollbar-gutter:stable}
+.jadera-resource-detail-page .jadera-resource-info-layout{padding:32px 0 40px}
+.jadera-resource-detail-page .jadera-resource-versions{border-top:1px solid var(--border);padding:32px 0}
+.jadera-resource-detail-page .jadera-resource-versions td p{font-size:12px;line-height:1.7;color:var(--muted-foreground);margin:8px 0 0}
+.jadera-version-filename{display:inline-flex;align-items:center;gap:8px}
+.jadera-version-filename svg{flex:none;color:var(--muted-foreground)}
+.jadera-document-page{--bidproposal-jadera-document-version-width:168px;width:100%;height:100%;min-height:0;display:flex;flex-direction:column;background:var(--background);overflow:hidden}
+.jadera-document-heading{flex:none;display:flex;align-items:center;gap:20px;min-height:56px;padding:12px 24px;box-sizing:border-box;border-bottom:1px solid var(--border);background:var(--card)}
+.jadera-document-heading button,.jadera-document-heading select{height:32px;font-size:12px}
+.jadera-document-back{padding-inline:0;color:var(--muted-foreground)}
+.jadera-document-identity{flex:1;min-width:0;display:flex;align-items:center;gap:12px}
+.jadera-document-identity h1{font-size:14px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin:0}
+.jadera-document-identity>span{font-size:12px;color:var(--muted-foreground);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.jadera-document-actions{display:flex;align-items:center;gap:8px;flex:none}
+.jadera-document-actions select{min-width:152px;max-width:220px}
+.jadera-document-focus{width:32px;padding:0}
+.jadera-document-stage{flex:1;min-height:0;overflow:hidden;display:flex;flex-direction:column}
+.jadera-document-page>.jadera-original-file{flex:1;min-height:0;border:0;border-radius:0}
+.jadera-document-stage .jadera-file-tools{flex:none;min-height:48px;padding:8px 24px;font-size:12px;background:var(--card);box-sizing:border-box}
+
+.jadera-document-stage .jadera-file-tools :is(button,a){font-size:12px}
+.jadera-document-stage .jadera-office-editor,.jadera-document-stage .jadera-office-surface{height:100%;min-height:0;flex:1}
+.jadera-document-stage .jadera-markdown-viewer{display:flex;flex-direction:column;flex:1;min-height:0}
+.jadera-document-stage .jadera-markdown-panes{flex:1;min-height:0;overflow:hidden}
+.jadera-document-stage .jadera-markdown-panes>*{max-height:none;overflow:auto}
+body:has(.jadera-document-page[data-focused=true]) .jadera-header,body:has(.jadera-document-page[data-focused=true]) .jadera-assistant-region{display:none!important}
+
+@media(max-width:700px){.jadera-document-heading{padding:8px 16px;gap:8px 16px;flex-wrap:wrap}.jadera-document-identity{order:3;flex-basis:100%}.jadera-document-actions{margin-left:auto}.jadera-document-identity>span{display:none}}
+.jadera-resource-info-records{border-top:1px solid var(--border);padding-top:24px}
+.jadera-resource-info-records h3{font-size:12px;font-weight:600;margin:0 0 16px}
+.jadera-resource-info-records dl{display:grid;grid-template-columns:96px minmax(0,1fr);gap:16px;font-size:12px;line-height:1.7;margin:0}
+.jadera-resource-info-records dt{color:var(--muted-foreground)}
+.jadera-resource-info-records dd{margin:0;overflow-wrap:anywhere}
+.jadera-resource-info-aside h3{font-size:12px;font-weight:600;margin:0 0 16px}
+.jadera-resource-info-layout{align-items:start}
+/* Metadata and version history reuse one responsive left-column track. */
+.jadera-resource-detail-page{--bidproposal-resource-detail-columns:minmax(0,1.65fr) minmax(260px,1fr);--bidproposal-resource-detail-gap:48px}
+.jadera-resource-detail-page .jadera-resource-info-layout,.jadera-resource-versions-grid{display:grid;grid-template-columns:var(--bidproposal-resource-detail-columns);column-gap:var(--bidproposal-resource-detail-gap);width:100%}
+.jadera-resource-detail-page .jadera-resource-versions{grid-column:1;min-width:0;width:100%;border-top:1px solid var(--border);padding:32px 0}
+.jadera-resource-versions-grid .jadera-resource-section-heading{width:100%;box-sizing:border-box}
+.jadera-resource-versions-grid td{overflow-wrap:anywhere}
+@media(max-width:900px){.jadera-resource-detail-page{--bidproposal-resource-detail-columns:minmax(0,1.4fr) minmax(240px,1fr);--bidproposal-resource-detail-gap:28px}}
+@media(max-width:760px){.jadera-resource-detail-page{--bidproposal-resource-detail-columns:minmax(0,1fr);--bidproposal-resource-detail-gap:32px}}
+/* Detail typography and file artwork follow the information-page baseline. */
+.jadera-resource-detail-page{font-size:14px}
+.jadera-resource-detail-page :is(.jadera-resource-info-readonly,.jadera-resource-info-records dl,.jadera-resource-info-fields>label,.jadera-resource-info-fields input,.jadera-resource-info-fields select,.jadera-resource-info-fields textarea,.jadera-resource-versions th,.jadera-resource-versions td){font-size:14px}
+.jadera-resource-detail-page :is(.jadera-resource-info-heading h2,.jadera-resource-info-records h2,.jadera-resource-section-heading h2){font-size:16px;font-weight:600;line-height:1.5;margin:0 0 16px}
+.jadera-resource-info-records{padding-top:32px}
+.jadera-resource-info-aside .jadera-resource-filetype-preview{width:min(100%,260px);height:auto;aspect-ratio:210/297;min-height:0;margin:0 auto 20px;padding:24px;background:var(--card);border:1px solid var(--border);border-radius:2px;box-shadow:0 2px 10px #00000008}
+.jadera-resource-filetype-preview>svg{width:36px;height:36px}
+/* The details page scrolls as one page; sections never create scroll boxes. */
+.jadera-resource-detail-page{overflow-y:auto;overflow-x:hidden}
+.jadera-resource-detail-page .jadera-resource-page-frame{height:auto;min-height:100%;overflow:visible}
+.jadera-resource-detail-page .jadera-resource-detail-scroll{overflow:visible;flex:none;min-height:auto;scrollbar-gutter:auto}
+.jadera-resource-detail-page .jadera-resource-page-heading{border-bottom:0;padding-bottom:0}
+/* Reuse the same card artwork, including tenant identity, at A4 size. */
+.jadera-resource-info-aside .jadera-resource-filetype-preview{padding:0;overflow:hidden}
+.jadera-resource-filetype-preview .jadera-resource-artwork-full{height:100%;width:100%;flex:1;min-height:0;background:color-mix(in srgb,var(--primary) 5%,var(--card));color:var(--primary-text)}
+.jadera-resource-artwork-full>i,.jadera-resource-artwork-full>div{height:calc(100% - 48px)}
+.jadera-resource-artwork-full .jadera-document-art{width:100%;height:100%}
+.jadera-resource-artwork-full .jadera-document-art>.jadera-document-eyebrow{font-size:12px;letter-spacing:.12em}
+.jadera-resource-artwork-full .jadera-document-art>.jadera-document-eyebrow svg{width:16px;height:16px}
+.jadera-resource-artwork-full .jadera-document-art>strong{font-size:16px;line-height:1.6;letter-spacing:normal}
+.jadera-resource-file-summary{margin-bottom:20px;overflow-wrap:anywhere}
+.jadera-resource-file-summary strong{font-size:14px;font-weight:600;line-height:1.6}
+.jadera-resource-file-summary .jadera-resource-help{margin:8px 0 0}
+.jadera-resource-person{display:inline-flex;align-items:center;flex-wrap:wrap;gap:8px;font-size:inherit;line-height:1.7}
+.jadera-resource-person-source{font-size:12px;color:var(--muted-foreground)}
+.jadera-resource-person>[data-slot=avatar]{flex:none}
+/* The detail uses the complete, unmodified collection card at column width. */
+.jadera-resource-info-aside .jadera-resource-card{width:100%;max-width:none;box-sizing:border-box}
+.jadera-resource-references{border-top:1px solid var(--border);padding-top:24px}
+.jadera-resource-references h3{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600;margin:0 0 16px}
+.jadera-resource-references h3 small{font-size:12px;font-weight:400;color:var(--muted-foreground)}
+.jadera-resource-references ul{list-style:none;padding:0;margin:0}
+.jadera-resource-references li{padding:16px 0;border-bottom:1px solid var(--border)}
+.jadera-resource-references li:first-child{padding-top:0}
+.jadera-resource-references li:last-child{border-bottom:0;padding-bottom:0}
+.jadera-resource-references .jadera-reference-project{height:auto;display:block;max-width:100%;padding:0;border:0;background:transparent;text-align:left;color:var(--foreground);font-size:14px;font-weight:500;line-height:1.7;overflow-wrap:anywhere}
+button.jadera-reference-project:hover{color:var(--primary);text-decoration:underline}
+.jadera-reference-meta{display:flex;flex-wrap:wrap;gap:8px 12px;color:var(--muted-foreground);font-size:12px;margin-top:8px}
+.jadera-reference-owner{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:10px;font-size:12px}
+.jadera-reference-owner>span:first-child{color:var(--muted-foreground)}
+.jadera-resource-references time{display:block;font-size:12px;color:var(--muted-foreground);margin-top:8px}
+/* Every information region uses the same heading level and typography. */
+.jadera-resource-detail-page :is(.jadera-resource-info-heading h2,.jadera-resource-info-records h2,.jadera-resource-section-heading h2,.jadera-resource-section-title){font-size:16px;font-weight:600;line-height:1.5;margin:0 0 16px}
+.jadera-resource-references>.jadera-resource-section-title{display:flex;align-items:center;gap:8px}
+.jadera-resource-section-title small{font-size:12px;font-weight:400;color:var(--muted-foreground)}
+/* Card metadata and every inline action share one exact control height. */
+.jadera-resource-card .jadera-resource-meta{height:32px;min-height:32px;max-height:32px;box-sizing:border-box;align-items:center}
+.jadera-resource-card .jadera-resource-meta>span,.jadera-resource-card .jadera-resource-meta>div{height:32px;min-height:32px;box-sizing:border-box;align-items:center;line-height:20px}
+.jadera-resource-card .jadera-resource-meta :is(button,a){display:inline-flex;align-items:center;justify-content:center;height:32px;min-height:32px;max-height:32px;min-width:32px;box-sizing:border-box;padding-block:0;line-height:20px;flex-shrink:0}
+/* State lives above the artwork; footer space is reserved for document data. */
+.jadera-resource-card{position:relative}
+.jadera-resource-card>.jadera-resource-status{position:absolute;inset-block-start:12px;inset-inline-end:12px;z-index:1;max-width:calc(100% - 24px);pointer-events:none}
+
+/* All decorative content fits inside the fixed 184px preview area. */
+.jadera-resource-card .jadera-document-art{display:grid;grid-template-rows:16px minmax(20px,40px) 16px minmax(0,1fr);gap:8px;align-items:start;justify-items:center;min-height:0;box-sizing:border-box}
+.jadera-resource-card .jadera-document-art>.jadera-document-eyebrow{align-self:start;justify-self:start;max-width:100%;font-size:10px;line-height:16px;letter-spacing:.1em;white-space:nowrap;overflow:hidden}
+.jadera-resource-card .jadera-document-eyebrow svg{width:12px;height:12px;flex:none}
+.jadera-resource-card .jadera-document-art>strong{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;font-size:16px;line-height:20px;max-height:40px;overflow:hidden;margin:0}
+.jadera-resource-card .jadera-document-art>span:not(.jadera-document-eyebrow):not(.jadera-document-seal){font-size:12px;line-height:16px}
+.jadera-resource-card .jadera-document-lines{align-self:end;justify-self:start;width:calc(100% - 44px);margin:0;gap:5px;padding-bottom:2px}
+.jadera-resource-card .jadera-document-seal{position:absolute;right:0;bottom:0;width:24px;height:24px;box-sizing:border-box;margin:0;font-size:10px;line-height:1;letter-spacing:0}
+.jadera-resource-card>.jadera-resource-status{background:var(--card);color:var(--foreground);border:1px solid var(--border);opacity:1;box-shadow:0 1px 3px #00000014}
+
+/* Shared resource navigation and compact, independent file actions. */
+.jadera-resource-card[data-details-enabled="true"]{cursor:pointer;transition:border-color .15s ease,box-shadow .15s ease}
+.jadera-resource-card[data-details-enabled="true"]:hover{border-color:var(--primary);box-shadow:0 2px 8px #0000000a}
+.jadera-resource-title-link,.jadera-resource-list-title{display:block;max-width:100%;padding:0;border:0;background:transparent;color:inherit;font:inherit;text-align:start;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}
+.jadera-resource-title-link{width:100%;height:20px;line-height:20px}
+.jadera-resource-title-link:hover,.jadera-resource-list-title:hover{color:var(--primary)}
+.jadera-resource-title-link:focus-visible,.jadera-resource-list-title:focus-visible{outline:2px solid var(--ring);outline-offset:-2px;border-radius:2px}
+.jadera-resource-card .jadera-resource-meta{gap:4px}
+.jadera-resource-card .jadera-resource-meta>span,.jadera-resource-card .jadera-resource-meta>div{gap:4px}
+.jadera-resource-card .jadera-resource-meta [data-card-actions]>button{padding-inline:4px;font-size:14px}
+.jadera-resource-more,.jadera-resource-card .jadera-resource-meta .jadera-resource-more{width:32px;height:32px;min-width:32px;min-height:32px;max-height:32px;padding:4px;flex:none;box-sizing:border-box}
+.jadera-resource-more svg{width:24px;height:24px;min-width:24px;max-width:none;flex:none}
+.jadera-resource-list-actions{display:flex;align-items:center;justify-content:flex-end;gap:4px;white-space:nowrap}
+.jadera-resource-list-actions>button{height:32px;min-height:32px;padding-inline:8px}
+@container (max-width:240px){.jadera-resource-card .jadera-resource-meta time{display:none}}
+@media(prefers-reduced-motion:reduce){.jadera-resource-card[data-details-enabled="true"]{transition:none}}
+.jadera-resource-card .jadera-resource-meta [data-card-actions]>.jadera-resource-open,.jadera-resource-list-actions>.jadera-resource-open{padding-inline:12px}
+
+.jadera-resource-info-main{min-width:0;display:flex;flex-direction:column;gap:32px}
+.jadera-resource-info-main>.jadera-resource-versions{margin:0;width:100%;padding:32px 0 0}
+.jadera-resource-info-main .jadera-resource-versions td{overflow-wrap:anywhere}
+
+/* Quiet viewport boundary hint; no footer height or pointer hit area. */
+.jadera-page-scroll-hint{position:absolute;z-index:2;transform:translateX(-50%);height:18px;display:flex;align-items:center;justify-content:center;pointer-events:none;user-select:none;color:var(--muted-foreground);opacity:.65;font-size:12px;font-weight:400;line-height:18px;white-space:nowrap;background:none;border:0;padding:0;margin:0}
+.jadera-page-scroll-hint[hidden]{display:none}
+.jadera-page-scroll-hint svg{width:14px;height:14px;flex:none}
+.jadera-native-library{position:relative}
+
+/* One document bar owns page and viewer controls. */
+.jadera-document-heading{gap:16px;padding:8px 24px;background:var(--card)}
+.jadera-document-identity{flex:1 1 120px;min-width:80px}
+.jadera-document-actions{gap:8px;flex-shrink:0}
+.jadera-document-actions select{width:var(--bidproposal-jadera-document-version-width);min-width:var(--bidproposal-jadera-document-version-width);max-width:var(--bidproposal-jadera-document-version-width)}
+.jadera-document-mode{font-size:12px;color:var(--muted-foreground);white-space:nowrap}
+.jadera-document-viewer-tools{display:flex;align-items:center;gap:8px;min-width:0}
+.jadera-document-viewer-tools:empty{display:none}
+.jadera-document-heading .jadera-file-tools,.jadera-document-heading .jadera-document-reading-tools{padding:0;min-height:32px;border:0;background:none;flex:none;display:flex;align-items:center;gap:8px;white-space:nowrap}
+.jadera-document-heading .jadera-file-tools{flex-wrap:nowrap}
+.jadera-document-heading .jadera-document-reading-options{gap:4px}
+.jadera-document-heading .jadera-file-tools button{padding-inline:8px}
+.jadera-document-heading .jadera-document-reading-tools>span{font-size:12px;color:var(--muted-foreground)}
+.jadera-document-status{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;padding:32px 24px;overflow:auto;box-sizing:border-box}
+.jadera-document-status>[data-slot],.jadera-document-status>div{width:100%;max-width:420px;margin:auto;text-align:center}
+.jadera-document-status-actions{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap}
+.jadera-document-status-actions button{height:32px;font-size:14px}
+.jadera-document-notice{margin:16px 24px;padding:12px 16px;border:1px solid var(--border);border-radius:var(--radius-md);font-size:14px;color:var(--muted-foreground);flex:none}
+@media(max-width:1100px){.jadera-document-heading:has(.jadera-document-viewer-tools:not(:empty)){flex-wrap:wrap;gap:8px 12px}.jadera-document-heading:has(.jadera-document-viewer-tools:not(:empty)) .jadera-document-viewer-tools{order:4;flex-basis:100%;justify-content:center}.jadera-document-heading:has(.jadera-document-viewer-tools:not(:empty)) .jadera-document-actions{margin-left:auto}}
+@media(max-width:700px){.jadera-document-heading{gap:8px 12px;padding:8px 16px}.jadera-document-identity{order:0;flex:1;min-width:0}.jadera-document-actions{width:100%;margin-left:0;justify-content:flex-end}.jadera-document-actions select{margin-right:auto}.jadera-document-status{padding:24px 16px}}
+/* Versions are quiet records under the current cover, not decorative covers. */
+.jadera-resource-info-aside>.jadera-resource-versions{padding:24px 0 0;margin:0;border-top:1px solid var(--border);grid-column:auto;min-width:0}
+.jadera-resource-info-aside .jadera-resource-section-heading{gap:12px;align-items:center;margin-bottom:20px}
+.jadera-resource-info-aside .jadera-resource-section-heading h2{margin-bottom:0}
+.jadera-resource-info-aside .jadera-resource-section-heading p{display:none}
+.jadera-resource-info-aside .jadera-resource-section-heading>button{flex:none;padding-inline:8px}
+.jadera-resource-version-list{display:flex;flex-direction:column;gap:12px}
+.jadera-resource-version-card{display:flex;flex-direction:column;gap:8px;padding:14px 16px;margin:0;border:1px solid var(--border);border-radius:var(--radius-md);background:transparent;box-shadow:none;min-width:0;height:auto;box-sizing:border-box}
+.jadera-resource-version-identity{display:flex;align-items:center;gap:8px;min-height:20px;font-size:14px}
+.jadera-resource-version-identity>strong{font-weight:600}
+.jadera-resource-version-card h3{display:flex;align-items:flex-start;gap:8px;min-width:0;margin:0;font-size:14px;font-weight:500;line-height:20px}
+.jadera-resource-version-card h3>svg{flex:none;margin-top:2px;color:var(--muted-foreground)}
+.jadera-resource-version-card h3>span{min-width:0;overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.jadera-resource-version-file{margin:0;color:var(--muted-foreground);font-size:12px;line-height:18px}
+.jadera-resource-version-person{font-size:12px;min-width:0}
+.jadera-resource-version-footer{display:flex;align-items:center;justify-content:space-between;gap:8px;min-width:0}
+.jadera-resource-version-footer>time{font-size:12px;line-height:18px;color:var(--muted-foreground);min-width:0}
+.jadera-resource-version-footer>div{display:flex;align-items:center;gap:4px;flex:none}
+.jadera-resource-version-footer .jadera-resource-open{height:32px;min-height:32px;padding:0 12px;font-size:14px}
+.jadera-resource-info-main>.jadera-resource-references,.jadera-resource-info-main>div>.jadera-resource-references{padding-top:32px}
+/* One clear action sequence: icon controls, edit, version. */
+.jadera-document-icon-actions{display:flex;align-items:center;gap:4px}
+.jadera-document-heading .jadera-document-icon-button{width:32px;min-width:32px;height:32px;min-height:32px;flex:0 0 32px;padding:0;box-sizing:border-box}
+.jadera-document-heading .jadera-document-icon-button svg{width:18px;height:18px}
+.jadera-document-mode{font-size:12px;line-height:20px;font-weight:400;flex:none;color:var(--muted-foreground)}
+.jadera-document-actions select{order:0}
+@media(max-width:700px){.jadera-document-actions select{margin-right:0}.jadera-document-icon-actions{margin-right:auto}}
+/* DS search owns its outline; its children never carry a competing width. */
+.jadera-collection-toolbar .jadera-collection-search{width:240px;flex:0 1 240px;min-width:144px}
+.jadera-collection-toolbar .jadera-collection-search input{width:100%;min-width:0;font-size:12px}
+.jadera-collection-toolbar .jadera-collection-search [data-slot="input-group-addon"]{flex:none}
+.jadera-collection-toolbar .jadera-collection-reset{width:32px;min-width:32px;max-width:32px;height:32px;min-height:32px;flex:0 0 32px;padding:0;box-sizing:border-box}
+.jadera-collection-toolbar .jadera-collection-reset svg{width:16px;height:16px;flex:none}
+/* Product interface typography. Document contents keep their own typography. */
+.jadera-work-area :is(.jadera-home-scroll,.jadera-resource-detail-page,.jadera-management-page,.jadera-static-page,.jadera-project-workspace){font-size:14px}
+.jadera-work-area :is(.jadera-home-scroll,.jadera-resource-detail-page,.jadera-management-page,.jadera-static-page,.jadera-project-workspace) :is(h1,h2){font-size:16px;line-height:1.5;font-weight:600}
+.jadera-work-area :is(.jadera-home-scroll,.jadera-resource-detail-page,.jadera-management-page,.jadera-static-page,.jadera-project-workspace) :is(h3,h4){font-size:14px;line-height:1.5;font-weight:600}
+.jadera-work-area :is(.jadera-home-scroll,.jadera-resource-detail-page,.jadera-management-page,.jadera-static-page,.jadera-project-workspace) :is(button,input,select,textarea){font-size:12px}
+.jadera-work-area button.bg-primary,.jadera-work-area .jadera-home-actions button,.jadera-work-area .jadera-resource-open{font-size:14px}
+.jadera-work-area .jadera-collection-toolbar :is(input,select,button){font-size:12px}
+.jadera-work-area :is(.jadera-home-kicker,.jadera-section-heading p,.jadera-collection-heading p,.jadera-resource-help,.jadera-resource-person-source,.jadera-resource-meta,.jadera-reference-meta,.jadera-reference-owner){font-size:12px}
+.jadera-work-area .jadera-resource-version-card h3{font-size:14px;font-weight:500}
+.jadera-work-area .jadera-document-eyebrow{font-size:10px}
+.jadera-work-area .jadera-document-heading h1{font-size:14px}
+/* Collection counts use the same 12px baseline as search and filters. */
+.jadera-collection-toolbar,.jadera-collection-toolbar>div:first-child>span{font-size:12px}
+
+/* Markdown is a document surface: restore semantics removed by the UI reset. */
+.jadera-markdown-panes>.jadera-markdown-content{padding:32px 32px 64px;background:var(--background);font-size:14px;line-height:1.85}
+.jadera-markdown-prose{width:100%;max-width:none;min-width:0;margin:0;color:var(--foreground);overflow-wrap:anywhere}
+.jadera-markdown-prose>:first-child{margin-top:0}
+.jadera-markdown-prose>:last-child{margin-bottom:0}
+.jadera-markdown-prose :is(h1,h2,h3,h4,h5,h6){font-weight:600;line-height:1.5;letter-spacing:0;color:var(--foreground);scroll-margin-top:24px}
+.jadera-markdown-prose h1{font-size:24px;margin:0 0 24px}
+.jadera-markdown-prose h2{font-size:20px;margin:36px 0 14px}
+.jadera-markdown-prose h3{font-size:16px;margin:24px 0 12px}
+.jadera-markdown-prose :is(h4,h5,h6){font-size:14px;margin:20px 0 10px}
+.jadera-markdown-prose p{font-size:14px;line-height:1.85;margin:0 0 16px}
+.jadera-markdown-prose :is(ul,ol){display:block;margin:0 0 20px;padding-inline-start:24px;list-style-position:outside}
+.jadera-markdown-prose ul{list-style-type:disc}
+.jadera-markdown-prose ol{list-style-type:decimal}
+.jadera-markdown-prose li{display:list-item;margin:6px 0;padding-inline-start:4px}
+.jadera-markdown-prose li>p{margin-bottom:8px}
+.jadera-markdown-prose li>:is(ul,ol){margin:8px 0 12px}
+.jadera-markdown-prose blockquote{margin:20px 0 24px;padding:12px 16px;border-inline-start:3px solid var(--border);background:var(--muted);color:var(--muted-foreground);border-radius:0 var(--radius-sm) var(--radius-sm) 0}
+.jadera-markdown-prose blockquote>:last-child{margin-bottom:0}
+.jadera-markdown-prose strong{font-weight:600}
+.jadera-markdown-prose em{font-style:italic}
+.jadera-markdown-prose del{text-decoration:line-through}
+.jadera-markdown-prose a{color:var(--primary);text-decoration:underline;text-underline-offset:3px}
+.jadera-markdown-prose hr{height:0;margin:32px 0;border:0;border-top:1px solid var(--border)}
+.jadera-markdown-table{max-width:100%;overflow-x:auto;overscroll-behavior-x:contain;margin:20px 0 24px;border:1px solid var(--border);border-radius:var(--radius-md)}
+.jadera-markdown-prose table{width:100%;border-collapse:collapse;font-size:14px;line-height:1.7;text-align:start;margin:0}
+.jadera-markdown-prose :is(th,td){padding:10px 14px;border:0;border-inline-end:1px solid var(--border);border-bottom:1px solid var(--border);vertical-align:top;min-width:100px}
+.jadera-markdown-prose :is(th,td):last-child{border-inline-end:0}
+.jadera-markdown-prose tbody tr:last-child td{border-bottom:0}
+.jadera-markdown-prose th{background:var(--muted);font-weight:600;text-align:start;white-space:nowrap}
+.jadera-markdown-prose pre{display:block;margin:20px 0;padding:16px 20px;max-width:100%;overflow:auto;background:var(--muted);border:1px solid var(--border);border-radius:var(--radius-md);font-family:var(--font-mono);font-size:12px;line-height:1.75;white-space:pre;overflow-wrap:normal}
+.jadera-markdown-prose code{font-family:var(--font-mono);font-size:12px;background:var(--muted);padding:2px 5px;border-radius:3px}
+.jadera-markdown-prose pre code{background:none;padding:0;white-space:inherit;font-size:inherit}
+.jadera-markdown-prose .contains-task-list{list-style:none;padding-inline-start:0}
+.jadera-markdown-prose .task-list-item{list-style:none;display:flex;align-items:baseline;gap:8px;padding:0}
+.jadera-markdown-prose input[type=checkbox]{width:14px;height:14px;flex:none;margin:0;accent-color:var(--primary)}
+.jadera-markdown-panes>.jadera-markdown-source{padding:32px;font-size:12px;line-height:1.85;tab-size:2;margin:0;background:var(--muted);color:var(--foreground);white-space:pre-wrap;overflow-wrap:anywhere}
+.jadera-markdown-panes[data-split=true]>.jadera-markdown-content{padding:32px}
+.jadera-markdown-panes[data-split=true]>.jadera-markdown-source{border-inline-start:1px solid var(--border)}
+.jadera-document-back,.jadera-resource-breadcrumb{display:inline-flex;align-items:center;gap:6px;flex:none}
+.jadera-document-back>svg,.jadera-resource-breadcrumb>svg{width:16px;height:16px;flex:none}
+@media(max-width:700px){.jadera-markdown-panes>.jadera-markdown-content{padding:24px 20px 48px}.jadera-markdown-panes[data-split=true]>.jadera-markdown-content{padding:24px 20px}.jadera-markdown-panes>.jadera-markdown-source{padding:24px 20px}.jadera-markdown-prose h1{font-size:22px}.jadera-markdown-prose h2{font-size:18px}}
+@media(max-width:640px){.jadera-markdown-panes[data-split=true]{grid-template-rows:minmax(0,1fr) minmax(0,1fr)}}
+
+.jadera-markdown-panes>.jadera-markdown-editor{width:100%;height:100%;min-height:0;max-height:none;resize:none;border:0;border-inline-start:1px solid var(--border);border-radius:0;outline-offset:-2px;box-shadow:none;font-family:var(--font-mono,monospace)}
+.jadera-markdown-panes>.jadera-markdown-source{font-family:var(--font-mono,ui-monospace,monospace)}
+@media(max-width:640px){.jadera-markdown-panes[data-split=true]>.jadera-markdown-source{border-inline-start:0;border-top:1px solid var(--border)}}
+/* Reading layout is independent of source/view selection and application chrome. */
+.jadera-markdown-panes>.jadera-markdown-reader{position:relative;display:flex;flex-direction:column;min-width:0;min-height:0;padding:0;overflow:hidden;container-type:inline-size}
+.jadera-markdown-viewer{position:relative}
+.jadera-markdown-layout-switch{position:absolute;inset-block-start:24px;inset-inline-start:24px;inset-inline-end:auto;width:max-content;z-index:3;display:flex;align-items:center;justify-content:flex-start;gap:4px;opacity:.35;transition:opacity 160ms ease}
+.jadera-markdown-layout-switch[data-open=true]{opacity:1}
+.jadera-markdown-layout-options[hidden]{display:none}
+.jadera-markdown-layout-options>[role=radiogroup]{display:inline-flex;align-items:stretch;height:32px;padding:2px;gap:2px;box-sizing:border-box;box-shadow:0 2px 8px #0000000a}
+.jadera-markdown-layout-switch button{display:inline-flex;align-items:center;justify-content:center;height:auto;min-height:0;padding:0 10px;font-size:12px;line-height:20px}
+.jadera-markdown-layout-switch>.jadera-markdown-layout-trigger{width:32px;min-width:32px;height:32px;flex:0 0 32px;padding:0;border:0;background:transparent;box-shadow:none;color:var(--muted-foreground)}
+.jadera-markdown-layout-switch[data-open=true]>.jadera-markdown-layout-trigger{background:var(--card);color:var(--foreground)}
+@media(prefers-reduced-motion:reduce){.jadera-markdown-layout-switch{transition:none}}
+@media(max-width:700px){.jadera-document-page{--bidproposal-jadera-document-version-width:120px}}
+.jadera-markdown-reader>.jadera-markdown-content{flex:1;min-height:0;overflow:auto;padding:24px 0 48px;font-size:14px;line-height:1.85;background:var(--background)}
+.jadera-markdown-reader .jadera-markdown-prose{max-width:1536px;width:100%;margin-inline:auto;padding-inline:48px;box-sizing:border-box}
+.jadera-markdown-reader[data-layout=print]>.jadera-markdown-content{padding:24px 24px 32px;background:var(--muted)}
+.jadera-markdown-reader[data-layout=print] .jadera-markdown-prose{width:210mm;max-width:100%;min-height:297mm;margin-inline:auto;padding:20mm;background:var(--card);border:1px solid var(--border);box-shadow:0 2px 12px #0000000a;box-sizing:border-box}
+@container (max-width:700px){.jadera-markdown-reader .jadera-markdown-prose{padding-inline:24px}.jadera-markdown-reader[data-layout=print] .jadera-markdown-prose{padding:24px;min-height:calc((100cqw - 48px)*1.414214)}}
+@media print{
+ @page jadera-markdown{size:A4;margin:20mm}
+ body:has(.jadera-markdown-viewer){background:white;color:black}
+ body:has(.jadera-markdown-viewer) :is(.jadera-header,.jadera-document-heading,.jadera-assistant-region,.jadera-page-scroll-hint,.jadera-markdown-layout-switch,.jadera-markdown-source,.jadera-document-notice){display:none!important}
+ body:has(.jadera-markdown-viewer) :is(#root,.bid-workbench,.workbench-page,.jadera-work-area,.jadera-document-page,.jadera-document-stage,.jadera-markdown-viewer,.jadera-markdown-panes,.jadera-markdown-reader,.jadera-markdown-content){display:block;height:auto;min-height:0;max-height:none;overflow:visible;padding:0;margin:0;background:white}
+ body:has(.jadera-markdown-viewer) .jadera-markdown-reader .jadera-markdown-prose{page:jadera-markdown;width:auto;max-width:none;min-height:0;padding:0;margin:0;border:0;box-shadow:none;background:white;color:black}
+ .jadera-markdown-prose :is(h1,h2,h3,h4){break-after:avoid}
+ .jadera-markdown-prose :is(tr,blockquote,pre){break-inside:avoid}
+ .jadera-markdown-prose thead{display:table-header-group}
+ .jadera-markdown-table{overflow:visible}
+}

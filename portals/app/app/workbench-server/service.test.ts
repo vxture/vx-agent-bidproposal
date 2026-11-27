@@ -24,6 +24,7 @@ import { runtimeContract } from "./contract";
 import { EMPTY_ENTITLEMENT } from "../entitlement/types";
 import type { StorageObservation } from "../usage/lib/gauge";
 import { DEFAULT_REQUIREMENTS } from "@bidproposal/shared/compilations";
+import { importResource, managedResource, updateResource } from "./resource-management";
 
 const principal: Principal = {
   sessionId: "opaque-own-product-session",
@@ -116,6 +117,56 @@ async function call(
   );
   return service.run(a, () => dispatch(service, a, path, request));
 }
+
+test("resource metadata and new versions persist without changing original file records", async () => {
+  const root = mkdtempSync(join(tmpdir(), "bid-resource-management-"));
+  let service = make(root);
+  try {
+    let id = "";
+    await service.run(access(), async () => {
+      const item = await importResource(service, { name: "source.md", category: "template_other", base64: Buffer.from("# First").toString("base64") }, principal.sub, "Creator", { source: "local_import", avatarSrc: "https://images.invalid/person.png" });
+      id = item.id;
+      const first = item.versions[0]!;
+      assert.equal(item.createdBy?.name, "Creator"); assert.equal(item.createdVia, "local_import"); assert.equal(item.versions[0]!.source, "local_import");
+      assert.match(item.resourceNumber!, /^TPL-\d{8}-\d{4,}$/);
+      const renamed = updateResource(service, id, { revision: item.revision, name: "Business template", resourceNumber: "TPL-BUSINESS-001", shortName: "Business", category: "template_business", description: "Technical delivery", usageNotes: "Review before reuse", tags: ["Delivery", "Delivery"] }, principal.sub, "Resource owner");
+      assert.equal(renamed.name, "Business template");
+      assert.equal(renamed.resourceNumber, "TPL-BUSINESS-001"); assert.equal(renamed.shortName, "Business");
+      assert.throws(() => updateResource(service, id, { revision: renamed.revision, name: renamed.name, category: renamed.category, resourceNumber: item.id }, principal.sub));
+      assert.equal(renamed.description, "Technical delivery");
+      assert.deepEqual(renamed.tags, ["Delivery"]);
+      assert.equal(renamed.updatedBy?.name, "Resource owner"); assert.equal(renamed.updatedVia, "metadata");
+      assert.throws(() => updateResource(service, id, { revision: renamed.revision, name: renamed.name, category: renamed.category, description: "x".repeat(1001) }, principal.sub));
+      assert.throws(() => updateResource(service, id, { revision: renamed.revision, name: renamed.name, category: renamed.category, tags: ["x".repeat(25)] }, principal.sub));
+      assert.equal(renamed.versions[0]!.name, "source.md");
+      assert.equal(renamed.versions[0]!.hash, first.hash);
+      assert.throws(() => updateResource(service, id, { revision: item.revision, name: "Stale", category: "template_other" }, principal.sub));
+      assert.throws(() => updateResource(service, id, { revision: renamed.revision, name: "Move", category: "case" }, principal.sub));
+      const next = await importResource(service, { id, revision: renamed.revision, expectedVersion: 1, name: "replacement.md", category: renamed.category, base64: Buffer.from("# Second").toString("base64") }, principal.sub, "Editor", { source: "office" });
+      assert.equal(next.name, "Business template");
+      assert.equal(next.resourceNumber, "TPL-BUSINESS-001"); assert.equal(next.shortName, "Business");
+      assert.equal(next.description, "Technical delivery");
+      assert.equal(next.usageNotes, "Review before reuse");
+      assert.deepEqual(next.tags, ["Delivery"]);
+      assert.equal(next.versions.length, 2);
+      assert.equal(next.createdBy?.name, "Creator"); assert.equal(next.updatedBy?.name, "Editor"); assert.equal(next.updatedVia, "office"); assert.equal(next.versions[1]!.source, "office");
+      const another = await importResource(service, { name: "other.md", category: "template_other", base64: Buffer.from("# Other").toString("base64") }, principal.sub);
+      assert.notEqual(another.resourceNumber, next.resourceNumber);
+      assert.throws(() => updateResource(service, another.id, { revision: another.revision, name: another.name, category: another.category, resourceNumber: "tpl-business-001" }, principal.sub));
+      assert.equal(next.versions[0]!.hash, first.hash);
+      assert.equal(next.versions[1]!.name, "replacement.md");
+      await assert.rejects(importResource(service, { id, revision: renamed.revision, expectedVersion: 1, name: "stale.md", category: renamed.category, base64: Buffer.from("Stale").toString("base64") }, principal.sub));
+    });
+    service.close(); service = make(root);
+    await service.run(access(), async () => {
+      const item = managedResource(service, id);
+      assert.equal(item.name, "Business template"); assert.equal(item.versions.length, 2);
+      assert.equal(item.description, "Technical delivery"); assert.equal(item.usageNotes, "Review before reuse"); assert.deepEqual(item.tags, ["Delivery"]);
+      assert.equal(item.createdBy?.id, principal.sub);
+      assert.equal(item.resourceNumber, "TPL-BUSINESS-001"); assert.equal(item.shortName, "Business");
+    });
+  } finally { service.close(); rmSync(root, { recursive: true, force: true }); }
+});
 
 test("creator is durable default owner and legacy assignment never overwrites ownership", async () => {
   const root = mkdtempSync(join(tmpdir(), "bid-owner-"));
@@ -1463,4 +1514,30 @@ test("identical completed exports reuse verified bytes across new source IDs and
     service.close();
     rmSync(root, { recursive: true, force: true });
   }
+});
+
+test("resource references reflect pinned versions, responsible people and unpinning", async () => {
+  const root = mkdtempSync(join(tmpdir(), "bid-resource-references-"));
+  const service = make(root);
+  try {
+    const a = access();
+    const project = await service.run(a, () => service.create("Referenced proposal", a.entitlement, "Project owner"));
+    const item = await (await call(service, ["library"], "POST", { name: "evidence.md", category: "qualification", base64: Buffer.from("# Evidence").toString("base64") })).json();
+    for (let attempt = 0; attempt < 100 && service.library.get(service.scope(), item.id)?.versions[0]?.reading?.state !== "completed"; attempt++)
+      await new Promise(resolve => setTimeout(resolve, 10));
+    await call(service, ["projects", project.id, "library-selection"], "POST", { id: item.id, version: 1, revision: 0 });
+    const references = await (await call(service, ["library", item.id, "references"])).json();
+    assert.equal(references.items.length, 1);
+    assert.equal(references.items[0].projectName, "Referenced proposal");
+    assert.equal(references.items[0].owner.id, principal.sub);
+    assert.equal(references.items[0].owner.name, "Project owner");
+    assert.equal(references.items[0].version, 1);
+    assert.ok(Date.parse(references.items[0].referencedAt));
+    const latest = await (await call(service, ["library", item.id])).json();
+    await call(service, ["library"], "POST", { id: item.id, revision: latest.revision, expectedVersion: 1, name: "evidence-v2.md", category: "qualification", base64: Buffer.from("# Updated evidence").toString("base64") });
+    assert.equal((await (await call(service, ["library", item.id, "references"])).json()).items[0].version, 1);
+    const pin = service.library.selections(project.id, "bidproposal");
+    await call(service, ["projects", project.id, "library-selection", item.id], "DELETE", { revision: pin.revision });
+    assert.equal((await (await call(service, ["library", item.id, "references"])).json()).items.length, 0);
+  } finally { service.close(); rmSync(root, { recursive: true, force: true }); }
 });

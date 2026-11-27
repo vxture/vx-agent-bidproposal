@@ -1,33 +1,39 @@
 "use client";
-import { productFetch } from "./product-fetch";
 import { useEffect, useState } from "react";
 import { Button, Icon } from "@vxture/design-system";
-import { ResourceVisualCard } from "@bidproposal/shared/presentation";
+import { ResourceVisualCard, ResourceActionsMenu, downloadResourceFile, type FileAccess, type ResourceRequest } from "@bidproposal/shared/presentation";
 import {
   RESOURCE_CATEGORIES,
+  resourceTitle,
   isTemplate,
   type ResourceData,
+  type ResourceDetailAction,
 } from "@bidproposal/shared/resources";
-import { ResourcePreview } from "./resource-collection";
+import { ResourcePreview, fileAccess as productFileAccess, libraryRequest } from "./resource-collection";
 export function ResourceProgress({
   onKnowledge,
   onTemplates,
+  tenantLabel,
+  onOpenFile,
+  fileAccess = productFileAccess,
+  request = libraryRequest,
 }: {
-  onKnowledge: (id?: string) => void;
-  onTemplates: (id?: string) => void;
+  tenantLabel?: string;
+  onKnowledge: (id?: string, action?: ResourceDetailAction) => void;
+  onTemplates: (id?: string, action?: ResourceDetailAction) => void;
+  onOpenFile(id: string, version: number, templates: boolean): void;
+  fileAccess?: FileAccess;
+  request?: ResourceRequest;
 }) {
   const [items, setItems] = useState<ResourceData[]>([]),
-    [state, setState] = useState("loading");
+    [state, setState] = useState("loading"), [error, setError] = useState("");
   useEffect(() => {
     const controller = new AbortController();
-    void productFetch("/api/workbench/library", {
-      credentials: "same-origin",
-      cache: "no-store",
+    void request("", {
       signal: controller.signal,
     })
-      .then(async (r) => {
-        if (!r.ok) throw Error();
-        const value = await r.json();
+      .then((value) => {
+        if (controller.signal.aborted) return;
         setItems(value.items);
         setState("ready");
       })
@@ -35,9 +41,16 @@ export function ResourceProgress({
         if (!controller.signal.aborted) setState("failed");
       });
     return () => controller.abort();
-  }, []);
+  }, [request]);
+  const download = async (item: ResourceData) => {
+    const version = item.versions.at(-1); if (!version) return;
+    setError("");
+    try { await downloadResourceFile(fileAccess, item.id, version.version, version.name); }
+    catch { setError("\u6587\u4ef6\u4e0b\u8f7d\u5931\u8d25\uff0c\u8bf7\u91cd\u8bd5"); }
+  };
   return (
     <div className="jadera-resource-progress">
+      {error && <p role="alert">{error}</p>}
       {[false, true].map((templates) => {
         const rows = items
             .filter((item) => isTemplate(item.category) === templates)
@@ -87,7 +100,7 @@ export function ResourceProgress({
                 {rows.map((item) => (
                   <ResourceVisualCard
                     key={item.id}
-                    title={item.name}
+                    title={resourceTitle(item)}
                     category={
                       RESOURCE_CATEGORIES[
                         item.category as keyof typeof RESOURCE_CATEGORIES
@@ -95,8 +108,10 @@ export function ResourceProgress({
                     }
                     version={item.versions.at(-1)?.version}
                     updatedAt={item.updatedAt}
-                    onOpen={() => go(item.id)}
-                    preview={<ResourcePreview item={item} />}
+                    onDetails={() => go(item.resourceNumber || item.id)}
+                    onOpenFile={() => { const version = item.versions.at(-1)?.version; if (version !== undefined) onOpenFile(item.resourceNumber || item.id, version, templates); }}
+                    actions={<ResourceActionsMenu title={resourceTitle(item)} onEdit={() => go(item.resourceNumber || item.id, "edit")} onUpload={() => go(item.resourceNumber || item.id, "upload")} onVersions={() => go(item.resourceNumber || item.id, "versions")} onReferences={() => go(item.resourceNumber || item.id, "references")} onDownload={item.versions.length ? () => void download(item) : undefined}/>}
+                    preview={<ResourcePreview item={item} tenantLabel={tenantLabel} />}
                   />
                 ))}
               </div>

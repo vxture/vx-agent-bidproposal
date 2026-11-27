@@ -1,8 +1,14 @@
 export { ApplicationHeader } from "./header";
+export { OfficeEditor } from "./office-editor";
+export { ImageViewer } from "./image-viewer";
 export { ProjectCollection } from "./projects";
 export type { ProjectCardData, ProjectRecord } from "./projects";
 export { HomeCompanion } from "./companion";
 export { ResourceVisualCard } from "./resource-card";
+export { PageScrollHint } from "./page-scroll-hint";
+export { ResourceActionsMenu } from "./resource-actions";
+export { downloadResourceFile } from "./original-file";
+export type { FileAccess } from "./original-file";
 export { AssistantDock } from "./assistant-dock";
 export type { AssistantClient } from "./assistant-dock";
 export { WorkflowNavigation } from "./workflow-nav";

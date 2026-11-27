@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { Button, Icon, ThemeProvider, ContentWidthProvider } from '@vxture/design-system';
-import { ResourceCollection } from '@bidproposal/shared/presentation';
+import { ResourceCollection, PageScrollHint } from '@bidproposal/shared/presentation';
 // These two modules are packaged beside this bundle; the host owns transport.
 import { createRuntime } from './environment.mjs';
 import { createLibraryRequest } from './library-request.mjs';
@@ -24,6 +24,7 @@ function NativeLibrary({ request }: { request: Parameters<typeof ResourceCollect
         </nav>
         <ResourceCollection key={String(templates)} templates={templates} request={request}
           selectedId={selected} onSelect={setSelected} />
+        <PageScrollHint/>
       </div>
     </ContentWidthProvider></ThemeProvider>
   );

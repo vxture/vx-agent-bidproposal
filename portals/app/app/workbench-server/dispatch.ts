@@ -13,6 +13,7 @@ import {
 } from "@vxture/ruyin-node-runtime";
 import type { BidRuntime } from "./service";
 import { projectRecord } from "@bidproposal/shared/project-records";
+import { managedResource, updateResource, importResource, resourceReferences } from "./resource-management";
 import { allowChatTurn } from "../chat/rate-limit";
 import { WorkbenchError, type WorkbenchAccess } from "./identity";
 
@@ -927,7 +928,7 @@ async function library(
   const scope = service.scope(),
     method = request.method;
   if (!path.length && method === "GET")
-    return json({ items: service.library.list(scope) });
+    return json({ items: service.library.list(scope).map((item) => managedResource(service, item.id)) });
   if (!path.length && method === "POST") {
     const body = await jsonBody(request, 29 * 1024 * 1024),
       bytes = Buffer.from(text(body, "base64"), "base64");
@@ -940,16 +941,35 @@ async function library(
         "INVALID_FILE",
         "Invalid upload encoding or size",
       );
-    return json(
-      await service.storageMutation(bytes, access.principal, () =>
-        service.library.import(scope, body),
-      ),
-      201,
-    );
+    const old = typeof body.id === "string" ? managedResource(service, body.id) : undefined;
+    if (old && body.category !== old.category)
+      throw new WorkbenchError(409, "RESOURCE_CONFLICT", "Resource type changed; reload before uploading");
+    const imported = await service.storageMutation(bytes, access.principal, async () => {
+      return importResource(service, body, access.principal.sub, access.principal.displayName, { source: "upload", avatarSrc: access.principal.avatarSrc });
+    });
+    return json(imported, 201);
   }
   if (path[0] && method === "GET" && path.length === 1)
-    return json(service.library.get(scope, path[0]) ?? missing());
+    return json(managedResource(service, path[0]));
+  if (path[0] && path[1] === "references" && path.length === 2 && method === "GET")
+    return json({ items: await resourceReferences(service, path[0]) });
+  if (path[0] && path.length === 1 && method === "PATCH")
+    return json(updateResource(service, path[0], await jsonBody(request), access.principal.sub, access.principal.displayName, access.principal.avatarSrc));
   if (path[0] && path[1] === "versions" && path[2]) {
+    if (path[3] === "file" && method === "GET") {
+      const item = service.library.get(scope, path[0]);
+      const version = item?.versions.find((entry) => entry.version === Number(path[2]));
+      if (!version) return missing();
+      const area = service.storage.openLibraryStore(scope.workspaceId, scope.productId);
+      return new Response(Uint8Array.from(await area.files.read(version.hash)), {
+        headers: {
+          "content-type": version.mediaType,
+          "content-disposition": attachmentDisposition(version.name),
+          "cache-control": "private, no-store",
+          "x-content-type-options": "nosniff",
+        },
+      });
+    }
     if (path[3] === "units" && method === "GET")
       return json(
         service.library.unit(

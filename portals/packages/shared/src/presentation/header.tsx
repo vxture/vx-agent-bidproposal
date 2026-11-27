@@ -67,7 +67,7 @@ export function ApplicationHeader({
   onNavigate,
   onSignOut,
   onAssistant,
-  assistantRunning = false,
+  assistantOpen = false,
   search,
 }: {
   brand: ReactNode;
@@ -77,7 +77,7 @@ export function ApplicationHeader({
   onNavigate: (page: string) => void;
   onSignOut: () => void;
   onAssistant: () => void;
-  assistantRunning?: boolean;
+  assistantOpen?: boolean;
   search?: ReactNode;
 }) {
   const [launcher, setLauncher] = useState(false),
@@ -242,8 +242,9 @@ export function ApplicationHeader({
             label={"AI \u52a9\u624b"}
             className="jadera-assistant-trigger"
             onClick={onAssistant}
+            active={assistantOpen}
             size="xl"
-            running={assistantRunning}
+            running
           />
           <ShellIconGroup
             label={"\u663e\u793a\u4e0e\u914d\u7f6e"}
