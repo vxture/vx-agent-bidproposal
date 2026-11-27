@@ -32,7 +32,7 @@ export function ResourceVisualCard({title,category,version,updatedAt,status,onDe
   <CardFooter className="jadera-resource-copy">
    <div className="jadera-resource-title"><h3 title={title}>{onDetails?<button type="button" className="jadera-resource-title-link" onClick={navigateDetails} aria-label={"\u8d44\u6599\u8be6\u60c5\uff1a"+title}>{displayTitle}</button>:displayTitle}</h3></div>
    <div className="jadera-resource-meta">
-    <span>{version===undefined?category:`v${version}`}<time dateTime={updatedAt} title={date.toLocaleString("zh-CN")}>{Number.isFinite(date.getTime())?date.toLocaleDateString("zh-CN",{month:"2-digit",day:"2-digit"}):""}</time></span>
+    <span>{version!==undefined&&<StatusBadge className="jadera-resource-latest" tone="neutral" aria-label={"\u6700\u65b0\u7248\u672c"}>NEW</StatusBadge>}{version===undefined?category:`v${version}`}<time dateTime={updatedAt} title={date.toLocaleString("zh-CN")}>{Number.isFinite(date.getTime())?date.toLocaleDateString("zh-CN",{month:"2-digit",day:"2-digit"}):""}</time></span>
     <div data-card-actions>
      <Button className="jadera-resource-open" size="md" variant="default" onClick={onOpenFile} disabled={version===undefined} aria-label={"\u6253\u5f00\u6587\u4ef6\uff1a"+title+(version===undefined?"":` v${version}`)} title={version===undefined?"\u5c1a\u65e0\u539f\u4ef6":"\u6253\u5f00\u6587\u4ef6 v"+version}>{"\u6253\u5f00"}</Button>
      {actions}

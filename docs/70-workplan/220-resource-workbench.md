@@ -446,3 +446,25 @@ to ten minutes; limit base-service pulls to two minutes. Recreate only after a
 successful image pull. Controlled tests cover primary success, timeout fallback,
 and double failure leaving the serving stack unchanged. Retry as v0.3.13 through
 the normal protected release path; do not move the existing release tag.
+
+## Latest file and historical versions (2026-11-28)
+
+The current visual card is the latest version and shows a small NEW badge before
+its version number. The lower version area lists earlier versions only; never
+repeat the current file there. Hide that area and its history note when there is
+only one version. Keep Upload new version in the current file's More menu so a
+single-version resource can still grow. Historical Open/Download target their
+own immutable version. Apply the same presentation to templates, knowledge and
+the HTML kit. Existing file bytes and version counts are unchanged.
+
+Knowledge-cover eyebrow uses the stored resource category's display label,
+matching the Resource type field and filter. Remove the fixed Knowledge text;
+template covers continue to identify the tenant. Collection/detail/home reuse
+the same shared artwork, so category changes propagate everywhere.
+
+Verified single/three-version detail states, latest NEW marker, no repeated
+current version, preserved upload/download menu, exact current downloads and
+historical read-only opening. Collection category labels pass for cases,
+qualifications, products, solutions and people; template tenant is unchanged.
+Both HTML examples pass single/three-version checks. All package type checks,
+HTML inventory/five kit tests and diff whitespace checks pass.

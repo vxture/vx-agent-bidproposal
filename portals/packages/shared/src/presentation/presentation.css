@@ -1434,3 +1434,5 @@ button.jadera-reference-project:hover{color:var(--primary);text-decoration:under
  .jadera-markdown-prose thead{display:table-header-group}
  .jadera-markdown-table{overflow:visible}
 }
+
+.jadera-resource-card .jadera-resource-latest{flex:none;padding:0 4px;font-size:10px;line-height:16px;font-weight:500;letter-spacing:.02em}

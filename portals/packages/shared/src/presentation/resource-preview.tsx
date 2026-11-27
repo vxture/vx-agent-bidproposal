@@ -38,7 +38,7 @@ export function ResourcePreview({
         size="xs"
       />
 
-        {template ? tenantLabel || "\u5f53\u524d\u79df\u6237" : "\u77e5\u8bc6\u8d44\u6599"}
+        {template ? tenantLabel || "\u5f53\u524d\u79df\u6237" : RESOURCE_CATEGORIES[item.category as keyof typeof RESOURCE_CATEGORIES] || item.category}
       </span>
       <strong>
         {resourceTitle(item)}
