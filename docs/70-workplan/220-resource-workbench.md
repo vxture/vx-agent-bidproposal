@@ -431,3 +431,10 @@ file acceptance. No platform configuration, database schema or worker01 changes.
 
 Local full test run passes after correcting product CSS variable namespaces;
 PATCH now resolves the verified updater display profile as POST already does.
+
+Pre-release inspection confirms live v0.3.11 / 0ea34dbb and healthy readiness.
+Its prior deploy run completed recreation/health checks but then failed with an
+unexpected EOF in shared /tmp/deploy.sh after a long image pull. Deploy and
+rollback now syntax-check and transfer to product/run/attempt-specific remote
+paths, preventing another product's workflow from replacing a running script.
+Environment approval, five required contexts and deployment semantics stay intact.

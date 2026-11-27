@@ -180,6 +180,7 @@ jobs:
           deploy_dir="${DEPLOY_DIR:-/srv/md0/${PRODUCT_CODE}/deploy}"
           image_tag="$IMAGE_TAG"
           test -n "$image_tag"
+          remote_script="/tmp/${PRODUCT_CODE}-deploy-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}.sh"
           ssh_opts=(-i ~/.ssh/deploy_key -p "$port" -o ServerAliveInterval=30 -o ServerAliveCountMax=20 -o ConnectTimeout=30)
 
           # Push only the deploy subset (deploy/, configs/, docker-compose.yml)
@@ -222,7 +223,8 @@ jobs:
           bash deploy.sh all
           bash deploy.sh verify
           REMOTE_SCRIPT
-          scp -i ~/.ssh/deploy_key -P "$port" -o ConnectTimeout=30 /tmp/deploy.sh "$DEPLOY_USER@$DEPLOY_HOST:/tmp/deploy.sh"
+          bash -n /tmp/deploy.sh
+          scp -i ~/.ssh/deploy_key -P "$port" -o ConnectTimeout=30 /tmp/deploy.sh "$DEPLOY_USER@$DEPLOY_HOST:$remote_script"
 
           remote_env=(
             "PRODUCT_CODE=$PRODUCT_CODE" "REPO_DIR=$deploy_dir" "IMAGE_TAG=$image_tag"
@@ -236,7 +238,8 @@ jobs:
             printf -v escaped '%q=%q ' "$key" "$value"
             remote_cmd+="$escaped"
           done
-          remote_cmd+="bash /tmp/deploy.sh"
+          printf -v remote_script_command 'bash %q' "$remote_script"
+          remote_cmd+="$remote_script_command"
           # Pipe over stdin (not argv) so secrets never appear in the host's ps/proc.
           printf '%s\n' "$remote_cmd" | ssh "${ssh_opts[@]}" "$DEPLOY_USER@$DEPLOY_HOST" bash -s
 
