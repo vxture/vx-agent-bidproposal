@@ -134,7 +134,9 @@ jobs:
           bash rollback-deploy.sh start
           bash rollback-deploy.sh verify
           REMOTE_SCRIPT
-          scp -i ~/.ssh/deploy_key -P "$port" -o ConnectTimeout=30 /tmp/rollback.sh "$DEPLOY_USER@$DEPLOY_HOST:/tmp/rollback.sh"
+          remote_script="/tmp/${PRODUCT_CODE}-rollback-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}.sh"
+          bash -n /tmp/rollback.sh
+          scp -i ~/.ssh/deploy_key -P "$port" -o ConnectTimeout=30 /tmp/rollback.sh "$DEPLOY_USER@$DEPLOY_HOST:$remote_script"
 
           remote_env=(
             "PRODUCT_CODE=$PRODUCT_CODE" "REPO_DIR=$deploy_dir" "IMAGE_TAG=$IMAGE_TAG"
@@ -148,5 +150,6 @@ jobs:
             printf -v escaped '%q=%q ' "$key" "$value"
             remote_cmd+="$escaped"
           done
-          remote_cmd+="bash /tmp/rollback.sh"
+          printf -v remote_script_command 'bash %q' "$remote_script"
+          remote_cmd+="$remote_script_command"
           printf '%s\n' "$remote_cmd" | ssh "${ssh_opts[@]}" "$DEPLOY_USER@$DEPLOY_HOST" bash -s

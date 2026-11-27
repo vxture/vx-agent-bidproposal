@@ -32,6 +32,7 @@ export class WorkbenchError extends Error {
 }
 export interface Principal {
   displayName?: string;
+  avatarSrc?: string;
   sessionId: string;
   sub: string;
   orgId: string;
@@ -127,12 +128,14 @@ export async function authorizeWorkbench(
       "Select an organization and workspace",
     );
   let displayName: string | undefined;
-  if (method === "POST") {
+  let avatarSrc: string | undefined;
+  if (method === "POST" || method === "PATCH") {
     const cfg = getOidcConfig();
     const context = await getAuthContext(cfg, sessionId);
     if (!context || context.user.sub !== caller.sub)
       throw new WorkbenchError(401, "AUTH_REQUIRED", "Sign in again");
     const profile = await resolveDisplayProfile(cfg, sessionId, context);
+    avatarSrc = profile.picture || undefined;
     displayName = profile.displayName || profile.account || undefined;
   }
   const principal = {
@@ -141,6 +144,7 @@ export async function authorizeWorkbench(
     orgId: caller.orgId,
     workspaceId: caller.workspaceId,
     ...(displayName ? { displayName } : {}),
+    ...(avatarSrc ? { avatarSrc } : {}),
   };
   return {
     principal,

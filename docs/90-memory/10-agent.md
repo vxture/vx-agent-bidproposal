@@ -260,3 +260,10 @@ first, then mirror it here - do not invent a standard inside a product repo.
 - See `CLAUDE.md` (repo root) for the full working agreement,
   `docs/40-implementation/10-app-workspace.md` for how the app fits together, and
   `docs/70-workplan/00-index.md` for the batch tracker.
+
+## Human-facing identifiers (owner, 2026-11-27)
+
+Never display internal UUIDs as product information, document numbers or user
+labels. Resources use a persisted business number, shown first in resource
+information; short names drive cards and document titles. Keep UUIDs internal to
+storage and authenticated transport. Resource browser routes use business numbers.

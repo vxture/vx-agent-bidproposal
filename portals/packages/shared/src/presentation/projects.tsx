@@ -3,6 +3,8 @@ import { ArrowsClockwise } from "@phosphor-icons/react";
 import React, { useMemo, useState, type ReactNode } from "react";
 import {
   ContentWidthContainer,
+  UserAvatar,
+  ViewHeader,
   Button,
   Input,
   InputGroup,
@@ -42,8 +44,8 @@ export interface ProjectCardData {
   productId: string;
   record?: ProjectRecord;
   versionLabel?: string;
-  owner?: { id?: string; name: string };
-  creator?: { id?: string; name: string };
+  owner?: { id?: string; name: string; avatarSrc?: string };
+  creator?: { id?: string; name: string; avatarSrc?: string };
   /** Host-supplied live execution state; never inferred from workflow stage. */
   backgroundTaskRunning?: boolean;
 }
@@ -100,7 +102,7 @@ function ProjectCard({
         <strong title={project.name}>{project.name}</strong>
         <span className="jadera-project-summary-row">
         <span className="jadera-project-owner">
-          <Icon name="user" size="xs" />
+          <UserAvatar src={(project.owner || project.creator)?.avatarSrc} alt={(project.owner || project.creator)?.name} className="size-icon-lg" />
           <span title={project.owner?.name || project.creator?.name}>{project.owner?.name || project.creator?.name || "\u8d1f\u8d23\u4eba\u5f85\u8865\u5f55"}</span>
         </span>
         <span className="jadera-project-assistant">
@@ -235,28 +237,17 @@ export function ProjectCollection({
     }
   };
   return (
-    <main className="jadera-home-scroll">
+    <main className="jadera-home-scroll" data-page-scroll>
       <ContentWidthContainer className="jadera-home-wrap">
         {catalog ? (
-          <header className="jadera-collection-heading">
-            <div>
-              <span>{"\u5de5\u4f5c\u533a\u9879\u76ee"}</span>
-              <h1>{"\u6807\u4e66\u9879\u76ee"}</h1>
-              <p>
-                {
-                  "\u9009\u62e9\u4e00\u4efd\u6807\u4e66\uff0c\u63a5\u7740\u5df2\u6709\u8fdb\u5c55\u7ee7\u7eed\u3002"
-                }
-              </p>
-            </div>
-            <Button
+          <ViewHeader className="mb-lg" icon="file-text" title={"\u6807\u4e66\u9879\u76ee"} description={"\u9009\u62e9\u4e00\u4efd\u6807\u4e66\uff0c\u63a5\u7740\u5df2\u6709\u8fdb\u5c55\u7ee7\u7eed\u3002"} action={<Button
               size="xl"
               disabled={state !== "ready"}
               onClick={() => setCreating(true)}
             >
               <Icon name="plus" size="sm" />
               {"\u65b0\u5efa\u6807\u4e66"}
-            </Button>
-          </header>
+            </Button>} />
         ) : (
           <section className="jadera-home-hero">
             <div>
@@ -354,14 +345,15 @@ export function ProjectCollection({
                   </span>
                 </div>
                 <div>
-                  <InputGroup>
+                  <InputGroup className="jadera-collection-search">
+                    <InputGroupAddon align="start"><Icon name="search" size="sm" /></InputGroupAddon>
                     <InputGroupInput
                     aria-label={"\u641c\u7d22\u6807\u4e66\u9879\u76ee"}
                     placeholder={"\u641c\u7d22\u6807\u4e66\u9879\u76ee"}
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
                   />
-                    <InputGroupAddon><Icon name="search" size="sm" /></InputGroupAddon>
+
                   </InputGroup>
                   <NativeSelect
                     aria-label={"\u9879\u76ee\u8303\u56f4"}
@@ -379,6 +371,7 @@ export function ProjectCollection({
                   <Button
                     variant="ghost"
                     size="icon-md"
+                    className="jadera-collection-reset"
                     aria-label={"\u590d\u4f4d\u7b5b\u9009"}
                     title={"\u590d\u4f4d\u7b5b\u9009"}
                     onClick={() => {

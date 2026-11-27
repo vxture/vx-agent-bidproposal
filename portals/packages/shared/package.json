@@ -10,12 +10,14 @@
     "./presentation": "./src/presentation/index.ts",
     "./presentation.css": "./src/presentation/presentation.css",
     "./project-records": "./src/project-records.ts",
-    "./resources": "./src/resources.ts"
+    "./resources": "./src/resources.ts",
+    "./file-formats": "./src/file-formats.ts"
   },
   "peerDependencies": {
     "@phosphor-icons/react": "^2.1.10",
     "@vxture/design-system": "15.11.0",
-    "react": "^19.0.0"
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
   },
   "scripts": {
     "type-check": "tsc --noEmit"
@@ -23,10 +25,14 @@
   "devDependencies": {
     "@types/node": "^22.0.0",
     "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
     "@vxture/design-system": "15.11.0",
     "typescript": "^5.7.0"
   },
   "dependencies": {
-    "libphonenumber-js": "1.13.17"
+    "libphonenumber-js": "1.13.17",
+    "pdfjs-dist": "5.4.624",
+    "react-markdown": "10.1.0",
+    "remark-gfm": "4.0.1"
   }
 }

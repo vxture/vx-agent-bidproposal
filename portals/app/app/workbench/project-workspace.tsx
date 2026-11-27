@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import {
   ContentWidthContainer,
   Button,
@@ -60,13 +60,10 @@ export function ProjectWorkspace({
   onRename?: (name: string) => Promise<void>;
 }) {
   const [contextOpen, setContextOpen] = useState(false),
-    [rightTab, setRightTab] = useState("tasks"),
-    [atBottom, setAtBottom] = useState(true),
-    [scrollable, setScrollable] = useState(false);
+    [rightTab, setRightTab] = useState("tasks");
   const [operationBusy, setOperationBusy] = useState(false),
     [operationError, setOperationError] = useState("");
   const [renaming, setRenaming] = useState(false);
-  const content = useRef<HTMLDivElement>(null);
   const region = useContainerWidth();
   const drawer = region.width !== undefined && region.width <= 1100;
   const visibleContext = contextOpen && !assistantOpen;
@@ -84,49 +81,6 @@ export function ProjectWorkspace({
     window.addEventListener(PRODUCT_REVIEW_EVENT, show);
     return () => window.removeEventListener(PRODUCT_REVIEW_EVENT, show);
   }, [id, onReview]);
-  useEffect(() => {
-    const outer = content.current,
-      iframeElement = frame.current;
-    if (!outer) return;
-    let cleanup = () => {};
-    const attach = () => {
-      cleanup();
-      const doc =
-          tab === "product" ? iframeElement?.contentDocument : undefined,
-        root = doc?.scrollingElement || outer;
-      const update = () => {
-        setScrollable(root.scrollHeight - root.clientHeight > 8);
-        setAtBottom(
-          root.scrollHeight - root.clientHeight - root.scrollTop <= 8,
-        );
-      };
-      const target = doc || outer;
-      target.addEventListener("scroll", update, true);
-      const observer = new ResizeObserver(update);
-      observer.observe(doc?.body || outer);
-      update();
-      cleanup = () => {
-        target.removeEventListener("scroll", update, true);
-        observer.disconnect();
-      };
-    };
-    attach();
-    iframeElement?.addEventListener("load", attach);
-    return () => {
-      cleanup();
-      iframeElement?.removeEventListener("load", attach);
-    };
-  }, [tab, section, id]);
-  const scroll = () => {
-    const target =
-      tab === "product"
-        ? frame.current?.contentDocument?.scrollingElement
-        : content.current;
-    target?.scrollBy({
-      top: Math.max(180, target.clientHeight * 0.65),
-      behavior: "smooth",
-    });
-  };
   const exportView = (
     <a
       className="bid-workbench-download"
@@ -139,7 +93,7 @@ export function ProjectWorkspace({
   return (
     <div className="jadera-project-workspace" ref={region.ref} data-context-drawer={drawer}>
       <div className="jadera-business-column">
-        <div ref={content} className="jadera-business-scroll">
+        <div className="jadera-business-scroll" data-page-scroll>
           <ContentWidthContainer className="jadera-center-content">
         <div className="jadera-project-context">
           <Button variant="ghost" onClick={() => onNavigate("#projects")}>
@@ -250,26 +204,7 @@ export function ProjectWorkspace({
               )}
           </ContentWidthContainer>
         </div>
-        <div className="jadera-content-scroll-cue">
-          {scrollable && !atBottom ? (
-            <Button
-              variant="ghost"
-              size="icon-md"
-              onClick={scroll}
-              aria-label={
-                "\u5411\u4e0b\u6eda\u52a8\u67e5\u770b\u540e\u7eed\u5185\u5bb9"
-              }
-            >
-              <Icon name="caret-double-down" size="sm" />
-            </Button>
-          ) : (
-            <span>
-              <i />
-              {"\u5df2\u7ecf\u5230\u5e95\u90e8"}
-              <i />
-            </span>
-          )}
-        </div>
+
       </div>
       {drawer && visibleContext && <button className="jadera-drawer-backdrop" aria-label={"\u5173\u95ed\u8f85\u52a9\u680f"} onClick={() => setContextOpen(false)} tabIndex={-1} />}
       <div

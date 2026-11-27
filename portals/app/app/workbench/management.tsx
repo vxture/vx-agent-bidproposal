@@ -18,7 +18,7 @@ export function Management({
 }) {
   const user = "user" in access ? access.user : undefined;
   return (
-    <ContentWidthContainer className="jadera-management-page">
+    <ContentWidthContainer className="jadera-management-page" data-page-scroll>
       <header>
         <span>{"\u914d\u7f6e\u7ba1\u7406"}</span>
         <h1>

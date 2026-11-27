@@ -3,6 +3,7 @@ import { ArrowsClockwise } from "@phosphor-icons/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ContentWidthContainer,
+  ViewHeader,
   Button,
   Icon,
   Input,
@@ -29,25 +30,44 @@ import {
   EmptyState,
   Label,
 } from "@vxture/design-system";
+import { ResourceActionsMenu } from "./resource-actions";
+import { downloadResourceFile } from "./original-file";
 import { ResourceVisualCard } from "./resource-card";
+import { MarkdownViewer } from "./markdown-viewer";
+import { FILE_ACCEPT, FILE_UPLOAD_MAX_BYTES, fileFormat } from "../file-formats";
+import { OriginalFile, type FileAccess } from "./original-file";
+import { ResourcePage } from "./resource-page";
+import { ResourcePreview } from "./resource-preview";
+export { ResourcePreview } from "./resource-preview";
 import {
   RESOURCE_CATEGORIES,
+  resourceTitle,
   isTemplate,
   resourceState,
   type ResourceData,
+  type ResourceDetailAction,
 } from "../resources";
 
 /** Scoped access supplied by the Web or native host. */
 export interface ResourceRequestOptions {
-  method?: "GET" | "POST";
+  method?: "GET" | "POST" | "PATCH";
   body?: string;
   signal?: AbortSignal;
 }
 export type ResourceRequest = (path?: string, options?: ResourceRequestOptions) => Promise<any>;
 export interface ResourceCollectionProps {
+  fileAccess?: FileAccess;
+  tenantLabel?: string;
+  organizationName?: string;
+  workspaceName?: string;
   templates: boolean;
   selectedId?: string;
-  onSelect: (id?: string) => void;
+  documentVersion?: number;
+  detailAction?: ResourceDetailAction;
+  onOpenFile?(id: string, version: number): void;
+  onCloseFile?(id: string): void;
+  onOpenProject?(id: string): void;
+  onSelect: (id?: string, action?: ResourceDetailAction) => void;
   request: ResourceRequest;
   projects?: { id: string; name: string; archivedAt?: string }[];
   loadCompilations?: (
@@ -66,11 +86,20 @@ const categoryName = (value: string) =>
 export function ResourceCollection({
   templates,
   selectedId,
+  documentVersion,
+  detailAction,
+  onOpenFile,
+  onCloseFile,
+  onOpenProject,
   onSelect,
   request,
   projects = [],
   onUse,
   loadCompilations,
+  tenantLabel,
+  organizationName,
+  workspaceName,
+  fileAccess,
 }: ResourceCollectionProps) {
   const [items, setItems] = useState<ResourceData[]>([]),
     [state, setState] = useState("loading"),
@@ -89,6 +118,14 @@ export function ResourceCollection({
     [text, setText] = useState<string>(),
     [sourceState, setSourceState] = useState("loading");
   const file = useRef<HTMLInputElement>(null);
+  const [pendingFile, setPendingFile] = useState<File>();
+  const [detailTab, setDetailTab] = useState<ResourceDetailAction>("info");
+  const [localDocumentVersion, setLocalDocumentVersion] = useState<number>();
+  const [editing, setEditing] = useState<ResourceData>();
+  const [editName, setEditName] = useState("");
+  const [editCategory, setEditCategory] = useState("");
+  const [savingMetadata, setSavingMetadata] = useState(false);
+  const [metadataError, setMetadataError] = useState("");
   const [using, setUsing] = useState(false),
     [useProject, setUseProject] = useState(""),
     [notice, setNotice] = useState("");
@@ -146,7 +183,7 @@ export function ResourceCollection({
     const timer = setTimeout(() => void load(), 3000);
     return () => clearTimeout(timer);
   }, [items, load]);
-  const selected = items.find((item) => item.id === selectedId),
+  const selected = items.find((item) => item.id === selectedId || item.resourceNumber === selectedId),
     current =
       selected?.versions.find((row) => row.version === version) ||
       selected?.versions.at(-1);
@@ -179,6 +216,11 @@ export function ResourceCollection({
       });
     return () => controller.abort();
   }, [selected?.id, current?.version, current?.reading?.units, unit, request]);
+  useEffect(() => {
+    if (!selected?.resourceNumber || selectedId !== selected.id) return;
+    if (documentVersion !== undefined && onOpenFile) onOpenFile(selected.resourceNumber, documentVersion);
+    else onSelect(selected.resourceNumber, detailAction);
+  }, [selected?.resourceNumber, selectedId, documentVersion]);
   const rows = items.filter(
     (item) =>
       isTemplate(item.category) === templates &&
@@ -188,22 +230,30 @@ export function ResourceCollection({
   const choices = Object.entries(RESOURCE_CATEGORIES).filter(
     ([key]) => isTemplate(key) === templates,
   );
-  const addVersion = (item: ResourceData) => {
-    setTarget(item);
-    setUploadCategory(item.category);
-    setIntake(true);
+  const showDetails = (item: ResourceData, action: ResourceDetailAction = "info") => { setLocalDocumentVersion(undefined); setDetailTab(action); onSelect(item.resourceNumber || item.id, action === "info" ? undefined : action); };
+  const openFile = (item: ResourceData) => {
+    setDetailTab("info");
+    const version = item.versions.at(-1)?.version;if(version===undefined)return;
+    if(onOpenFile)onOpenFile(item.resourceNumber || item.id,version);
+    else { setLocalDocumentVersion(version);onSelect(item.resourceNumber || item.id); }
   };
+  const downloadFile = async (item: ResourceData) => {
+    const version = item.versions.at(-1);if(!fileAccess || !version)return;
+    try { await downloadResourceFile(fileAccess,item.id,version.version,version.name); } catch { setError("\u6587\u4ef6\u4e0b\u8f7d\u5931\u8d25\uff0c\u8bf7\u91cd\u8bd5"); }
+  };
+  const resourceActions = (item: ResourceData) => <ResourceActionsMenu title={resourceTitle(item)} onEdit={() => showDetails(item,"edit")} onUpload={() => showDetails(item,"upload")} onVersions={() => showDetails(item,"versions")} onReferences={() => showDetails(item,"references")} onDownload={fileAccess && item.versions.length ? () => void downloadFile(item) : undefined}/>;
+  const addVersion = (item: ResourceData) => showDetails(item,"upload");
   const upload = async (selectedFile: File) => {
     setUploading(true);
     setError("");
     try {
       if (
-        selectedFile.size > 20 * 1024 * 1024 ||
+        selectedFile.size > FILE_UPLOAD_MAX_BYTES ||
         !selectedFile.size ||
-        !/[.](pdf|docx|md)$/i.test(selectedFile.name)
+        !fileFormat(selectedFile.name)
       )
         throw Error(
-          "\u8bf7\u9009\u62e9\u4e0d\u8d85\u8fc7 20 MiB \u7684 PDF\u3001DOCX \u6216 Markdown \u6587\u4ef6",
+          "\u8bf7\u9009\u62e9\u4e0d\u8d85\u8fc7 20 MiB \u7684 Office\u3001PDF\u3001Markdown \u6216\u56fe\u7247",
         );
       const bytes = new Uint8Array(await selectedFile.arrayBuffer());
       let binary = "";
@@ -216,14 +266,15 @@ export function ResourceCollection({
           category: uploadCategory,
           base64: btoa(binary),
           ...(target
-            ? { id: target.id, expectedVersion: target.versions.length }
+            ? { id: target.id, expectedVersion: target.versions.length, revision: target.revision }
             : {}),
         }),
       });
       setIntake(false);
       setTarget(undefined);
+      setPendingFile(undefined);
       await load();
-      onSelect(item.id);
+      onSelect(item.resourceNumber || item.id);
     } catch (e) {
       setError(
         e instanceof Error
@@ -234,6 +285,18 @@ export function ResourceCollection({
       setUploading(false);
       if (file.current) file.current.value = "";
     }
+  };
+  const editMetadata = (item: ResourceData) => {
+    showDetails(item,"edit");
+  };
+  const saveMetadata = async () => {
+    if (!editing || savingMetadata) return;
+    setSavingMetadata(true); setMetadataError("");
+    try {
+      await request("/" + editing.id, { method: "PATCH", body: JSON.stringify({ revision: editing.revision, name: editName.trim(), category: editCategory }) });
+      await load(); setEditing(undefined);
+    } catch (error) { setMetadataError(error instanceof Error ? error.message : "\u4fdd\u5b58\u5931\u8d25"); }
+    finally { setSavingMetadata(false); }
   };
   const retry = async () => {
     if (!selected || !current) return;
@@ -249,26 +312,29 @@ export function ResourceCollection({
       );
     }
   };
+  const loadReferences = useCallback(async (id: string, signal: AbortSignal) => (await request("/" + id + "/references", { signal })).items, [request]);
+  if (selected) return <ResourcePage key={selected.id} item={selected} loadReferences={loadReferences} onOpenProject={onOpenProject} initialAction={detailAction || detailTab} tenantLabel={tenantLabel} documentVersion={documentVersion ?? localDocumentVersion} onOpenFile={onOpenFile ? version => onOpenFile(selected.resourceNumber || selected.id, version) : undefined} onCloseFile={() => {setLocalDocumentVersion(undefined);onCloseFile?.(selected.resourceNumber || selected.id);}} organizationName={organizationName || tenantLabel} workspaceName={workspaceName} fileAccess={fileAccess} parsedText={text} onBack={() => { setDetailTab("info"); onSelect(); }}
+    onUpdate={async (input) => { const saved = await request("/" + selected.id, { method: "PATCH", body: JSON.stringify(input) }); await load(); if (saved.resourceNumber && saved.resourceNumber !== selectedId) onSelect(saved.resourceNumber); }}
+    onUpload={async (newFile) => {
+      if (!newFile.size || newFile.size > FILE_UPLOAD_MAX_BYTES || !fileFormat(newFile.name)) throw Error("\u8bf7\u9009\u62e9\u652f\u6301\u7684\u6587\u4ef6\uff0c\u4e0d\u8d85\u8fc7 20 MiB");
+      const bytes = new Uint8Array(await newFile.arrayBuffer()); let binary = "";
+      for (let i = 0; i < bytes.length; i += 16384) binary += String.fromCharCode(...bytes.subarray(i, i + 16384));
+      const saved = await request("", { method: "POST", body: JSON.stringify({ id: selected.id, revision: selected.revision, expectedVersion: selected.versions.length, name: newFile.name, category: selected.category, base64: btoa(binary) }) });
+      await load();
+      return saved.versions.at(-1).version as number;
+    }} />;
   return (
-    <main className="jadera-home-scroll">
+    <main className="jadera-home-scroll" data-page-scroll>
       <ContentWidthContainer className="jadera-home-wrap">
-        <header className="jadera-collection-heading">
-          <div>
-            <span>{"\u516c\u5171\u8d44\u6e90"}</span>
-            <h1>
-              {templates
+        <ViewHeader className="mb-lg" icon={templates ? "file-text" : "book-open"} title={templates
                 ? "\u6a21\u677f\u7ba1\u7406"
-                : "\u77e5\u8bc6\u8d44\u6599"}
-            </h1>
-            <p>
-              {templates
+                : "\u77e5\u8bc6\u8d44\u6599"} description={templates
                 ? "\u6309\u6807\u4e66\u7c7b\u578b\u79ef\u7d2f\u5185\u5bb9\u4e0e\u7248\u5f0f\uff0c\u4fdd\u7559\u6bcf\u6b21\u66f4\u65b0\u3002"
-                : "\u4f01\u4e1a\u8d44\u8d28\u3001\u9879\u76ee\u6848\u4f8b\u4e0e\u4e13\u4e1a\u7ecf\u9a8c\uff0c\u968f\u9879\u76ee\u79ef\u7d2f\u4e0e\u590d\u7528\u3002"}
-            </p>
-          </div>
-          <Button
+                : "\u4f01\u4e1a\u8d44\u8d28\u3001\u9879\u76ee\u6848\u4f8b\u4e0e\u4e13\u4e1a\u7ecf\u9a8c\uff0c\u968f\u9879\u76ee\u79ef\u7d2f\u4e0e\u590d\u7528\u3002"} action={<Button size="xl"
             onClick={() => {
               setTarget(undefined);
+              setPendingFile(undefined);
+              setError("");
               setIntake(true);
             }}
           >
@@ -276,8 +342,7 @@ export function ResourceCollection({
             {templates
               ? "\u5bfc\u5165\u6a21\u677f"
               : "\u5bfc\u5165\u8d44\u6599"}
-          </Button>
-        </header>
+          </Button>} />
         <div className="jadera-collection-toolbar">
           <div>
             <ViewModeSwitch
@@ -296,7 +361,8 @@ export function ResourceCollection({
             </span>
           </div>
           <div>
-            <InputGroup>
+            <InputGroup className="jadera-collection-search">
+                    <InputGroupAddon align="start"><Icon name="search" size="sm" /></InputGroupAddon>
               <InputGroupInput
               value={query}
               onChange={(e) => setQuery(e.target.value)}
@@ -307,7 +373,7 @@ export function ResourceCollection({
                   : "\u641c\u7d22\u77e5\u8bc6\u8d44\u6599"
               }
             />
-              <InputGroupAddon><Icon name="search" size="sm" /></InputGroupAddon>
+
             </InputGroup>
             <NativeSelect
               value={category}
@@ -324,6 +390,7 @@ export function ResourceCollection({
             <Button
               variant="ghost"
               size="icon-md"
+              className="jadera-collection-reset"
               aria-label={"\u590d\u4f4d\u7b5b\u9009"}
               title={"\u590d\u4f4d\u7b5b\u9009"}
               onClick={() => {
@@ -371,36 +438,15 @@ export function ResourceCollection({
             {rows.map((item) => (
               <ResourceVisualCard
                 key={item.id}
-                title={item.name}
+                title={resourceTitle(item)}
                 category={categoryName(item.category)}
                 version={item.versions.at(-1)?.version}
                 updatedAt={item.updatedAt}
                 status={resourceState(item)}
-                onOpen={() => onSelect(item.id)}
-                preview={<ResourcePreview item={item} />}
-                actions={
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon-md"
-                        aria-label={
-                          item.name + "\u7684\u66f4\u591a\u64cd\u4f5c"
-                        }
-                      >
-                        <Icon name="more-vertical" size="sm" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => onSelect(item.id)}>
-                        {"\u67e5\u770b\u539f\u6587\u4e0e\u7248\u672c"}
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => addVersion(item)}>
-                        {"\u6dfb\u52a0\u65b0\u7248\u672c"}
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                }
+                onDetails={() => showDetails(item)}
+                onOpenFile={() => openFile(item)}
+                preview={<ResourcePreview item={item} tenantLabel={tenantLabel} />}
+                actions={resourceActions(item)}
               />
             ))}
           </div>
@@ -419,7 +465,7 @@ export function ResourceCollection({
               <TableBody>
                 {rows.map((item) => (
                   <TableRow key={item.id}>
-                    <TableCell>{item.name}</TableCell>
+                    <TableCell><button className="jadera-resource-list-title" onClick={()=>showDetails(item)}>{resourceTitle(item)}</button></TableCell>
                     <TableCell>{categoryName(item.category)}</TableCell>
                     <TableCell>{resourceState(item)}</TableCell>
                     <TableCell>
@@ -427,41 +473,28 @@ export function ResourceCollection({
                       {" \u00b7"}{" "}
                       {new Date(item.updatedAt).toLocaleDateString("zh-CN")}
                     </TableCell>
-                    <TableCell>
-                      <Button variant="ghost" onClick={() => onSelect(item.id)}>
-                        {"\u67e5\u770b\u8d44\u6599"}
-                      </Button>
-                      <Button variant="ghost" onClick={() => addVersion(item)}>
-                        {"\u65b0\u7248\u672c"}
-                      </Button>
-                    </TableCell>
+                    <TableCell><div className="jadera-resource-list-actions"><Button className="jadera-resource-open" variant="default" disabled={!item.versions.length} onClick={()=>openFile(item)}>{"\u6253\u5f00"}</Button>{resourceActions(item)}</div></TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
           </div>
         )}
-        <Dialog
-          open={intake}
-          onOpenChange={(open) => {
-            if (!uploading) setIntake(open);
-          }}
-        >
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>
+        {intake && <section className="jadera-resource-intake" aria-label="\u5bfc\u5165\u6587\u4ef6">
+            <header>
+              <h2>
                 {target
                   ? "\u6dfb\u52a0\u65b0\u7248\u672c"
                   : templates
                     ? "\u5bfc\u5165\u6a21\u677f"
                     : "\u5bfc\u5165\u77e5\u8bc6\u8d44\u6599"}
-              </DialogTitle>
-              <DialogDescription>
+              </h2>
+              <p>
                 {
                   "\u539f\u4ef6\u52a0\u5bc6\u4fdd\u5b58\uff0c\u6b63\u6587\u5728\u540e\u53f0\u8bfb\u53d6\uff1b\u540c\u4e00\u8d44\u6599\u7684\u5386\u53f2\u7248\u672c\u4f1a\u4fdd\u7559\u3002"
                 }
-              </DialogDescription>
-            </DialogHeader>
+              </p>
+            </header>
             <Label htmlFor="resource-category">
               {"\u8d44\u6599\u7c7b\u578b"}
             </Label>
@@ -480,234 +513,28 @@ export function ResourceCollection({
             <Input
               ref={file}
               type="file"
-              accept=".pdf,.docx,.md"
+              accept={FILE_ACCEPT}
               disabled={uploading}
               aria-label={"\u9009\u62e9\u8d44\u6599\u6587\u4ef6"}
               onChange={(e) => {
                 const selected = e.target.files?.[0];
-                if (selected) void upload(selected);
+                if (selected) { setPendingFile(selected); setError(""); }
               }}
             />
+            {target && <p className="text-body-small">{target.name}{" \u00b7 v"}{target.versions.at(-1)?.version}{" \u2192 v"}{target.versions.length + 1}</p>}
+            {pendingFile && <p className="text-body-small">{pendingFile.name}{" \u00b7 "}{(pendingFile.size / 1024 / 1024).toFixed(2)} MiB</p>}
+            <div className="jadera-file-tools">
+              <Button disabled={!pendingFile || uploading} onClick={() => pendingFile && void upload(pendingFile)}>{uploading ? "\u4e0a\u4f20\u4e2d\u2026" : "\u786e\u8ba4\u4e0a\u4f20"}</Button>
+              <Button variant="ghost" disabled={uploading} onClick={() => setIntake(false)}>{"\u53d6\u6d88"}</Button>
+            </div>
             {uploading && (
               <p role="status">
                 {"\u6b63\u5728\u4e0a\u4f20\u5e76\u4fdd\u5b58\u539f\u4ef6\u2026"}
               </p>
             )}
             {error && <p role="alert">{error}</p>}
-          </DialogContent>
-        </Dialog>
-        <Dialog
-          open={!!selected}
-          onOpenChange={(open) => {
-            if (!open) onSelect();
-          }}
-        >
-          <DialogContent className="jadera-resource-detail">
-            <DialogHeader>
-              <DialogTitle>{selected?.name}</DialogTitle>
-              <DialogDescription>
-                {selected && categoryName(selected.category)}
-                {" \u00b7 \u539f\u6587\u4e0e\u5386\u53f2\u7248\u672c"}
-              </DialogDescription>
-            </DialogHeader>
-            <div className="jadera-resource-detail-toolbar">
-              <NativeSelect
-                aria-label={"\u8d44\u6599\u7248\u672c"}
-                value={current?.version || ""}
-                onChange={(e) => {
-                  setVersion(Number(e.target.value));
-                  setUnit(0);
-                }}
-              >
-                {selected &&
-                  [...selected.versions].reverse().map((row) => (
-                    <option key={row.version} value={row.version}>
-                      v{row.version}
-                      {" \u00b7 "}
-                      {row.name}
-                    </option>
-                  ))}
-              </NativeSelect>
-              <Button
-                variant="outline"
-                onClick={() => {
-                  if (selected) {
-                    onSelect();
-                    addVersion(selected);
-                  }
-                }}
-              >
-                {"\u6dfb\u52a0\u65b0\u7248\u672c"}
-              </Button>
-            </div>
-            {onUse && (
-              <div className="jadera-resource-use">
-                <NativeSelect
-                  aria-label={"\u9009\u7528\u5230\u6807\u4e66\u9879\u76ee"}
-                  value={useProject}
-                  onChange={(e) => setUseProject(e.target.value)}
-                >
-                  <option value="">
-                    {"\u9009\u62e9\u6807\u4e66\u9879\u76ee"}
-                  </option>
-                  {projects
-                    .filter((project) => !project.archivedAt)
-                    .map((project) => (
-                      <option value={project.id} key={project.id}>
-                        {project.name}
-                      </option>
-                    ))}
-                </NativeSelect>
-                {loadCompilations && useProject && (
-                  <NativeSelect
-                    aria-label={"\u9009\u62e9\u7f16\u5236\u7248\u672c"}
-                    value={useVersion}
-                    onChange={(e) => setUseVersion(e.target.value)}
-                  >
-                    {!useVersions.length && (
-                      <option value="">
-                        {versionsFailed
-                          ? "\u7248\u672c\u8bfb\u53d6\u5931\u8d25\uff0c\u8bf7\u91cd\u9009\u9879\u76ee"
-                          : "\u8bfb\u53d6\u7248\u672c\u2026"}
-                      </option>
-                    )}
-                    {useVersions.map((item) => (
-                      <option
-                        key={item.id}
-                        value={item.id}
-                        disabled={item.state !== "ready"}
-                      >
-                        {item.label}
-                      </option>
-                    ))}
-                  </NativeSelect>
-                )}
-                <Button
-                  disabled={
-                    !useProject ||
-                    (!!loadCompilations && !useVersion) ||
-                    using ||
-                    current?.reading?.state !== "completed"
-                  }
-                  onClick={async () => {
-                    if (!selected || !current) return;
-                    setUsing(true);
-                    setNotice("");
-                    try {
-                      await onUse(
-                        selected,
-                        current.version,
-                        loadCompilations ? useVersion : useProject,
-                      );
-                      setNotice(
-                        "\u5df2\u56fa\u5b9a\u6b64\u7248\u672c\u5230\u9879\u76ee\uff0c\u53ef\u5728\u7f16\u5199\u89c4\u5212\u548c\u6210\u679c\u5bfc\u51fa\u4e2d\u9009\u7528\u3002",
-                      );
-                    } catch (e) {
-                      setNotice(
-                        e instanceof Error
-                          ? e.message
-                          : "\u9009\u7528\u672a\u5b8c\u6210",
-                      );
-                    } finally {
-                      setUsing(false);
-                    }
-                  }}
-                >
-                  {using
-                    ? "\u6b63\u5728\u9009\u7528\u2026"
-                    : "\u9009\u7528\u6b64\u7248\u672c"}
-                </Button>
-              </div>
-            )}
-            {notice && <p role="status">{notice}</p>}
-            <p className="text-body-small text-muted-foreground">
-              {selected && resourceState(selected)}
-              {" \u00b7"} {current?.reading?.units || 0}
-              {" \u4e2a\u539f\u6587\u5757"}
-            </p>
-            {current?.reading?.state === "failed" && (
-              <Button variant="outline" onClick={() => void retry()}>
-                {"\u91cd\u65b0\u8bfb\u53d6"}
-              </Button>
-            )}
-            {!!current?.reading?.units && (
-              <>
-                <NativeSelect
-                  aria-label={"\u539f\u6587\u9875\u6216\u7ed3\u6784\u5757"}
-                  value={unit}
-                  onChange={(e) => setUnit(Number(e.target.value))}
-                >
-                  {Array.from({ length: current.reading.units }, (_, i) => (
-                    <option key={i} value={i}>
-                      {"\u539f\u6587\u5757 "}
-                      {i + 1}
-                    </option>
-                  ))}
-                </NativeSelect>
-                <div
-                  className="jadera-resource-source"
-                  role="region"
-                  aria-label={"\u539f\u6587\u5185\u5bb9"}
-                >
-                  {sourceState === "loading"
-                    ? "\u6b63\u5728\u8bfb\u53d6\u539f\u6587\u2026"
-                    : sourceState === "failed"
-                      ? "\u539f\u6587\u8bfb\u53d6\u5931\u8d25\uff0c\u8bf7\u91cd\u65b0\u6253\u5f00\u3002"
-                      : text}
-                </div>
-              </>
-            )}
-          </DialogContent>
-        </Dialog>
+        </section>}
       </ContentWidthContainer>
     </main>
-  );
-}
-export function ResourcePreview({
-  item,
-}: {
-  item: Pick<ResourceData, "name" | "category">;
-}) {
-  const template = isTemplate(item.category);
-  return (
-    <div
-      className={
-        "jadera-document-art " +
-        (template
-          ? "template"
-          : item.category === "qualification"
-            ? "certificate"
-            : "case")
-      }
-    >
-      <span className="jadera-document-eyebrow">
-      <Icon
-        name={
-          template
-            ? "file-text"
-            : item.category === "qualification"
-              ? "certificate"
-              : "buildings"
-        }
-        size="xs"
-      />
-
-        {template ? "JADERA" : "\u77e5\u8bc6\u8d44\u6599"}
-      </span>
-      <strong>
-        {template
-          ? categoryName(item.category)
-          : item.name.replace(/[.](pdf|docx|md)$/i, "")}
-      </strong>
-      <span>{categoryName(item.category)}</span>
-      <div className="jadera-document-lines">
-        <i />
-        <i />
-        <i />
-      </div>
-      <span className="jadera-document-seal" aria-hidden>
-        {"\u7ae0"}
-      </span>
-    </div>
   );
 }

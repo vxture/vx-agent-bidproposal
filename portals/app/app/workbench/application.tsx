@@ -30,6 +30,7 @@ import { EntryCard } from "../access/entry-card";
 import { entryKindFor, gateLoginUrl } from "../access/entry-content";
 import {
   ApplicationHeader,
+  PageScrollHint,
   ProjectCollection,
   HomeCompanion,
   AssistantDock,
@@ -47,6 +48,7 @@ import { requirementsComplete } from "@bidproposal/shared/compilations";
 import { ResourceCollection } from "./resource-collection";
 import { assistantClient } from "./assistant-client";
 import { ResourceProgress } from "./resources";
+import { resourceDetailAction } from "@bidproposal/shared/resources";
 import { Management, ManagementNavigation } from "./management";
 import { displayNameFor } from "../auth/lib/display";
 import { ProductMark } from "../access/product-mark";
@@ -224,6 +226,7 @@ function Workspace({ access }: { access: AccessState }) {
     }
   }, [lastKey]);
   const navigate = useCallback((href: string) => {
+    if(!window.dispatchEvent(new Event("jadera:before-navigate",{cancelable:true})))return;
     const doc = frame.current?.contentDocument;
     if (doc?.documentElement.dataset.unsaved === "true") {
       doc.dispatchEvent(new Event("bid.unsaved"));
@@ -245,6 +248,10 @@ function Workspace({ access }: { access: AccessState }) {
                 backgroundTaskRunning?: boolean;
               }[];
             };
+          for (const key of ["owner", "creator"] as const) {
+            const person = project[key];
+            if (person && person.id === user?.sub && user?.picture) project[key] = { ...person, avatarSrc: user.picture };
+          }
           let selected = project.id;
           try {
             selected =
@@ -270,10 +277,11 @@ function Workspace({ access }: { access: AccessState }) {
     } catch {
       setState("failed");
     }
-  }, [api, lastKey]);
+  }, [api, lastKey, user?.sub, user?.picture]);
   useEffect(() => {
     let acceptedHash = window.location.hash;
     const update = () => {
+      if(window.location.hash!==acceptedHash&&!window.dispatchEvent(new Event("jadera:before-navigate",{cancelable:true}))){window.history.replaceState(null,"",acceptedHash);return;}
       const doc = frame.current?.contentDocument;
       if (doc?.documentElement.dataset.unsaved === "true" && window.location.hash !== acceptedHash) {
         window.history.replaceState(null, "", acceptedHash);
@@ -544,7 +552,7 @@ function Workspace({ access }: { access: AccessState }) {
             onNavigate={headerNavigate}
             onSignOut={signOut}
             onAssistant={assistant}
-            assistantRunning={projects.some((project) => project.backgroundTaskRunning && !project.archivedAt)}
+            assistantOpen={assistantOpen}
             search={<WorkspaceSearch open={searchOpen} onOpen={() => setSearchOpen(true)} onClose={() => setSearchOpen(false)} projects={projects} onNavigate={navigate} />}
           />
         }
@@ -675,6 +683,9 @@ function Workspace({ access }: { access: AccessState }) {
               />
             ) : library || page === "templates" ? (
               <ResourceCollection
+                organizationName={user?.activeOrgName || undefined}
+                workspaceName={user?.activeWorkspaceName || undefined}
+                tenantLabel={user?.activeOrgDisplayName || user?.activeOrgName || undefined}
                 loadCompilations={loadCompilations}
                 templates={page === "templates"}
                 projects={projects}
@@ -704,11 +715,16 @@ function Workspace({ access }: { access: AccessState }) {
                       "\u9009\u7528\u672a\u5b8c\u6210\uff0c\u8bf7\u91cd\u65b0\u8bfb\u53d6\u9879\u76ee\u540e\u91cd\u8bd5",
                     );
                 }}
+                onOpenProject={id => navigate("#ws/" + id + "/product/analysis")}
+                documentVersion={parts[2] === "file" && /^\d+$/.test(parts[3] || "") ? Number(parts[3]) : undefined}
+                detailAction={resourceDetailAction(parts[2])}
+                onOpenFile={(id, version) => navigate((page === "templates" ? "#templates" : "#library") + "/" + id + "/file/" + version)}
+                onCloseFile={id => navigate((page === "templates" ? "#templates" : "#library") + "/" + id)}
                 selectedId={parts[1] !== "bidproposal" ? parts[1] : undefined}
-                onSelect={(id) =>
+                onSelect={(id, action) =>
                   navigate(
                     (page === "templates" ? "#templates" : "#library") +
-                      (id ? "/" + id : ""),
+                      (id ? "/" + id + (action && action !== "info" ? "/" + action : "") : ""),
                   )
                 }
               />
@@ -719,7 +735,7 @@ function Workspace({ access }: { access: AccessState }) {
                 onNavigate={navigate}
               />
             ) : page === "help" ? (
-              <main className="jadera-static-page">
+              <main className="jadera-static-page" data-page-scroll>
                 <h1>{"\u4f7f\u7528\u5e2e\u52a9"}</h1>
                 <p>
                   {
@@ -762,12 +778,14 @@ function Workspace({ access }: { access: AccessState }) {
                 }
                 resources={
                   <ResourceProgress
-                    onKnowledge={(id) =>
-                      navigate("#library" + (id ? "/" + id : ""))
+                    tenantLabel={user?.activeOrgDisplayName || user?.activeOrgName || undefined}
+                    onKnowledge={(id, action) =>
+                      navigate("#library" + (id ? "/" + id + (action && action !== "info" ? "/" + action : "") : ""))
                     }
-                    onTemplates={(id) =>
-                      navigate("#templates" + (id ? "/" + id : ""))
+                    onTemplates={(id, action) =>
+                      navigate("#templates" + (id ? "/" + id + (action && action !== "info" ? "/" + action : "") : ""))
                     }
+                    onOpenFile={(id, version, templates) => navigate((templates ? "#templates/" : "#library/") + id + "/file/" + version)}
                   />
                 }
                 companion={
@@ -786,6 +804,7 @@ function Workspace({ access }: { access: AccessState }) {
               projectId={projectId}
               projectName={projectName}
             />
+            <PageScrollHint scopeRef={workRegion.ref} frameRef={frame} frameActive={!!projectId && tab === "product"}/>
           </div>
         </ShellPageContainer>
       </ShellViewport>
