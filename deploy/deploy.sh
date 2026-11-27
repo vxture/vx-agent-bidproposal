@@ -86,14 +86,18 @@ cmd_start() {
   local reg="${IMAGE_REGISTRY:-ghcr.io}" ns="${IMAGE_NAMESPACE:-vxture}" tag="${IMAGE_TAG:-latest}"
   local primary="${reg}/${ns}/${IMAGE_NAME}:${tag}"
   log "pulling ${primary}"
-  if ! docker pull "$primary"; then
+  if ! timeout --kill-after=10s 180 docker pull "$primary"; then
     local fb="${FALLBACK_IMAGE_REGISTRY:-}/${FALLBACK_IMAGE_NAMESPACE:-}/${IMAGE_NAME}:${tag}"
-    log "primary pull failed; trying fallback ${fb}"
-    docker pull "$fb"
+    log "primary pull failed or timed out; trying fallback ${fb}"
+    timeout --kill-after=10s 600 docker pull "$fb"
     docker tag "$fb" "$primary"
   fi
   # Data-array box: full-stack recreate is fine.
-  compose pull redis db || true
+  timeout --kill-after=10s 120 env \
+    PRODUCT_CODE="$PRODUCT_CODE" PRODUCT_CODE_SNAKE="$PRODUCT_CODE_SNAKE" \
+    PROJECT_NAME="$PROJECT_NAME" DATA_DIR="$DATA_DIR" APP_ENV_FILE="$ENV_FILE" \
+    IMAGE_REGISTRY="$reg" IMAGE_NAMESPACE="$ns" IMAGE_TAG="$tag" \
+    docker compose --project-name "$PROJECT_NAME" --env-file "$ENV_FILE" -f "$COMPOSE_FILE" pull redis db || true
   compose up -d
   log "started"
 }
