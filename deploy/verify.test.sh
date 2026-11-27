@@ -46,3 +46,44 @@ if bash "$stage/deploy/deploy.sh" verify > "$stage/output"; then
 fi
 ! grep -q '/api/ready' "$stage/calls"
 echo 'Bid deployment readiness gate: 3 scenarios passed'
+
+# A stalled primary registry must reach the fallback, and two failed registries
+# must never recreate the serving stack. The mock timeout returns immediately.
+cat > "$stage/bin/timeout" <<'TIMEOUT'
+#!/usr/bin/env bash
+printf 'timeout %s\n' "$*" >> "$BID_VERIFY_LOG"
+shift 2
+exec "$@"
+TIMEOUT
+cat > "$stage/bin/docker" <<'DOCKER'
+#!/usr/bin/env bash
+printf 'docker %s\n' "$*" >> "$BID_VERIFY_LOG"
+case "$*" in
+  'pull ghcr.io/vxture/bidproposal-app:sha-test') exit "$BID_PRIMARY_EXIT" ;;
+  'pull backup.test/vxture/bidproposal-app:sha-test') exit "$BID_FALLBACK_EXIT" ;;
+  'tag '*) exit 0 ;;
+  'compose '*) exit 0 ;;
+  *) echo 'Unexpected Docker operation' >&2; exit 99 ;;
+esac
+DOCKER
+chmod +x "$stage/bin/timeout" "$stage/bin/docker"
+export IMAGE_TAG=sha-test FALLBACK_IMAGE_REGISTRY=backup.test FALLBACK_IMAGE_NAMESPACE=vxture
+export BID_PRIMARY_EXIT=0 BID_FALLBACK_EXIT=0
+: > "$BID_VERIFY_LOG"
+bash "$stage/deploy/deploy.sh" start > "$stage/output"
+grep -q 'timeout --kill-after=10s 180 docker pull ghcr.io/' "$BID_VERIFY_LOG"
+! grep -q 'docker pull backup.test' "$BID_VERIFY_LOG"
+grep -q ' up -d' "$BID_VERIFY_LOG"
+export BID_PRIMARY_EXIT=124
+: > "$BID_VERIFY_LOG"
+bash "$stage/deploy/deploy.sh" start > "$stage/output"
+grep -q 'timeout --kill-after=10s 600 docker pull backup.test/' "$BID_VERIFY_LOG"
+grep -q 'docker tag backup.test/' "$BID_VERIFY_LOG"
+grep -q ' up -d' "$BID_VERIFY_LOG"
+export BID_FALLBACK_EXIT=1
+: > "$BID_VERIFY_LOG"
+if bash "$stage/deploy/deploy.sh" start > "$stage/output"; then
+  echo 'Two failed registry pulls incorrectly passed deployment' >&2; exit 1
+fi
+! grep -q ' up -d' "$BID_VERIFY_LOG"
+echo 'Bid deployment image pull: primary success, timeout fallback, double failure passed'

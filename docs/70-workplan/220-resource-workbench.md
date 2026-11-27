@@ -438,3 +438,11 @@ unexpected EOF in shared /tmp/deploy.sh after a long image pull. Deploy and
 rollback now syntax-check and transfer to product/run/attempt-specific remote
 paths, preventing another product's workflow from replacing a running script.
 Environment approval, five required contexts and deployment semantics stay intact.
+
+Release v0.3.12 did not reach production: run 46017653094 attempt 2 timed out
+after 45 minutes while GHCR downloaded the final image layer. Live v0.3.11 stayed
+healthy. Bound the primary pull to three minutes and the existing ACR fallback
+to ten minutes; limit base-service pulls to two minutes. Recreate only after a
+successful image pull. Controlled tests cover primary success, timeout fallback,
+and double failure leaving the serving stack unchanged. Retry as v0.3.13 through
+the normal protected release path; do not move the existing release tag.
